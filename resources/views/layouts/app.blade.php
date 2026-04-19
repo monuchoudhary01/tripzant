@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TripZant.com — Book flights, hotels, homestays, cabs & train tickets at best prices. Your complete travel partner.">
+    <title>@yield('title', "TripZant.com — Your Travel Starts Here")</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --navy: #002f55;
+            --primary: #0076f7;
+            --orange: #ff8c00;
+        }
+        .btn-navy { background: var(--navy); color: #fff; }
+        .btn-navy:hover { background: #001f3a; color: #fff; }
+        .text-navy { color: var(--navy) !important; }
+        .fw-900 { font-weight: 900 !important; }
+        .x-small { font-size: 10px; }
+        
+        /* Modal Backdrop Override - WEBSITE NO VISIBLE */
+        .modal-backdrop.show {
+            opacity: 0.98 !important;
+            background-color: #000 !important;
+            backdrop-filter: blur(15px);
+        }
+        .modal-content { box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        .nav-pills .nav-link.active { background-color: var(--navy); color: #fff; }
+        .nav-pills .nav-link { color: var(--navy); }
+    </style>
+    @yield('styles')
+</head>
+<body class="bg-light">
+    @php
+        $isB2BPortal = auth()->check() && request()->is(['agent-dashboard*', 'iata-dashboard*', 'amadeus-dashboard*', 'hotel-dashboard*', 'corporate-dashboard*', 'tourbuilder-dashboard*', 'admin-dashboard*', 'corporate*', 'partner*', 'affiliate-dashboard*']);
+    @endphp
+
+    @unless($isB2BPortal)
+    <header id="siteHeader" style="background:#fff; border-bottom:1px solid #f1f5f9; position:sticky; top:0; z-index:1000;">
+        <div class="container d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <a href="/" class="navbar-brand py-0 me-4">
+                    <img src="/img/logo.svg" alt="Tripzant.com" height="60" style="object-fit: contain;">
+                </a>
+                
+                <nav class="d-none d-lg-flex align-items-center gap-1">
+                    <a href="/flights" class="nav-link-mmt @yield('active-flights')">
+                        <i class="fas fa-plane"></i>
+                        <span>Flights</span>
+                    </a>
+                    <a href="/hotels" class="nav-link-mmt @yield('active-hotels')">
+                        <i class="fas fa-hotel"></i>
+                        <span>Hotels</span>
+                    </a>
+                    <a href="/flight-hotel" class="nav-link-mmt @yield('active-flight-hotel')">
+                        <i class="fas fa-suitcase-rolling"></i>
+                        <span>Flight + Hotel</span>
+                    </a>
+                    <a href="/homestays" class="nav-link-mmt @yield('active-homestays')">
+                        <i class="fas fa-house-chimney"></i>
+                        <span>Homestays</span>
+                    </a>
+                    <a href="/cabs" class="nav-link-mmt @yield('active-cabs')">
+                        <i class="fas fa-car-side"></i>
+                        <span>Cabs</span>
+                    </a>
+                    <a href="/trains" class="nav-link-mmt @yield('active-trains')">
+                        <i class="fas fa-train"></i>
+                        <span>Trains</span>
+                    </a>
+
+                    <a href="{{ route('tours.index') }}" class="nav-link-mmt {{ request()->routeIs('tours.*') ? 'active' : '' }}">
+                        <i class="fas fa-camera-retro"></i>
+                        <span>Tours</span>
+                    </a>
+
+                    <a href="/cargo" class="nav-link-mmt">
+                        <i class="fas fa-boxes-packing"></i>
+                        <span>Cargo</span>
+                    </a>
+
+                    <!-- Melbourn Event Button -->
+                    <a href="javascript:void(0)" class="nav-link-mmt festive-nav-btn" data-bs-toggle="modal" data-bs-target="#eventQrModal">
+                         <div class="festive-icon-wrap animate__animated animate__swing animate__infinite">
+                            <i class="fas fa-qrcode"></i>
+                         </div>
+                        <span class="fw-900">EVENT QR</span>
+                    </a>
+
+                    <!-- More Dropdown -->
+                    <div class="nav-item dropdown">
+                        <a class="nav-link-mmt dropdown-toggle" href="javascript:void(0)" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-h"></i>
+                            <span>More</span>
+                        </a>
+                        <ul class="dropdown-menu border-0 shadow-lg p-2 mt-2" style="border-radius: 12px; min-width: 200px;">
+                            <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy" href="/explore-map"><i class="fas fa-map-location-dot me-2 text-primary"></i> Explore</a></li>
+                            <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy" href="/esim"><i class="fas fa-sim-card me-2 text-primary"></i> eSIM</a></li>
+                            <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy" href="{{ route('visa.index') }}"><i class="fas fa-id-card me-2 text-primary"></i> Visa</a></li>
+                            <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy" href="{{ route('booking.insurance') }}"><i class="fas fa-shield-alt me-2 text-primary"></i> Insurance</a></li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-none d-lg-flex align-items-center gap-3">
+                    @guest
+                    <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#partnerModal" class="btn btn-outline-primary rounded-pill px-3 fw-bold d-flex align-items-center gap-2 shadow-sm transition-fast hvr-grow" style="height: 44px; border: 2px solid #0076f7; color: #0076f7;">
+                        <i class="fas fa-handshake"></i>
+                        <span style="font-size: 11px; letter-spacing: 0.5px;">BECOME A PARTNER</span>
+                    </a>
+
+                    <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#loginModal" class="btn btn-primary rounded-pill px-4 fw-900 d-flex align-items-center gap-2 shadow-sm hover-shadow transition-fast" style="height: 44px; background: linear-gradient(135deg, #0076f7 0%, #0056b3 100%);">
+                        <i class="fas fa-user-circle fs-5"></i>
+                        <span class="text-uppercase tracking-wider" style="font-size: 12px;">LOGIN / SIGNUP</span>
+                    </a>
+                    @else
+                        <div class="dropdown">
+                            <div class="d-flex align-items-center gap-2 cursor-pointer dropdown-toggle" data-bs-toggle="dropdown" style="cursor: pointer;">
+                                <div class="text-end d-none d-sm-block">
+                                    <h6 class="fw-800 text-navy mb-0" style="font-size: 11px;">{{ trim(Auth::user()->name) ? Auth::user()->name : 'User' }}</h6>
+                                    <span class="text-orange fw-bold" style="font-size: 9px; text-transform: uppercase;">{{ str_replace('-', ' ', Auth::user()->role) }}</span>
+                                </div>
+                                <div class="avatar bg-navy text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 38px; height: 38px; font-size: 14px;">
+                                    {{ trim(Auth::user()->name) ? strtoupper(substr(Auth::user()->name, 0, 1)) : 'U' }}
+                                </div>
+                            </div>
+                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2" style="border-radius: 12px; width: 220px;">
+                                <li class="p-2 border-bottom mb-2">
+                                    <span class="text-muted small fw-bold d-block">MANAGEMENT</span>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item rounded-3 py-2 px-3 fw-700 text-navy d-flex align-items-center gap-2" href="{{ Auth::user()->getDashboardUrl() }}">
+                                        <i class="fas fa-th-large text-primary opacity-50"></i> Go to Dashboard
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item rounded-3 py-2 px-3 fw-700 text-navy d-flex align-items-center gap-2" href="/dashboard/profile">
+                                        <i class="fas fa-user-edit text-primary opacity-50"></i> My Profile
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider opacity-50"></li>
+                                <li>
+                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
+                                    <a class="dropdown-item rounded-3 py-2 px-3 fw-700 text-danger d-flex align-items-center gap-2" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    @endguest
+                </div>
+
+                <button class="btn d-lg-none border-0 p-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
+                    <i class="fas fa-bars text-navy fs-4"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+    @endunless
+
+
+
+    <!-- Partner Signup Modal -->
+    <div class="modal fade" id="partnerSignupModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg p-4" style="border-radius: 30px;">
+                <div class="modal-header auth-modal-header">
+                    <h4 class="fw-900 text-navy">Partner With Us</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body auth-modal-body">
+                    <p class="text-muted">Join our network of travel partners and grow your business.</p>
+                    <a href="{{ route('partner.signup') }}" class="btn btn-navy w-100 py-3 fw-bold">Register as Partner</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event QR Modal -->
+    <div class="modal fade" id="eventQrModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg text-center p-4" style="border-radius: 30px; background: linear-gradient(135deg, #ffffff 0%, #fef9c3 100%);">
+                <div class="modal-header border-0 pb-0 justify-content-center">
+                    <h4 class="fw-900 text-navy mb-0">Melbourn New Year Event</h4>
+                </div>
+                <div class="modal-body py-4">
+                    <p class="text-muted fw-bold mb-4">Scan the flyer below or click it to enter the lucky draw!</p>
+                    
+                    <div class="qr-container bg-white p-2 rounded-4 shadow-sm d-inline-block mb-4 border border-warning" style="cursor: pointer;" onclick="window.location.href='{{ route('event.melbourne') }}'">
+                        <!-- User's Professional Flyer Image -->
+                        <img src="/img/image.png" alt="Event Flyer" class="img-fluid rounded-3 shadow">
+                        <div class="mt-2 text-primary small fw-bold"><i class="fas fa-mouse-pointer me-1"></i> Click Flyer to Visit Page</div>
+                    </div>
+
+                    <div class="mt-3">
+                        <a href="{{ route('event.melbourne') }}" class="btn btn-navy rounded-pill px-5 py-3 fw-bold w-100 shadow-lg hvr-grow">
+                             OPEN REGISTRATION FORM <i class="fas fa-external-link-alt ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center pt-0">
+                    <p class="small text-muted mb-0">Happy New Year to all Sri Lankans!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @unless($isB2BPortal)
+    <!-- Mobile Offcanvas Menu -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="mobileMenu">
+        <div class="offcanvas-header border-bottom">
+            <a href="/" class="navbar-brand"><img src="/img/logo.svg" alt="Tripzant.com" height="120"></a>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="d-flex flex-column gap-1">
+                @guest
+                    <a href="/login" class="btn btn-orange w-100 text-center mb-3">Login / Signup</a>
+                    <a href="/partner/signup" class="btn btn-link text-navy text-decoration-none fw-bold small text-center mb-3">Become a Partner</a>
+                @else
+                    <div class="p-3 bg-light rounded-3 mb-3">
+                        <h6 class="fw-800 text-navy mb-0">{{ Auth::user()->name }}</h6>
+                        <span class="text-orange fw-bold x-small">{{ str_replace('_', ' ', Auth::user()->role) }}</span>
+                    </div>
+                    <a href="/dashboard" class="dash-nav-link"><i class="fas fa-th-large"></i> Dashboard Home</a>
+                    <form id="logout-form-mobile" action="/logout" method="POST" class="mt-2">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-danger w-100 py-2 fw-bold">Logout</button>
+                    </form>
+                @endguest
+                <hr>
+                <a href="/flights" class="dash-nav-link"><i class="fas fa-plane-departure"></i> Flights</a>
+                <a href="/hotels" class="dash-nav-link"><i class="fas fa-hotel"></i> Hotels</a>
+                <a href="/homestays" class="dash-nav-link"><i class="fas fa-house-chimney"></i> Homestays</a>
+                <a href="/cabs" class="dash-nav-link"><i class="fas fa-car-side"></i> Cabs</a>
+                <a href="/trains" class="dash-nav-link"><i class="fas fa-train"></i> Trains</a>
+                <a href="/explore-map" class="dash-nav-link text-primary fw-bold"><i class="fas fa-map-location-dot"></i> Explore on Map</a>
+                <a href="/tours/listings" class="dash-nav-link"><i class="fas fa-camera-retro"></i> Tours & Activities</a>
+
+                <a href="/esim" class="dash-nav-link"><i class="fas fa-sim-card"></i> Travel eSIM</a>
+                <a href="{{ route('booking.insurance') }}" class="dash-nav-link"><i class="fas fa-shield-alt"></i> Travel Insurance</a>
+            </div>
+        </div>
+    </div>
+    @endunless
+
+    <!-- ====== MAIN CONTENT ====== -->
+    <main>
+        @yield('content')
+    </main>
+
+    @unless($isB2BPortal)
+    <!-- ====== PRE-FOOTER DISCOVERY (SEO & LINKS) ====== -->
+    <section class="pre-footer-discovery">
+        <div class="container">
+            <!-- SEO Text Blocks -->
+            <div class="row g-4 footer-seo-content mb-5">
+                <div class="col-lg-4">
+                    <h6 class="footer-title-sm">Why Tripzant.com?</h6>
+                    <p class="footer-text-muted">Tripzant.com is India's leading travel brand, providing a wide range of services including flights, hotels, homestays, holiday packages, and activities. Our goal is to make travel accessible, affordable, and enjoyable for everyone through technology and trust.</p>
+                </div>
+                <div class="col-lg-4">
+                    <h6 class="footer-title-sm">Booking Flights & Hotels Online</h6>
+                    <p class="footer-text-muted">Book cheapest flight tickets for domestic and international routes with instant confirmation. Choose from a massive inventory of premium hotels, luxury villas, budget stays, and unique homestays with verified reviews and genuine guest photos.</p>
+                </div>
+                <div class="col-lg-4">
+                    <h6 class="footer-title-sm">24/7 Premium Support</h6>
+                    <p class="footer-text-muted">Our dedicated travel experts are available around the clock to assist you with bookings, cancellations, and travel advice. We use advanced AI to ensure you get the best rates and real-time updates for your journeys across the globe.</p>
+                </div>
+            </div>
+
+            <!-- Exhaustive SEO Links (Professional Grid) -->
+            <div class="footer-discovery-grid">
+                <!-- HOTELS -->
+                <div class="grid-card">
+                    <div class="grid-head">
+                        <i class="fas fa-hotel"></i>
+                        <span>Hotels in India</span>
+                    </div>
+                    <div class="grid-body">
+                        <div class="link-col">
+                            <a href="#">Jaipur</a><a href="#">Goa</a><a href="#">Delhi</a><a href="#">Udaipur</a>
+                        </div>
+                        <div class="link-col">
+                            <a href="#">Mumbai</a><a href="#">Bangalore</a><a href="#">Rishikesh</a><a href="#">Agra</a>
+                        </div>
+                        <div class="link-col">
+                            <a href="#">Chennai</a><a href="#">Kasauli</a><a href="#">Kolkata</a><a href="#">Pune</a>
+                        </div>
+                        <div class="link-col">
+                            <a href="#">Manali</a><a href="#">Lonavala</a><a href="#">Shimla</a><a href="#">Munnar</a>
+                        </div>
+                        <div class="link-col">
+                            <a href="#">Ayodhya</a><a href="#">Gulmarg</a><a href="#">Leh</a><a href="#">Hyderabad</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FLIGHTS -->
+                <div class="grid-card">
+                    <div class="grid-head">
+                        <i class="fas fa-plane"></i>
+                        <span>Flight Routes</span>
+                    </div>
+                    <div class="grid-body">
+                        <div class="link-col">
+                            <a href="#">Delhi Mumbai</a><a href="#">Bangalore Delhi</a>
+                        </div>
+                        <div class="link-col">
+                            <a href="#">Mumbai Goa</a><a href="#">Chennai Hyderabad</a>
+                        </div>
+                        <div class="link-col">
+                            <a href="#">Kolkata Delhi</a><a href="#">Dubai Mumbai</a>
+                        </div>
+                        <div class="link-col">
+                            <a href="#">Delhi London</a><a href="#">Mumbai New York</a>
+                        </div>
+                        <div class="link-col">
+                            <a href="#">Bangalore Singapore</a><a href="#">Delhi Dubai</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUICK ACCESS -->
+                <div class="grid-card">
+                    <div class="grid-head">
+                        <i class="fas fa-handshake"></i>
+                        <span>Partner Program</span>
+                    </div>
+                    <div class="grid-body">
+                        <div class="link-col">
+                            <a href="{{ route('partner.login') }}">Partner Login</a>
+                            <a href="/admin/login" class="text-muted">Admin Access</a>
+                        </div>
+                        <div class="link-col">
+                            <a href="/login">User Login</a>
+                            <a href="{{ route('partner.signup') }}" class="small text-primary opacity-50">Join as Partner</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IMPORTANT LINKS -->
+                <div class="grid-card">
+                    <div class="grid-head">
+                        <i class="fas fa-star"></i>
+                        <span>Important Links</span>
+                    </div>
+                    <div class="grid-body">
+                        <div class="link-col">
+                            <a href="#">Cheap Flights</a><a href="#">Flight Status</a>
+                        </div>
+                        <div class="link-col">
+                            <a href="#">Kumbh Mela</a><a href="#">Domestic Airlines</a>
+                        </div>
+                        <div class="link-col">
+                            <a href="#">International Airlines</a><a href="#">Indigo</a>
+                        </div>
+                        <div class="link-col">
+                            <a href="#">Spicejet</a><a href="#">Air Asia</a>
+                        </div>
+                        <div class="link-col">
+                            <a href="#">Air India</a><a href="#">Indian Railways</a>
+                        </div>
+                        <div class="link-col">
+                            <a href="#">Trip Ideas</a><a href="#">Beaches</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== FOOTER ====== -->
+    <footer>
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="mb-4">
+                        <img src="/img/logo.svg" height="120" style="filter: brightness(0) invert(1); opacity: 0.9; margin-bottom: 15px;" alt="Tripzant.com">
+                    </div>
+                    <p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.7;">Tripzant.com is your ultimate travel partner for booking flights, hotels, homestays and experiences worldwide with unbeatable prices and premium service.</p>
+                    <div class="d-flex gap-2 TS-3">
+                        <a href="#" class="social-pill"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-pill"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-pill"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-pill"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" class="social-pill"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-3 col-6">
+                    <h6 class="footer-title">Products</h6>
+                    <ul class="footer-links">
+                        <li><a href="/flights">Flights</a></li>
+                        <li><a href="/hotels">Hotels</a></li>
+                        <li><a href="/homestays">Homestays & Villas</a></li>
+                        <li><a href="/cabs">Cabs</a></li>
+                        <li><a href="/trains">Trains</a></li>
+                        <li><a href="{{ route('booking.insurance') }}">Travel Insurance</a></li>
+                        <li><a href="#">Holiday Packages</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-3 col-6">
+                    <h6 class="footer-title">Company</h6>
+                    <ul class="footer-links">
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Press Room</a></li>
+                        <li><a href="#">Terms of Use</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Investor Relations</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6">
+                    <h6 class="footer-title">Support</h6>
+                    <ul class="footer-links">
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Cancellation Policy</a></li>
+                        <li><a href="#">Refund Status</a></li>
+                        <li><a href="#">Report a Bug</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-8 col-6">
+                    <h6 class="footer-title">Contact Us</h6>
+                    <ul class="footer-links" style="list-style: none; padding: 0;">
+                        <li class="mb-3 d-flex align-items-start gap-2">
+                            <i class="fas fa-phone-alt text-primary mt-1"></i>
+                            <div>
+                                <a href="tel:0468259656" class="d-block">0468259656</a>
+                                <small style="color:rgba(255,255,255,0.4);">Call or WhatsApp</small>
+                            </div>
+                        </li>
+                        <li class="mb-3 d-flex align-items-start gap-2">
+                            <i class="fas fa-envelope text-primary mt-1"></i>
+                            <a href="mailto:info@tripzant.com">info@tripzant.com</a>
+                        </li>
+                        <li class="d-flex align-items-start gap-2">
+                            <i class="fas fa-map-marker-alt text-primary mt-1"></i>
+                            <span style="color:rgba(255,255,255,0.7); font-size:13px;">1151 Wynnum Road, Cannon Hill, 4170, QLD , Australia</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr style="border-color:rgba(255,255,255,.1); margin: 40px 0;">
+
+            <div class="footer-bottom">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p style="color:rgba(255,255,255,.35);font-size:12px;margin:0;">© 2026 Tripzant Private Limited. All rights reserved.</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <div class="d-flex flex-column align-items-md-end gap-4">
+                            <!-- IATA Logo (Premium Badge - Major Focus) -->
+                            <div class="iata-badge bg-white px-4 py-2 rounded-3 shadow-lg d-inline-flex align-items-center mb-2" style="height: 95px; border: 2px solid #0076f7; transition: 0.3s;">
+                                <img src="/img/iata-logo.svg" alt="IATA Accredited Agent" style="height: 70px; object-fit: contain;">
+                            </div>
+                            
+                            <div class="d-flex align-items-center gap-3 justify-content-md-end">
+                                <span style="color:rgba(255,255,255,.4); font-size:12px; font-weight: 700;">WE ACCEPT:</span>
+                                <div class="payment-icons-footer d-flex align-items-center gap-2">
+                                    <img src="https://img.icons8.com/color/48/visa.png" width="36" alt="Visa">
+                                    <img src="https://img.icons8.com/color/48/mastercard.png" width="36" alt="Mastercard">
+                                    <img src="https://img.icons8.com/color/48/paypal.png" width="36" alt="PayPal"> <!-- Fixed PayPal URL -->
+                                    <img src="https://img.icons8.com/color/48/stripe.png" width="36" alt="Stripe"> <!-- Added Stripe -->
+                                    <img src="https://img.icons8.com/color/48/rupay.png" width="36" alt="RuPay">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </footer>
+    @endunless
+
+    <!-- ====== LOCALIZATION MODAL (INR/Country) ====== -->
+    <div class="modal fade" id="localizationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-900 text-navy">Country & Language</h5>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="small fw-bold text-muted mb-2">CURRENCY</label>
+                            <div class="p-3 border rounded-3 bg-light d-flex align-items-center gap-3 cursor-pointer border-primary">
+                                <img src="https://flagcdn.com/w20/in.png" width="20">
+                                <span class="fw-bold text-navy">INR (₹)</span>
+                                <i class="fas fa-check-circle ms-auto text-primary"></i>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-bold text-muted mb-2">LANGUAGE</label>
+                            <div class="p-3 border rounded-3 bg-light d-flex align-items-center gap-3 cursor-pointer">
+                                <span class="fw-bold text-navy">English (US)</span>
+                                <i class="fas fa-chevron-down ms-auto text-muted small"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button class="btn btn-navy w-100 py-3 rounded-pill fw-bold shadow" data-bs-dismiss="modal">Apply & Continue</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS (CRITICAL) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ====== SCROLL REVEAL (CRITICAL FIX FOR WHITE SPACE) ====== -->
+    <script>
+        const scrollReveal = () => {
+            const reveals = document.querySelectorAll('.reveal');
+            reveals.forEach(el => {
+                const windowHeight = window.innerHeight;
+                const revealTop = el.getBoundingClientRect().top;
+                const revealPoint = 150;
+                if (revealTop < windowHeight - revealPoint) el.classList.add('visible');
+            });
+        };
+        window.addEventListener('scroll', scrollReveal);
+        window.addEventListener('load', scrollReveal);
+    </script>
+
+    <script>
+        // Under Construction Popup
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!sessionStorage.getItem('constructionSeen')) {
+                Swal.fire({
+                    title: '<span style="color:var(--navy); font-family:Outfit; font-weight:900;">TripZant.com is Under Construction</span>',
+                    html: `
+                        <div style="text-align: center; padding: 10px;">
+                            <div class="d-flex align-items-center justify-content-center gap-5 mb-4">
+                                <img src="/img/logo.svg" height="80">
+                                <div style="width: 2px; height: 60px; background: #e2e8f0;"></div>
+                                <img src="/img/iata-logo.svg" height="80">
+                            </div>
+                            <p style="color: #64748b; font-size: 16px; line-height: 1.6;">
+                                We are currently building a premium travel experience for you. 
+                                Our engineers are working hard to integrate live GDS pricing and global hotel networks.
+                            </p>
+                            <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin-top: 20px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 8px;">
+                                <div>
+                                    <strong style="color: var(--navy);">🚀 Official Launch:</strong> 
+                                    <span style="color: var(--primary); font-weight: 700;">Coming Live in 1 Month!</span>
+                                </div>
+                                <div style="border-top: 1px solid #e2e8f0; pt-2; margin-top: 5px; padding-top: 8px;">
+                                    <p style="margin:0; font-weight: 600; color: #1e293b; font-size: 14px;">For immediate bookings, please contact:</p>
+                                    <h5 style="color: var(--primary); font-weight: 800; margin-top: 5px; letter-spacing: 1px;"><i class="fas fa-phone-alt me-2"></i>0468259656</h5>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    icon: 'info',
+                    iconColor: '#0076f7',
+                    confirmButtonText: 'Explore Preview',
+                    confirmButtonColor: '#002f55',
+                    width: 700,
+                    allowOutsideClick: false,
+                    showClass: {
+                        popup: 'animate__animated animate__fadeInDown'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOutUp'
+                    },
+                    customClass: {
+                        popup: 'rounded-4 border-0 shadow-lg',
+                        title: 'fs-3',
+                    }
+                }).then(() => {
+                    sessionStorage.setItem('constructionSeen', 'true');
+                });
+            }
+        });
+
+        // Header scroll effect
+        window.addEventListener('scroll', function() {
+            const header = document.getElementById('siteHeader');
+            if (header && window.scrollY > 30) header.classList.add('scrolled');
+            else if(header) header.classList.remove('scrolled');
+        });
+        function openLocalizationModal() {
+            const modal = new bootstrap.Modal(document.getElementById('localizationModal'));
+            modal.show();
+        }
+
+        @if(session('showLoginModal'))
+        document.addEventListener('DOMContentLoaded', function() {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('loginModal')).show();
+        });
+        @endif
+
+        @if(session('showSignupModal'))
+        document.addEventListener('DOMContentLoaded', function() {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('signupModal')).show();
+        });
+        @endif
+    </script>
+    @include('partials.partner-modal')
+    @include('partials.login-modal')
+    @include('partials.signup-modal')
+    @yield('scripts')
+</body>
+</html>

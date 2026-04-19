@@ -1,0 +1,20 @@
+Subject: Request for mTLS Certification and Certificate Signing - Account: EASITRIPBOOKING B2C
+
+Dear Hotelbeds Support Team,
+
+We are currently integrating the Hotel API for our platform, Easitrip. We have been informed that mTLS (Mutual TLS) is now mandatory for our account.
+
+We have generated a Certificate Signing Request (CSR) on our end. Please find the 'client.csr' file attached to this email.
+
+We kindly request you to:
+1. Sign our CSR and provide us with the signed client certificate (.crt file).
+2. Restart or Enable the certification process for our API keys so we can finalize the integration.
+
+Account Details:
+- Account Name: EASITRIPBOOKING B2C
+- Environment: Test/Live
+
+Please let us know if any further steps are required from our side.
+
+Best regards,
+Easitrip Development Team

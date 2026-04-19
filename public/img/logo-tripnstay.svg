@@ -1,0 +1,12 @@
+<svg width="400" height="160" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Navy Blue Background Box -->
+  <rect width="400" height="160" rx="15" fill="#0B3D61"/>
+  
+  <!-- "Trip n Stay" (First Line) -->
+  <text x="40" y="75" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="52" fill="white">
+    Trip <tspan fill="#FFC107" font-weight="800">n</tspan> Stay
+  </text>
+  
+  <!-- "Booking.com" (Second Line - Forced to match width) -->
+  <text x="40" y="128" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="800" font-size="44" fill="white" textLength="320" lengthAdjust="spacingAndGlyphs">Booking.com</text>
+</svg>

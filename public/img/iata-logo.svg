@@ -1,0 +1,27 @@
+<svg width="300" height="200" viewBox="0 0 150 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Exact IATA Logo Replica - V2 -->
+  <g fill="#0035FF"> <!-- Brighter Blue -->
+    <!-- Globe -->
+    <circle cx="75" cy="28" r="22"/>
+    <!-- Globe Lines -->
+    <ellipse cx="75" cy="28" rx="8" ry="22" stroke="white" stroke-width="1.5"/>
+    <circle cx="75" cy="28" r="22" stroke="white" stroke-width="1.5" fill="none"/>
+    <line x1="53" y1="28" x2="97" y2="28" stroke="white" stroke-width="1.5"/>
+    <line x1="75" y1="6" x2="75" y2="50" stroke="white" stroke-width="1.5"/>
+    
+    <!-- Wings (Left) - 4 Blocks -->
+    <path d="M50 35H5L5 40H52C51 38 50 37 50 35Z"/>
+    <path d="M54 42H12V47H56C55 45 54 44 54 42Z"/>
+    <path d="M58 49H20V54H60C59 52 58 51 58 49Z"/>
+    <path d="M62 56H30V61H64C63 59 62 58 62 56Z"/>
+    
+    <!-- Wings (Right) - 4 Blocks -->
+    <path d="M100 35H145V40H98C99 38 100 37 100 35Z"/>
+    <path d="M96 42H138V47H94C95 45 96 44 96 42Z"/>
+    <path d="M92 49H130V54H90C91 52 92 51 92 49Z"/>
+    <path d="M88 56H120V61H86C87 59 88 58 88 56Z"/>
+    
+    <!-- IATA Text -->
+    <text x="75" y="90" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-style="italic" font-size="34" text-anchor="middle">IATA</text>
+  </g>
+</svg>

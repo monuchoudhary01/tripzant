@@ -1,0 +1,10 @@
+<svg width="350" height="160" viewBox="0 0 350 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Navy Blue Background Box -->
+  <rect width="350" height="160" rx="15" fill="#0B3D61"/>
+  
+  <!-- "TripStay" (First Line - Width Forced to 280 units) -->
+  <text x="35" y="75" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="52" fill="white" textLength="280" lengthAdjust="spacingAndGlyphs">TripStay</text>
+  
+  <!-- "Booking.com" (Second Line - Width Forced to 280 units) -->
+  <text x="35" y="125" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="800" font-size="40" fill="white" textLength="280" lengthAdjust="spacingAndGlyphs">Booking.com</text>
+</svg>

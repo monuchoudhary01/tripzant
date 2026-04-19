@@ -1,0 +1,241 @@
+
+===========================================================================
+      TRIPZANT — B2B AUTO FARE MONITORING SYSTEM
+      COMPLETE STEP-BY-STEP GUIDE (HINDI + ENGLISH)
+===========================================================================
+
+Banane ki date: 16 April 2026
+Developer: Antigravity AI (Powered by Google DeepMind)
+Project: EasiTrip / Tripzant B2B Portal
+
+===========================================================================
+ SECTION 1: B2B AGENT LOGIN DETAILS
+===========================================================================
+
+   Portal URL  :  http://127.0.0.1:8000/agent/login
+            OR :  http://127.0.0.1:8000/partner/login
+
+   Email       :  b2b@tripzant.com
+   Password    :  Agent@123
+   Role        :  B2B Travel Agent
+   Agent ID    :  #B2B-5010
+
+   -----------------------------------------------------------------------
+   ADMIN LOGIN (System Management ke liye):
+   URL         :  http://127.0.0.1:8000/admin/login
+   Email       :  (apna admin email)
+   -----------------------------------------------------------------------
+
+===========================================================================
+ SECTION 2: FARE MONITORING SYSTEM — KYA HAI? (SAMAJHNE KE LIYE)
+===========================================================================
+
+   YE SYSTEM KYA KARTA HAI?
+   --------------------------
+   Imagine karo — ek agent chahta hai:
+     "Jaipur se Dubai ka ticket ₹18,000 ya usse kam mile to muje batao."
+
+   Purana tarika: Agent baar baar khud search karta tha.
+   Naya tarika (humara system): AUTOMATIC!
+
+   SYSTEM KA KAAM:
+   ---------------
+   1. Agent ek "Fare Alert" set karta hai (route + price target)
+   2. System har 15 MINUTE me khud Amadeus API ko call karta hai
+   3. Agar cheapest price target se kam/barabar ho to:
+      - Agent ko EMAIL bhejta hai
+      - Agent ko WHATSAPP bhejta hai
+   4. Alert ka status "MATCHED" ho jaata hai
+   5. Agent turant book kar sakta hai
+
+===========================================================================
+ SECTION 3: STEP-BY-STEP — AGENT KAISE USE KARE
+===========================================================================
+
+   STEP 1 — LOGIN KARO
+   --------------------
+   URL: http://127.0.0.1:8000/agent/login
+   Email: b2b@tripzant.com
+   Password: Agent@123
+
+   -------------------------------------------
+
+   STEP 2 — FARE MONITOR SECTION KHOLO
+   ------------------------------------
+   Login ke baad left sidebar mein dekho:
+   "FLIGHT BOOKING" section ke neeche:
+   >> "Fare Monitor" (Bell icon ke saath)
+
+   Click karo.
+
+   URL: http://127.0.0.1:8000/agent-dashboard/fare-alerts
+
+   -------------------------------------------
+
+   STEP 3 — NAYA ALERT BANAO
+   --------------------------
+   "CREATE NEW ALERT" button pe click karo (top-right corner).
+
+   URL: http://127.0.0.1:8000/agent-dashboard/fare-alerts/create
+
+   Form bharo:
+   ┌────────────────────────────────────────────────────────┐
+   │  Origin (From)          :  JAI  (Jaipur)               │
+   │  Destination (To)       :  DXB  (Dubai)                 │
+   │  Travel Date            :  2024-05-20                   │
+   │  Passengers (Adults)    :  1                            │
+   │  Target Budget (INR)    :  18000                        │
+   │                           (ya blank chhodo = cheapest) │
+   │  Notify Via             :  [x] Email  [x] WhatsApp      │
+   └────────────────────────────────────────────────────────┘
+
+   "ACTIVATE AUTO-MONITOR" button dabao.
+
+   -------------------------------------------
+
+   STEP 4 — ALERT LIST DEKHO
+   -------------------------
+   Tumhara alert ab list mein dikhega:
+   Status: [ MONITORING ] (blue pulsating badge)
+
+   Yahan dikhai dega:
+   - Route            : JAI → DXB
+   - Travel Date      : 20 May 2024
+   - Target Price     : ₹18,000
+   - Current/Last     : (jab system pehli baar check kare)
+   - Status           : MONITORING → MATCHED
+   - Notify Via       : EMAIL | WHATSAPP
+
+   -------------------------------------------
+
+   STEP 5 — SYSTEM KHUD KAAM KARTA HAI
+   ------------------------------------
+   Ab kuch nahi karna! System automatically:
+   - Har 15 minute mein Amadeus API check karta hai
+   - Price log save karta hai database mein
+   - Agar price match ho to EMAIL + WHATSAPP bhejta hai
+   - Status "MATCHED" dikhai deta hai
+
+   -------------------------------------------
+
+   STEP 6 — MATCHED ALERT PE BOOK KARO
+   ------------------------------------
+   Jab status "MATCHED" ho jaaye:
+   - "BOOK NOW" button dikhega (green color)
+   - Us button pe click karo
+   - Flight booking flow mein chale jao
+
+   -------------------------------------------
+
+   STEP 7 — ALERT DELETE KARO (Agar chahiye)
+   ------------------------------------------
+   Alert list mein Red Dustbin icon pe click karo.
+   Confirm karo — alert delete ho jaayega.
+
+===========================================================================
+ SECTION 4: TECHNICAL — SYSTEM KE FILES (DEVELOPERS KE LIYE)
+===========================================================================
+
+   DATABASE TABLES:
+   ----------------
+   fare_alerts          -- Agent ke monitor requests
+   fare_price_logs      -- Har check ka price history
+   fare_notifications   -- Email/WhatsApp log
+
+   IMPORTANT FILES:
+   ----------------
+   app/Models/FareAlert.php
+   app/Models/FarePriceLog.php
+   app/Models/FareNotification.php
+
+   app/Console/Commands/MonitorFares.php   ← YE AUTOMATION ENGINE HAI
+   app/Console/Kernel.php                  ← Schedule: har 15 minute
+   app/Http/Controllers/B2bAgentController.php  ← Controller methods
+
+   VIEWS (Blade files):
+   --------------------
+   resources/views/agent/b2b/fare-alerts.blade.php        ← List page
+   resources/views/agent/b2b/fare-alert-create.blade.php  ← Create form
+
+   ROUTES (web.php line 759-763):
+   -------------------------------
+   GET  /agent-dashboard/fare-alerts           -- list
+   GET  /agent-dashboard/fare-alerts/create    -- form
+   POST /agent-dashboard/fare-alerts/store     -- save
+   DELETE /agent-dashboard/fare-alerts/{id}    -- delete
+
+===========================================================================
+ SECTION 5: COMMAND — MANUALLY CHALAO (TESTING KE LIYE)
+===========================================================================
+
+   Command Prompt ya Terminal mein yeh chalao:
+
+      cd d:\project\easitrip
+      php artisan fare:monitor
+
+   Output kuch aisa hoga:
+      Checking 3 active fare alerts...
+      Processing alert ID: 1 (JAI -> DXB on 2024-05-20)
+      Fare monitoring cycle completed.
+
+===========================================================================
+ SECTION 6: PRODUCTION (LIVE SERVER) DEPLOY KARNE KE LIYE
+===========================================================================
+
+   CRON JOB SETUP (Linux Server):
+   -------------------------------
+   SSH se server mein ghuso aur yeh command chalao:
+      crontab -e
+
+   Yeh line add karo:
+      * * * * * cd /var/www/easitrip && php artisan schedule:run >> /dev/null 2>&1
+
+   Yeh line automatically har 1 minute mein Laravel scheduler chalayegi,
+   aur Laravel khud decide karega ki kaunsa command kab run karna hai.
+   fare:monitor har 15 minute mein run hoga.
+
+===========================================================================
+ SECTION 7: NOTIFICATION CHANNELS — FUTURE SETUP
+===========================================================================
+
+   EMAIL SETUP (.env file):
+   -------------------------
+   MAIL_MAILER=smtp
+   MAIL_HOST=smtp.gmail.com
+   MAIL_PORT=587
+   MAIL_USERNAME=your@gmail.com
+   MAIL_PASSWORD=your_app_password
+   MAIL_ENCRYPTION=tls
+   MAIL_FROM_ADDRESS=noreply@tripzant.com
+
+   WHATSAPP SETUP (future — Twilio ya 360dialog):
+   ------------------------------------------------
+   Abhi WhatsApp notifications Log file mein record ho rahi hain:
+   File: storage/logs/laravel.log
+   
+   Production mein Twilio WhatsApp API ya Interakt (Indian provider)
+   se integrate kar sakte hain.
+
+===========================================================================
+ SECTION 8: QUICK REFERENCE CARD
+===========================================================================
+
+   ACTION                    URL
+   ─────────────────────────────────────────────────────────────────────
+   Login                   → http://127.0.0.1:8000/agent/login
+   Dashboard               → http://127.0.0.1:8000/agent-dashboard
+   Fare Monitor List       → http://127.0.0.1:8000/agent-dashboard/fare-alerts
+   Create New Alert        → http://127.0.0.1:8000/agent-dashboard/fare-alerts/create
+   Test Command (Terminal) → php artisan fare:monitor
+   ─────────────────────────────────────────────────────────────────────
+
+   LOGIN CREDENTIALS (B2B Agent):
+   ────────────────────────────────
+   Email    : b2b@tripzant.com
+   Password : Agent@123
+   ────────────────────────────────
+
+===========================================================================
+   Banaya gaya: Tripzant B2B Platform — Antigravity AI
+   Support: Aapke project ki yeh file save hai
+===========================================================================

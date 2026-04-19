@@ -1,0 +1,13 @@
+<svg width="340" height="60" viewBox="0 0 340 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- EASITRIP BOOKING - MakeMyTrip Style -->
+  
+  <!-- "easi" (Navy Blue) -->
+  <text x="0" y="42" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-weight="800" font-size="34" fill="#0B3D61" letter-spacing="-1">easi</text>
+  
+  <!-- "trip" (Red Rounded Box) -->
+  <rect x="75" y="8" width="85" height="44" rx="12" fill="#E92128" />
+  <text x="117" y="41" text-anchor="middle" font-family="'Brush Script MT', cursive, sans-serif" font-weight="500" font-size="34" fill="#FFFFFF">trip</text>
+  
+  <!-- "booking" (Navy Blue) -->
+  <text x="168" y="42" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-weight="800" font-size="34" fill="#0B3D61" letter-spacing="-1">booking</text>
+</svg>
