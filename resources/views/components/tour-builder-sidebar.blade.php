@@ -39,10 +39,6 @@
 
         <div class="nav-divider my-4 mx-3" style="border-top: 1px solid rgba(0,0,0,0.05);"></div>
         
-        <a href="/" class="nav-link-tour mt-3" style="background: rgba(107, 70, 193, 0.05); color: #44337a;">
-            <div class="nav-icon"><i class="fas fa-globe text-purple"></i></div>
-            <span class="flex-grow-1">Go to Website</span>
-        </a>
 
         <a href="{{ route('logout') }}" class="nav-link-tour logout-link mt-2" style="color: #ef4444;" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
             <div class="nav-icon"><i class="fas fa-power-off"></i></div>

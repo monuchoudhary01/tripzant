@@ -144,12 +144,15 @@ class AuthController extends Controller
             'password' => 'required|min:6',
         ]);
 
+        $role = \App\Models\Role::where('slug', 'user')->first();
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
             'role' => 'user',
+            'role_id' => $role ? $role->id : null,
             'status' => 'active',
             'is_verified' => false, // Require OTP
             'otp' => '1234', // Default for now
@@ -226,12 +229,15 @@ class AuthController extends Controller
         $exclude = ['_token', 'business_name', 'contact_name', 'email', 'phone', 'role', 'password', 'password_confirmation', 'service_category', 'pricing', 'location'];
         $metadata = array_diff_key($request->all(), array_flip($exclude));
 
+        $roleModel = \App\Models\Role::where('slug', $request->role)->first();
+
         $user = User::create([
             'name' => $request->contact_name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
             'role' => $request->role,
+            'role_id' => $roleModel ? $roleModel->id : null,
             'status' => 'pending',
             'agency_name' => $request->business_name,
             'company_name' => $request->business_name,

@@ -114,34 +114,40 @@
             
             <div class="d-flex align-items-center gap-3">
                 <div class="d-none d-lg-flex align-items-center gap-3">
-                    @guest
-                    <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#partnerModal" class="btn btn-outline-primary rounded-pill px-3 fw-bold d-flex align-items-center gap-2 shadow-sm transition-fast hvr-grow" style="height: 44px; border: 2px solid #0076f7; color: #0076f7;">
-                        <i class="fas fa-handshake"></i>
-                        <span style="font-size: 11px; letter-spacing: 0.5px;">BECOME A PARTNER</span>
-                    </a>
+                    @if(!auth()->check() || auth()->user()->role !== 'user')
+                        <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#partnerModal" class="btn btn-outline-primary rounded-pill px-3 fw-bold d-flex align-items-center gap-2 shadow-sm transition-fast hvr-grow" style="height: 44px; border: 2px solid #0076f7; color: #0076f7;">
+                            <i class="fas fa-handshake"></i>
+                            <span style="font-size: 11px; letter-spacing: 0.5px;">BECOME A PARTNER</span>
+                        </a>
 
-                    <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#loginModal" class="btn btn-primary rounded-pill px-4 fw-900 d-flex align-items-center gap-2 shadow-sm hover-shadow transition-fast" style="height: 44px; background: linear-gradient(135deg, #0076f7 0%, #0056b3 100%);">
-                        <i class="fas fa-user-circle fs-5"></i>
-                        <span class="text-uppercase tracking-wider" style="font-size: 12px;">LOGIN / SIGNUP</span>
-                    </a>
+                        @if(auth()->check())
+                            <!-- If logged in as Partner/Admin, show a small dashboard link instead of Login -->
+                            <a href="{{ auth()->user()->getDashboardUrl() }}" class="btn btn-navy rounded-pill px-4 fw-900 d-flex align-items-center gap-2 shadow-sm hover-shadow transition-fast" style="height: 44px;">
+                                <i class="fas fa-th-large"></i>
+                                <span class="text-uppercase tracking-wider" style="font-size: 11px;">Go to Dashboard</span>
+                            </a>
+                        @else
+                            <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#loginModal" class="btn btn-primary rounded-pill px-4 fw-900 d-flex align-items-center gap-2 shadow-sm hover-shadow transition-fast" style="height: 44px; background: linear-gradient(135deg, #0076f7 0%, #0056b3 100%);">
+                                <i class="fas fa-user-circle fs-5"></i>
+                                <span class="text-uppercase tracking-wider" style="font-size: 12px;">LOGIN / SIGNUP</span>
+                            </a>
+                        @endif
                     @else
+                        <!-- Only for ROLE: user (Customer) -->
                         <div class="dropdown">
                             <div class="d-flex align-items-center gap-2 cursor-pointer dropdown-toggle" data-bs-toggle="dropdown" style="cursor: pointer;">
                                 <div class="text-end d-none d-sm-block">
                                     <h6 class="fw-800 text-navy mb-0" style="font-size: 11px;">{{ trim(Auth::user()->name) ? Auth::user()->name : 'User' }}</h6>
-                                    <span class="text-orange fw-bold" style="font-size: 9px; text-transform: uppercase;">{{ str_replace('-', ' ', Auth::user()->role) }}</span>
+                                    <span class="text-orange fw-bold" style="font-size: 9px; text-transform: uppercase;">MY ACCOUNT</span>
                                 </div>
                                 <div class="avatar bg-navy text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 38px; height: 38px; font-size: 14px;">
                                     {{ trim(Auth::user()->name) ? strtoupper(substr(Auth::user()->name, 0, 1)) : 'U' }}
                                 </div>
                             </div>
                             <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2" style="border-radius: 12px; width: 220px;">
-                                <li class="p-2 border-bottom mb-2">
-                                    <span class="text-muted small fw-bold d-block">MANAGEMENT</span>
-                                </li>
                                 <li>
-                                    <a class="dropdown-item rounded-3 py-2 px-3 fw-700 text-navy d-flex align-items-center gap-2" href="{{ Auth::user()->getDashboardUrl() }}">
-                                        <i class="fas fa-th-large text-primary opacity-50"></i> Go to Dashboard
+                                    <a class="dropdown-item rounded-3 py-2 px-3 fw-700 text-navy d-flex align-items-center gap-2" href="/dashboard">
+                                        <i class="fas fa-th-large text-primary opacity-50"></i> My Dashboard
                                     </a>
                                 </li>
                                 <li>
@@ -158,7 +164,7 @@
                                 </li>
                             </ul>
                         </div>
-                    @endguest
+                    @endif
                 </div>
 
                 <button class="btn d-lg-none border-0 p-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
@@ -225,20 +231,32 @@
         </div>
         <div class="offcanvas-body">
             <div class="d-flex flex-column gap-1">
-                @guest
-                    <a href="/login" class="btn btn-orange w-100 text-center mb-3">Login / Signup</a>
+                @if(!auth()->check() || auth()->user()->role !== 'user')
+                    <a href="/login" class="btn btn-primary w-100 text-center mb-3 py-3 fw-900 rounded-pill">LOGIN / SIGNUP</a>
                     <a href="/partner/signup" class="btn btn-link text-navy text-decoration-none fw-bold small text-center mb-3">Become a Partner</a>
+                    
+                    @if(auth()->check())
+                        <div class="p-3 bg-light rounded-3 mb-3 border border-primary">
+                            <h6 class="fw-800 text-navy mb-1">{{ Auth::user()->name }}</h6>
+                            <span class="badge bg-primary-subtle text-primary x-small">LOGGED AS {{ strtoupper(str_replace('-', ' ', Auth::user()->role)) }}</span>
+                            <a href="{{ auth()->user()->getDashboardUrl() }}" class="btn btn-navy btn-sm w-100 mt-2 fw-bold rounded-pill">Back to Dashboard</a>
+                        </div>
+                    @endif
                 @else
-                    <div class="p-3 bg-light rounded-3 mb-3">
+                    <!-- Only for Customers -->
+                    <div class="p-3 bg-light rounded-3 mb-3 border border-orange">
                         <h6 class="fw-800 text-navy mb-0">{{ Auth::user()->name }}</h6>
-                        <span class="text-orange fw-bold x-small">{{ str_replace('_', ' ', Auth::user()->role) }}</span>
+                        <span class="text-orange fw-bold x-small">CUSTOMER ACCOUNT</span>
                     </div>
                     <a href="/dashboard" class="dash-nav-link"><i class="fas fa-th-large"></i> Dashboard Home</a>
-                    <form id="logout-form-mobile" action="/logout" method="POST" class="mt-2">
+                    <a href="/dashboard/profile" class="dash-nav-link"><i class="fas fa-user-circle"></i> My Profile</a>
+                    <a href="/dashboard/bookings" class="dash-nav-link"><i class="fas fa-suitcase"></i> My Bookings</a>
+                    
+                    <form id="logout-form-mobile" action="/logout" method="POST" class="mt-4">
                         @csrf
-                        <button type="submit" class="btn btn-outline-danger w-100 py-2 fw-bold">Logout</button>
+                        <button type="submit" class="btn btn-outline-danger w-100 py-2 fw-bold rounded-pill">Logout</button>
                     </form>
-                @endguest
+                @endif
                 <hr>
                 <a href="/flights" class="dash-nav-link"><i class="fas fa-plane-departure"></i> Flights</a>
                 <a href="/hotels" class="dash-nav-link"><i class="fas fa-hotel"></i> Hotels</a>

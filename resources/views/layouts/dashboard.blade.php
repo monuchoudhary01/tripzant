@@ -268,9 +268,7 @@
                     <button class="btn d-lg-none border-0 p-0" onclick="toggleSidebar()">
                         <i class="fas fa-bars fs-4"></i>
                     </button>
-                    <h5 class="fw-900 text-navy mb-0">Member Dashboard</h5>
                 </div>
-                <a href="/" class="btn-website"><i class="fas fa-globe me-2"></i> Go to Website</a>
             </div>
 
             @yield('dashboard_content')

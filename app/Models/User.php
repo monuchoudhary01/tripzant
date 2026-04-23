@@ -11,6 +11,20 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($user) {
+            if (!empty($user->role) && empty($user->role_id)) {
+                $role = Role::where('slug', $user->role)->first();
+                if ($role) {
+                    $user->role_id = $role->id;
+                }
+            }
+        });
+    }
+
     const ROLE_SUPER_ADMIN = 'super-admin';
     const ROLE_ADMIN = 'admin';
     const ROLE_B2B_AGENT = 'b2b';
