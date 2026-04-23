@@ -428,41 +428,26 @@
             <!-- Payment -->
             <div class="checkout-card" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-900 text-navy mb-0">Secure Payment Gateway</h5>
-                    @if(str_contains($stripeKey, 'pk_test'))
-                        <span class="badge bg-warning text-dark fw-800 px-3 py-2 rounded-pill shadow-sm" style="font-size: 10px; letter-spacing: 0.5px;"><i class="fas fa-flask-vial me-2"></i> STRIPE TEST MODE</span>
-                    @else
-                        <span class="badge bg-success text-white fw-800 px-3 py-2 rounded-pill shadow-sm" style="font-size: 10px; letter-spacing: 0.5px;"><i class="fas fa-shield-check me-2"></i> LIVE MODE</span>
-                    @endif
+                    <h5 class="fw-900 text-navy mb-0">Secure Stripe Payment</h5>
+                    <span class="badge bg-success text-white fw-800 px-3 py-2 rounded-pill shadow-sm" style="font-size: 10px; letter-spacing: 0.5px;"><i class="fas fa-shield-check me-2"></i> SECURE GATEWAY</span>
                 </div>
                 
-                <div class="alert bg-white border rounded-4 p-3 mb-4 d-flex align-items-center gap-4 shadow-sm border-primary border-opacity-25">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" height="28">
-                    <div class="vr opacity-10" style="height: 30px;"></div>
+                <div class="alert bg-white border rounded-4 p-4 mb-4 d-flex align-items-center gap-4 shadow-sm">
+                    <div class="icon-box bg-primary-light text-primary fs-3">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
                     <div>
-                        <div class="fw-900 text-navy" style="font-size: 13px;">PCI-DSS COMPLIANT ENCRYPTION</div>
-                        <div class="fw-bold small text-muted">Your card details are never stored on our servers.</div>
+                        <div class="fw-900 text-navy" style="font-size: 14px;">Redirect to Secure Payment</div>
+                        <div class="fw-bold small text-muted">You will be redirected to Stripe to complete your payment securely.</div>
                     </div>
                 </div>
 
-                <div class="p-4 bg-white border @if(str_contains($stripeKey, 'pk_test')) border-warning @else border-light @endif rounded-4 shadow-sm" style="border-width: 2px !important;">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <label class="form-label-premium mb-0">Credit / Debit Card Details</label>
-                        <div class="d-flex gap-2 payment-icons">
-                            <img src="https://img.icons8.com/color/48/visa.png" width="28">
-                            <img src="https://img.icons8.com/color/48/mastercard.png" width="28">
-                            <img src="https://img.icons8.com/color/48/amex.png" width="28">
-                        </div>
-                    </div>
-                    <div id="card-element" class="form-control custom-input bg-light bg-opacity-10 py-3" style="min-height: 54px; border: 1.5px solid #e2e8f0;">
-                        <!-- Stripe Element will be injected here -->
-                    </div>
-                    <div id="card-errors" role="alert" class="text-danger small mt-2 fw-bold"></div>
-                </div>
-                
-                <div class="mt-4 p-3 rounded-4 bg-success bg-opacity-5 d-flex align-items-center gap-3 border border-success border-opacity-10">
-                    <i class="fas fa-shield-check text-success fs-4"></i>
-                    <div class="small fw-bold text-success opacity-75">Your payment is protected by multi-layer bank security protocols.</div>
+                <div class="p-3 rounded-4 bg-light d-flex justify-content-center gap-3 align-items-center opacity-75">
+                    <img src="https://img.icons8.com/color/48/visa.png" width="35">
+                    <img src="https://img.icons8.com/color/48/mastercard.png" width="35">
+                    <img src="https://img.icons8.com/color/48/amex.png" width="35">
+                    <img src="https://img.icons8.com/color/48/google-pay.png" width="35">
+                    <img src="https://img.icons8.com/color/48/apple-pay.png" width="35">
                 </div>
             </div>
             </div>
@@ -560,14 +545,6 @@
 <script>
     const stripeKey = "{{ $stripeKey }}";
     const stripe = Stripe(stripeKey);
-    const elements = stripe.elements();
-    const card = elements.create('card', {
-        style: {
-            base: { fontSize: '16px', color: '#1a1a2e', '::placeholder': { color: '#a0aec0' } }
-        }
-    });
-    card.mount('#card-element');
-
     // MMT Style State Management
     let extraCharges = {
         seats: 0,
@@ -578,15 +555,15 @@
 
     function refreshTotal() {
         const itemData = @json($item);
-        let basePrice = {{ $totalPrice ?? 0 }};
+        let basePrice = parseFloat("{{ $totalPrice ?? 0 }}");
         
         if (basePrice <= 0 && itemData) {
             if (Array.isArray(itemData)) {
                 basePrice = itemData.reduce((sum, f) => sum + parseFloat(f.price || 0), 0);
             } else if (itemData.price && typeof itemData.price === 'object') {
-                basePrice = itemData.price.total || 0;
+                basePrice = parseFloat(itemData.price.total || 0);
             } else if (itemData.price) {
-                basePrice = itemData.price;
+                basePrice = parseFloat(itemData.price);
             }
         }
 
@@ -629,6 +606,7 @@
         refreshTotal();
     };
 
+    // Simplified confirmBooking for Stripe Redirect
     window.confirmBooking = async function() {
         if (!{{ Auth::check() ? 'true' : 'false' }}) {
             bootstrap.Modal.getOrCreateInstance(document.getElementById('loginModal')).show();
@@ -639,11 +617,8 @@
         const originalText = btn.innerHTML;
 
         try {
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> AUTHORIZING...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> REDIRECTING...';
             btn.classList.add('disabled');
-
-            const {token, error} = await stripe.createToken(card);
-            if (error) throw new Error(error.message);
 
             const travelers = [];
             document.querySelectorAll('.traveler-block').forEach((block, idx) => {
@@ -662,11 +637,11 @@
 
             const payload = {
                 _token: "{{ csrf_token() }}",
-                stripeToken: token.id,
                 type: "{{ $type }}",
                 travelers: travelers,
                 extra_services: extraCharges.details,
-                total_amount: document.getElementById('summaryTotal').innerText.replace(/[₹,]/g, '').trim()
+                total_amount: document.getElementById('summaryTotal').innerText.replace(/[₹,]/g, '').trim(),
+                item_data: @json($item)
             };
 
             const resp = await fetch("{{ route('checkout.process') }}", {
@@ -676,11 +651,10 @@
             });
 
             const data = await resp.json();
-            if (data.success) {
-                Swal.fire({ title: 'Booking Confirmed!', text: 'Payment Successful!', icon: 'success' })
-                .then(() => window.location.href = data.redirect);
+            if (data.success && data.redirect) {
+                window.location.href = data.redirect;
             } else {
-                throw new Error(data.message);
+                throw new Error(data.message || 'Payment initiation failed.');
             }
         } catch (e) {
             Swal.fire('Error', e.message, 'error');
@@ -740,9 +714,52 @@
         }
     }
 
+    function initItinerary() {
+        const itemData = @json($item);
+        if (!itemData) return;
+
+        const container = document.getElementById('itineraryBreakdown');
+        if (!container) return;
+
+        let html = '';
+        const flights = Array.isArray(itemData) ? itemData : [itemData];
+
+        flights.forEach(f => {
+            html += `
+                <div class="p-3 bg-light rounded-4 mb-2">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="badge bg-navy text-white fw-800">${f.airline || 'Flight'}</span>
+                        <span class="text-muted small fw-bold">${f.flight_number || ''}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-center">
+                            <div class="fw-900 text-navy fs-5">${f.departure_city || f.from || '---'}</div>
+                            <div class="small text-muted fw-bold">${f.departure_at ? new Date(f.departure_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</div>
+                        </div>
+                        <div class="flex-grow-1 px-3 position-relative text-center">
+                            <div class="border-top w-100 position-absolute top-50 start-0 opacity-10"></div>
+                            <i class="fas fa-plane text-navy opacity-20 position-relative bg-light px-2" style="z-index: 1;"></i>
+                        </div>
+                        <div class="text-center">
+                            <div class="fw-900 text-navy fs-5">${f.arrival_city || f.to || '---'}</div>
+                            <div class="small text-muted fw-bold">${f.arrival_at ? new Date(f.arrival_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
     // Initial Start
     document.addEventListener('DOMContentLoaded', () => {
-        // Ready to process
+        try {
+            initItinerary();
+            refreshTotal();
+        } catch (e) {
+            console.error("Initialization Error:", e);
+        }
     });
 </script>
 @endsection

@@ -12,6 +12,7 @@ class AmadeusService
     protected $baseUrl;
     protected $apiKey;
     protected $apiSecret;
+    protected $ndcOid;
     public $lastRequest = []; // To store last request metadata for testing
 
     public function __construct()
@@ -20,6 +21,7 @@ class AmadeusService
         $this->baseUrl = config('tripzant.amadeus.base_url', 'https://test.api.amadeus.com');
         $this->apiKey = config('tripzant.amadeus.key');
         $this->apiSecret = config('tripzant.amadeus.secret');
+        $this->ndcOid = config('tripzant.amadeus.ndc_oid');
 
         // Prefer dynamic keys from DB if available (as requested by user)
         try {
@@ -97,6 +99,8 @@ class AmadeusService
             'Authorization' => 'Bearer ' . $token,
             'Ama-Client-Ref' => $clientRef,
             'Accept' => 'application/json',
+            'X-Amadeus-Target-Source' => $this->ndcOid,
+            'X-Amadeus-Navigation-Target-Source' => $this->ndcOid,
         ];
 
         try {
@@ -155,6 +159,7 @@ class AmadeusService
             'Ama-Client-Ref' => $clientRef,
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
+            'X-Amadeus-Target-Source' => $this->ndcOid, // Required for NDC
         ];
 
         try {
@@ -210,6 +215,15 @@ class AmadeusService
     public function flightOffersSearch($params = [])
     {
         return $this->get('/v2/shopping/flight-offers', $params);
+    }
+
+    /**
+     * Flight Offers Search (POST version - Better for NDC)
+     * Endpoint: /v2/shopping/flight-offers
+     */
+    public function flightOffersSearchPost($payload = [])
+    {
+        return $this->post('/v2/shopping/flight-offers', $payload);
     }
 
     /**

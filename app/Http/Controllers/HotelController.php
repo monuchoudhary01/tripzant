@@ -68,15 +68,22 @@ class HotelController extends Controller
         $hotelCode = $request->input('hotel_code');
         $checkIn   = $request->input('checkIn');
         $checkOut  = $request->input('checkOut');
+        $adults    = $request->input('adults', 2);
+        $children  = $request->input('children', 0);
 
-        $data = $this->hotelService->getDetails($hotelCode, $checkIn, $checkOut);
+        $data = $this->hotelService->getDetails($hotelCode, $checkIn, $checkOut, $adults);
 
-        AuditLogService::log('Hotel', 'Details', "Viewed hotel: {$hotelCode}");
+        AuditLogService::log('Hotel', 'Details', "Viewed hotel: {$hotelCode} for {$adults} adults, {$children} children");
 
         return view('hotel.details', [
             'hotelContent' => $data['content'],
             'hotelAvail'   => $data['availability'],
-            'params'       => ['checkIn' => $checkIn, 'checkOut' => $checkOut],
+            'params'       => [
+                'checkIn'  => $checkIn, 
+                'checkOut' => $checkOut,
+                'adults'   => $adults,
+                'children' => $children
+            ],
         ]);
     }
 
@@ -150,8 +157,39 @@ class HotelController extends Controller
         $totalFare = (float) $request->input('total_fare');
         $adults    = (int) $request->input('adults', 1);
 
-        // 1. Wallet deduction for B2B / corporate users
-        if ($user && $user->role !== 'b2c') {
+        $paymentMethod = $request->input('payment_method', 'online');
+
+        // 1. Handle Online Payment Flow (Stripe)
+        if ($paymentMethod === 'online') {
+            // Store booking data in session for retrieval after payment
+            session(['pending_hotel_booking' => $request->all()]);
+
+            $stripe = app(\App\Services\StripeService::class);
+            $session = $stripe->createCheckoutSession([
+                'item_name'   => 'Hotel Booking: ' . $request->input('hotel_name'),
+                'amount'      => $totalFare,
+                'email'       => $request->input('email') ?? $user->email,
+                'success_url' => route('hotel.payment.process') . '?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url'  => route('hotel.checkout') . '?error=Payment cancelled',
+                'metadata'    => [
+                    'booking_type' => 'hotel',
+                    'hotel_name'   => $request->input('hotel_name')
+                ]
+            ]);
+
+            if (isset($session->url)) {
+                return redirect()->away($session->url);
+            }
+
+            return back()->with('error', 'Stripe session creation failed: ' . ($session['message'] ?? 'Unknown error'));
+        }
+
+        // 2. Handle Wallet Deduction (B2B Only)
+        if ($paymentMethod === 'wallet') {
+            if ($user->role === 'b2c') {
+                return back()->with('error', 'Wallet payment not available for B2C accounts.');
+            }
+            
             $deduction = $this->walletService->deduct(
                 $user,
                 $totalFare,
@@ -162,7 +200,7 @@ class HotelController extends Controller
             }
         }
 
-        // 2. Build pax list
+        // 3. Build pax list
         $paxes = [];
         for ($i = 0; $i < $adults; $i++) {
             $paxes[] = [
@@ -172,7 +210,7 @@ class HotelController extends Controller
             ];
         }
 
-        // 3. Attempt live HotelBeds booking
+        // 4. Attempt live HotelBeds booking
         $bookingResult = $this->hotelService->book([
             'holder_name'    => $paxes[0]['name'],
             'holder_surname' => $paxes[0]['surname'],
@@ -200,24 +238,24 @@ class HotelController extends Controller
         // 5. Create internal booking record
         try {
             $bookingRecord = \App\Models\Booking::create([
-                'user_id'         => $user->id,
-                'booking_type'    => 'hotel',
-                'api_reference'   => $bookingRef,
-                'status'          => 'confirmed',
-                'net_price'       => $bookingResult['booking']['totalNet'] ?? ($totalFare * 0.9),
-                'selling_price'   => $totalFare,
-                'payment_status'  => 'confirmed',
-                'contact_email'   => $request->input('email') ?? $user->email,
-                'contact_phone'   => $request->input('contact_phone'),
-                'booking_details' => json_encode([
+                'user_id'             => $user->id,
+                'type'                => 'hotel',
+                'booking_reference'   => $bookingRef,
+                'status'              => 'confirmed',
+                'total_amount'        => $totalFare,
+                'currency'            => 'INR',
+                'api_booking_details' => json_encode([
                     'hotel_name' => $request->input('hotel_name'),
                     'room_name'  => $request->input('room_name'),
-                    'checkIn'    => $request->input('checkIn'),
-                    'checkOut'   => $request->input('checkOut'),
+                    'check_in'   => $request->input('checkIn'),
+                    'check_out'  => $request->input('checkOut'),
                     'is_mock'    => $isMock,
+                    'paxes'      => $paxes,
+                    'board_name' => $request->input('board_name'),
                 ]),
-                'api_response' => json_encode($bookingResult),
             ]);
+
+            \Illuminate\Support\Facades\Log::info("Booking Record Created (Direct/Wallet): " . $bookingRecord->id);
 
             // 5a. Hotel booking detail record
             \App\Models\HotelBooking::create([
@@ -246,14 +284,16 @@ class HotelController extends Controller
 
             // 5c. Payment record
             \App\Models\Payment::create([
-                'booking_id'      => $bookingRecord->id,
-                'user_id'         => $user->id,
-                'transaction_id'  => 'TXN-HOT-' . strtoupper(uniqid()),
-                'payment_gateway' => $user->role !== 'b2c' ? 'Wallet' : 'Online',
-                'amount'          => $totalFare,
-                'currency'        => 'INR',
-                'status'          => 'successful',
+                'booking_id'        => $bookingRecord->id,
+                'user_id'           => $user->id,
+                'transaction_id'    => 'TXN-HOT-' . strtoupper(uniqid()),
+                'gateway'           => $user->role !== 'b2c' ? 'wallet' : 'online',
+                'amount'            => $totalFare,
+                'currency'          => 'INR',
+                'status'            => 'paid',
             ]);
+
+            \Illuminate\Support\Facades\Log::info("Payment Record Created (Direct/Wallet): " . $bookingRecord->id);
 
             // 5d. Invoice
             \App\Models\Invoice::create([
@@ -294,14 +334,173 @@ class HotelController extends Controller
     }
 
     /**
+     * Show Simulated Payment Gateway
+     */
+    public function showPaymentGateway(Request $request)
+    {
+        $amount = $request->query('amount');
+        $hotel  = $request->query('hotel');
+
+        if (!session('pending_hotel_booking')) {
+            return redirect()->route('hotels.index')->with('error', 'Booking session expired.');
+        }
+
+        return view('hotel.payment', compact('amount', 'hotel'));
+    }
+
+    /**
+     * Process Simulated Online Payment & Complete Booking
+     */
+    public function processPayment(Request $request)
+    {
+        $params = session('pending_hotel_booking');
+        if (!$params) {
+            return redirect()->route('hotels.index')->with('error', 'Booking session expired.');
+        }
+
+        $user      = Auth::user();
+        $totalFare = (float) $params['total_fare'];
+        $adults    = (int) ($params['adults'] ?? 1);
+
+        // 1. Build pax list
+        $paxes = [];
+        for ($i = 0; $i < $adults; $i++) {
+            $paxes[] = [
+                'name'    => $params["pax_name"][$i] ?? $params["pax_name"][0],
+                'surname' => $params["pax_surname"][$i] ?? $params["pax_surname"][0],
+                'type'    => 'AD',
+            ];
+        }
+
+        // 2. Attempt live HotelBeds booking
+        $bookingResult = $this->hotelService->book([
+            'holder_name'    => $paxes[0]['name'],
+            'holder_surname' => $paxes[0]['surname'],
+            'rateKey'        => $params['rate_key'],
+            'paxes'          => $paxes,
+        ]);
+
+        // 3. Handle API failure gracefully
+        $isMock = false;
+        if (isset($bookingResult['error'])) {
+            $isMock = true;
+            $bookingResult = [
+                'booking' => [
+                    'reference'      => 'TZ-' . strtoupper(uniqid()),
+                    'totalNet'       => $totalFare * 0.9,
+                    'hotelReference' => null,
+                    'hotel'          => ['name' => $params['hotel_name']],
+                ],
+            ];
+        }
+
+        $bookingRef = $bookingResult['booking']['reference'];
+
+        // 4. Create internal booking record
+        try {
+            $bookingRecord = \App\Models\Booking::create([
+                'user_id'             => $user->id,
+                'type'                => 'hotel',
+                'booking_reference'   => $bookingRef,
+                'status'              => 'confirmed',
+                'total_amount'        => $totalFare,
+                'currency'            => 'INR',
+                'api_booking_details' => json_encode([
+                    'hotel_name' => $params['hotel_name'],
+                    'room_name'  => $params['room_name'],
+                    'check_in'   => $params['checkIn'],
+                    'check_out'  => $params['checkOut'],
+                    'is_mock'    => $isMock,
+                    'paxes'      => $paxes,
+                ]),
+            ]);
+
+            \Illuminate\Support\Facades\Log::info("Booking Record Created (Online): " . $bookingRecord->id);
+
+            // 4a. Hotel booking detail
+            \App\Models\HotelBooking::create([
+                'booking_id'          => $bookingRecord->id,
+                'hotel_id'            => $params['hotel_code'],
+                'hotel_name'          => $params['hotel_name'],
+                'check_in'            => $params['checkIn'],
+                'check_out'           => $params['checkOut'],
+                'rooms'               => 1,
+                'guests'              => $adults,
+                'room_type'           => $params['room_name'],
+                'confirmation_number' => $bookingResult['booking']['hotelReference'] ?? null,
+                'hotel_details'       => json_encode($bookingResult['booking']['hotel'] ?? []),
+            ]);
+
+            // 4b. Passenger records
+            foreach ($paxes as $p) {
+                \App\Models\Passenger::create([
+                    'booking_id' => $bookingRecord->id,
+                    'type'       => 'adult',
+                    'title'      => 'Mr',
+                    'first_name' => $p['name'],
+                    'last_name'  => $p['surname'],
+                ]);
+            }
+
+            // 4c. Payment record
+            \App\Models\Payment::create([
+                'booking_id'        => $bookingRecord->id,
+                'user_id'           => $user->id,
+                'transaction_id'    => $request->query('session_id', 'STRIPE-' . uniqid()),
+                'gateway'           => 'stripe',
+                'amount'            => $totalFare,
+                'currency'          => 'INR',
+                'status'            => 'paid',
+                'gateway_response'  => json_encode($request->all()),
+            ]);
+
+            \Illuminate\Support\Facades\Log::info("Payment Record Created (Online): " . $bookingRecord->id);
+
+            // 4d. Invoice
+            \App\Models\Invoice::create([
+                'booking_id'     => $bookingRecord->id,
+                'invoice_number' => 'INV-HOT-' . date('Ymd') . '-' . $bookingRecord->id,
+                'amount'         => $totalFare,
+                'tax_amount'     => round($totalFare * 0.12, 2),
+                'status'         => 'paid',
+            ]);
+
+            // 5. Accounting sync
+            try {
+                app(\App\Services\AccountingService::class)->postBookingEntries($bookingRecord);
+            } catch (\Exception $e) {
+                \Log::warning('Accounting sync skipped: ' . $e->getMessage());
+            }
+
+            // Clear pending booking
+            session()->forget('pending_hotel_booking');
+
+            AuditLogService::log('Hotel', 'Payment Success', "Payment processed for Ref: {$bookingRef}");
+
+        } catch (\Exception $e) {
+            \Log::error('Hotel Payment DB Error: ' . $e->getMessage());
+        }
+
+        return redirect()->route('hotel.confirmation')->with([
+            'success'        => 'Payment Successful & Hotel Booked!',
+            'reference'      => $bookingRef,
+            'hotel_name'     => $params['hotel_name'],
+            'check_in'       => $params['checkIn'],
+            'check_out'      => $params['checkOut'],
+            'room_name'      => $params['room_name'],
+            'total_fare'     => $totalFare,
+            'guest_name'     => $paxes[0]['name'] . ' ' . $paxes[0]['surname'],
+            'is_mock'        => $isMock,
+        ]);
+    }
+
+    /**
      * Show Booking Confirmation Page
      */
     public function showConfirmation(Request $request)
     {
-        // If there's no session data (direct URL visit), redirect home
         if (!session('reference')) {
-            return redirect()->route('hotels.index')
-                ->with('info', 'No active booking found. Please search for hotels.');
+            return redirect()->route('hotels.index');
         }
 
         return view('hotel.confirmation');

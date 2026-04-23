@@ -147,6 +147,9 @@
                 <a href="{{ route('dashboard.bookings') }}" class="action-btn action-btn-outline">
                     <i class="fas fa-list-alt"></i> My Bookings
                 </a>
+                <button onclick="shareOnWhatsApp()" class="action-btn" style="background: #25d366; color: #fff; border: 2px solid #25d366;">
+                    <i class="fab fa-whatsapp"></i> Share on WhatsApp
+                </button>
                 <button onclick="window.print()" class="action-btn action-btn-outline">
                     <i class="fas fa-print"></i> Print Voucher
                 </button>
@@ -154,4 +157,18 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    function shareOnWhatsApp() {
+        const hotel = "{{ session('hotel_name') }}";
+        const ref = "{{ session('reference') }}";
+        const checkIn = "{{ session('check_in') }}";
+        
+        const text = `*Booking Confirmed!* \uD83C\uDFE8\n\n*Hotel:* ${hotel}\n*Check-in:* ${checkIn}\n*Ref:* ${ref}\n\nBooked via *Tripzant.com*`;
+        const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+    }
+</script>
 @endsection

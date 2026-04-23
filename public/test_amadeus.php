@@ -1,107 +1,128 @@
 <?php
 
-$apiKey = "b493832341msh7db10645a560350p11edc3jsn73556b46e8d5";
-$apiHost = "kiwi-com-cheap-flights.p.rapidapi.com";
+use App\Services\AmadeusService;
+use Illuminate\Support\Facades\Http;
 
-// Exact URL from your CURL command
-$url = "https://kiwi-com-cheap-flights.p.rapidapi.com/round-trip?source=Country%3AGB&destination=City%3Adubrovnik_hr&currency=usd&locale=en&adults=1&children=0&infants=0&handbags=1&holdbags=0&cabinClass=ECONOMY&sortBy=QUALITY&sortOrder=ASCENDING&applyMixedClasses=true&allowReturnFromDifferentCity=true&allowChangeInboundDestination=true&allowChangeInboundSource=true&allowDifferentStationConnection=true&enableSelfTransfer=true&allowOvernightStopover=true&enableTrueHiddenCity=true&enableThrowAwayTicketing=true&outbound=SUNDAY%2CWEDNESDAY%2CTHURSDAY%2CFRIDAY%2CSATURDAY%2CMONDAY%2CTUESDAY&transportTypes=FLIGHT&contentProviders=FLIXBUS_DIRECTS%2CFRESH%2CKAYAK%2CKIWI&limit=20";
+require __DIR__.'/../vendor/autoload.php';
+$app = require_once __DIR__.'/../bootstrap/app.php';
+$app->make('Illuminate\Contracts\Http\Kernel')->handle(Illuminate\Http\Request::capture());
 
-$ch = curl_init();
-curl_setopt_array($ch, [
-    CURLOPT_URL => $url,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_ENCODING => "",
-    CURLOPT_MAXREDIRS => 10,
-    CURLOPT_TIMEOUT => 30,
-    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-    CURLOPT_CUSTOMREQUEST => "GET",
-    CURLOPT_HTTPHEADER => [
-        "x-rapidapi-host: $apiHost",
-        "x-rapidapi-key: $apiKey",
-        "Content-Type: application/json"
-    ],
-]);
+$amadeus = app(AmadeusService::class);
 
-$response = curl_exec($ch);
-$err = curl_error($ch);
-$status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
+// 1. Test Token Generation
+$token = $amadeus->getAccessToken();
 
-$data = json_decode($response, true);
+// 2. Test Flight Search (POST version with NDC sources)
+$results = [];
+if ($token) {
+    $results = $amadeus->flightOffersSearch([
+        'originLocationCode' => 'PAR',
+        'destinationLocationCode' => 'ICN',
+        'departureDate' => date('Y-m-d', strtotime('+7 days')),
+        'adults' => 2,
+        'max' => 5
+    ]);
+}
+
+$status = isset($results['error']) ? ($results['status'] ?? 500) : 200;
 
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Kiwi Flight Search Test</title>
+    <title>Amadeus NDC Integration Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; padding: 40px; }
-        .container { max-width: 1100px; margin: 0 auto; }
-        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
-        .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px; transition: transform 0.2s; }
-        .card:hover { transform: translateY(-3px); border-color: #38bdf8; }
-        .price { font-size: 1.5rem; font-weight: bold; color: #10b981; }
-        .route { font-size: 1.1rem; color: #fff; margin: 10px 0; }
-        .badge { background: #38bdf8; color: #000; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
-        .json-box { background: #000; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.85rem; color: #10b981; max-height: 300px; overflow: auto; }
-        .error { color: #f43f5e; background: #451a1a; padding: 15px; border-radius: 8px; border: 1px solid #f43f5e; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .tag { color: #94a3b8; font-size: 0.85rem; margin-right: 15px; }
+        body { background: #0f172a; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .card { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; margin-bottom: 20px; }
+        .json-box { background: #000; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.85rem; color: #10b981; max-height: 500px; overflow: auto; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 style="margin:0">✈️ Kiwi Cheap Flights</h1>
-                <p style="color: #64748b; margin: 5px 0;">Testing RapidAPI Integration (Round Trip)</p>
+                <h1 class="h3 fw-bold mb-0">✈️ Amadeus NDC Test Portal (POST)</h1>
+                <p class="text-muted">Testing OID: <span class="text-info"><?= config('tripzant.amadeus.ndc_oid') ?></span></p>
             </div>
-            <div style="text-align: right">
-                <span class="badge">Status: <?= $status ?></span>
+            <div class="text-end">
+                <span class="badge <?= $token ? 'bg-success' : 'bg-danger' ?> p-2">Token: <?= $token ? 'ACTIVE' : 'FAILED' ?></span>
             </div>
         </div>
 
-        <?php if ($err): ?>
-            <div class="error">CURL Error: <?= $err ?></div>
-        <?php elseif ($status !== 200): ?>
-            <div class="error">
-                <h3>API Error (<?= $status ?>)</h3>
-                <pre><?= json_encode($data, JSON_PRETTY_PRINT) ?></pre>
-            </div>
-        <?php elseif (!empty($data['data'])): ?>
-            <div class="grid">
-                <?php foreach ($data['data'] as $flight): ?>
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: start;">
-                            <span class="price">$<?= number_format($flight['price'], 2) ?></span>
-                            <span class="badge" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8;"><?= $flight['airlines'][0] ?? 'Flight' ?></span>
-                        </div>
-                        <div class="route">
-                            <?= $flight['flyFrom'] ?> → <?= $flight['flyTo'] ?>
-                        </div>
-                        <div style="margin-top: 15px;">
-                            <span class="tag">Duration: <?= $flight['fly_duration'] ?></span>
-                            <span class="tag">Quality: <?= $flight['quality'] ?></span>
-                        </div>
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header border-0 bg-transparent d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold">Search Results (SYD → BNE)</h5>
+                        <span class="badge bg-secondary">HTTP Status: <?= $status ?></span>
                     </div>
-                <?php endforeach; ?>
-            </div>
-            
-            <h3 style="margin-top: 40px;">Raw Response Snippet</h3>
-            <div class="json-box">
-                <?= json_encode(array_slice($data['data'], 0, 1), JSON_PRETTY_PRINT) ?>
-            </div>
-        <?php else: ?>
-            <div class="card" style="text-align: center; padding: 50px;">
-                <h3>No Flights Found</h3>
-                <p>Try changing the source or destination parameters.</p>
-                <div class="json-box" style="text-align: left;">
-                    <?= json_encode($data, JSON_PRETTY_PRINT) ?>
+                    <div class="card-body">
+                        <?php if (isset($results['data']) && count($results['data']) > 0): ?>
+                            <div class="list-group list-group-flush">
+                                <?php foreach ($results['data'] as $flight): ?>
+                                    <div class="list-group-item bg-transparent border-secondary text-white py-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <span class="fw-bold fs-5"><?= $flight['price']['currency'] ?> <?= number_format($flight['price']['total'], 2) ?></span>
+                                                <?php if($flight['source'] === 'NDC'): ?>
+                                                    <span class="badge bg-info text-dark ms-2">NDC Content</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-secondary ms-2">GDS</span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="small text-muted"><?= $flight['itineraries'][0]['segments'][0]['carrierCode'] ?></div>
+                                                <div class="fw-bold"><?= $flight['itineraries'][0]['segments'][0]['departure']['iataCode'] ?> → <?= $flight['itineraries'][0]['segments'][0]['arrival']['iataCode'] ?></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-center py-5">
+                                <p class="text-muted">No flights found or API error.</p>
+                                <?php if(isset($results['error'])): ?>
+                                    <div class="alert alert-danger mx-4">
+                                        <strong>Error <?= $results['status'] ?? '' ?>:</strong> <?= $results['message'] ?? 'Unknown Error' ?>
+                                        <?php if(isset($results['details']['errors'])): ?>
+                                            <hr>
+                                            <ul class="text-start mb-0 small">
+                                                <?php foreach($results['details']['errors'] as $e): ?>
+                                                    <li>[<?= $e['code'] ?? '?' ?>] <?= $e['detail'] ?? 'No detail' ?> 
+                                                        <?php if(isset($e['source'])): ?>
+                                                            <br><small class="text-warning">Source: <?= json_encode($e['source']) ?></small>
+                                                        <?php endif; ?>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
-        <?php endif; ?>
+
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header border-0 bg-transparent"><h5 class="mb-0 fw-bold">POST Debug</h5></div>
+                    <div class="card-body">
+                        <div class="mb-3 small">
+                            <strong>Method:</strong> POST<br>
+                            <strong>Endpoint:</strong> <code>/v2/shopping/flight-offers</code><br>
+                            <strong>OID:</strong> <code><?= config('tripzant.amadeus.ndc_oid') ?></code>
+                        </div>
+                        <h6 class="fw-bold small text-uppercase text-muted">Raw Response</h6>
+                        <div class="json-box">
+                            <?= json_encode($results, JSON_PRETTY_PRINT) ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>

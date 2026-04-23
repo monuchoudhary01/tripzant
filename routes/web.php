@@ -88,6 +88,8 @@ Route::post('/hotels/search', [HotelController::class, 'search'])->name('hotels.
 Route::get('/hotels/details', [HotelController::class, 'details'])->name('hotel.details');
 Route::get('/hotels/checkout', [HotelController::class, 'checkout'])->middleware('auth')->name('hotel.checkout');
 Route::post('/hotels/book', [HotelController::class, 'book'])->middleware('auth')->name('hotel.book');
+Route::get('/hotels/payment', [HotelController::class, 'showPaymentGateway'])->middleware('auth')->name('hotel.payment');
+Route::get('/hotels/payment/process', [HotelController::class, 'processPayment'])->middleware('auth')->name('hotel.payment.process');
 Route::get('/hotels/confirmation', [HotelController::class, 'showConfirmation'])->middleware('auth')->name('hotel.confirmation');
 
 // Hotel Map View
@@ -173,6 +175,7 @@ Route::prefix('esim')->name('esim.')->group(function () {
 // Checkout Flow
 Route::get('/checkout', [App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout');
 Route::post('/checkout/process', [App\Http\Controllers\CheckoutController::class, 'process'])->name('checkout.process');
+Route::get('/checkout/success', [App\Http\Controllers\CheckoutController::class, 'success'])->name('checkout.success');
 
 Route::get('/seat-selection', [App\Http\Controllers\SeatSelectionController::class, 'index'])->name('seat.selection');
 
@@ -352,7 +355,7 @@ Route::prefix('amadeus-dashboard')->name('amadeus.')->middleware('auth')->group(
 });
 
 // Dedicated Hotel Module (Standalone)
-Route::prefix('hotel-dashboard')->name('hotel.')->group(function () {
+Route::prefix('hotel-dashboard')->name('hotel_dashboard.')->group(function () {
     Route::get('/', function () { return view('hotel.dashboard'); })->name('dashboard');
     Route::get('/search', function () { return view('hotel.search'); })->name('search');
     Route::get('/results', [HotelController::class, 'index'])->name('results');

@@ -44,4 +44,9 @@ return [
                         : 'https://api.test.hotelbeds.com/hotel-api/1.0',
     ],
 
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+    ],
+
 ];

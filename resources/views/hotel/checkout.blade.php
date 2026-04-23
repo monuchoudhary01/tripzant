@@ -123,23 +123,42 @@
                     </div>
                     @endfor
 
-                    {{-- Trust Badges --}}
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <div class="trust-badge"><i class="fas fa-shield-alt"></i><span>Encrypted & Secure</span></div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="trust-badge"><i class="fas fa-tag"></i><span>Best Price Guarantee</span></div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="trust-badge"><i class="fas fa-headset"></i><span>24/7 Support</span></div>
+                    {{-- Payment Method Selection --}}
+                    <div class="d-flex align-items-center gap-3 mb-4 mt-5">
+                        <div class="step-bubble bg-primary text-white shadow">2</div>
+                        <h2 class="outfit fw-900 text-navy mb-0">Payment Method</h2>
+                    </div>
+
+                    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4">
+                        <div class="row g-3">
+                            {{-- Online Payment Option --}}
+                            <div class="col-md-12">
+                                <label class="payment-card-wrapper w-100">
+                                    <input type="radio" name="payment_method" value="online" checked class="d-none">
+                                    <div class="payment-card p-4 border rounded-4 text-center h-100 transition-all cursor-pointer">
+                                        <div class="fs-2 text-success mb-2"><i class="fas fa-credit-card"></i></div>
+                                        <div class="fw-900 text-navy mb-1">Online Payment</div>
+                                        <div class="small text-muted fw-700">Card, UPI, NetBanking</div>
+                                    </div>
+                                </label>
+                            </div>
                         </div>
                     </div>
+
+                    <style>
+                        .payment-card-wrapper input:checked + .payment-card {
+                            border-color: #2563eb !important;
+                            background: rgba(37, 99, 235, 0.05);
+                            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.1);
+                        }
+                        .payment-card:hover { transform: translateY(-3px); border-color: #cbd5e1; }
+                        .cursor-pointer { cursor: pointer; }
+                    </style>
 
                     {{-- Submit Button --}}
                     <button type="submit" id="confirmBtn" class="btn-confirm">
                         <span id="confirmBtnText">
-                            <i class="fas fa-lock me-2"></i>CONFIRM BOOKING &rarr;
+                            <i class="fas fa-lock me-2"></i>CONFIRM & PAY &rarr;
                         </span>
                         <span id="confirmBtnLoader" class="d-none">
                             <i class="fas fa-spinner fa-spin me-2"></i>Processing your booking...

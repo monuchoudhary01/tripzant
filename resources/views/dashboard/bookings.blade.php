@@ -57,17 +57,28 @@
                 // Fallback for older data or other types
                 $details = $details ?? (is_string($booking->booking_details) ? json_decode($booking->booking_details, true) : $booking->booking_details);
                 
-                $type = $booking->type ?? $booking->booking_type ?? 'flight';
+                $type = $booking->booking_type ?? ($booking->type ?? 'flight');
                 
-                $origin = $fb->origin ?? $details['origin'] ?? $details['flight']['itineraries'][0]['segments'][0]['departure']['iataCode'] ?? 'TRZ';
-                $destination = $fb->destination ?? $details['destination'] ?? 'LOC';
-                
-                $airline = $fb->airline_code ?? $details['flight']['airline'] ?? ($type == 'flight' ? 'Flt-'.$booking->id : ucfirst($type));
-                $flightNum = isset($fb->flight_number) ? $fb->airline_code.$fb->flight_number : ($details['flight']['flight_number'] ?? '');
+                if($type == 'hotel') {
+                    $origin = $details['hotel_name'] ?? 'Hotel';
+                    $destination = $details['room_name'] ?? 'Room';
+                    $airline = $details['board_name'] ?? 'Hotel Stay';
+                    $duration = (isset($details['check_in']) && isset($details['check_out'])) ? (strtotime($details['check_out']) - strtotime($details['check_in'])) / 86400 : 0;
+                    $durationText = $duration . ' Night(s)';
+                    $displayOrigin = $details['check_in'] ?? '--';
+                    $displayDest = $details['check_out'] ?? '--';
+                } else {
+                    $origin = $fb->origin ?? $details['origin'] ?? $details['flight']['itineraries'][0]['segments'][0]['departure']['iataCode'] ?? 'TRZ';
+                    $destination = $fb->destination ?? $details['destination'] ?? 'LOC';
+                    $airline = $fb->airline_code ?? $details['flight']['airline'] ?? ($type == 'flight' ? 'Flt-'.$booking->id : ucfirst($type));
+                    $durationText = $details['duration'] ?? '--';
+                    $displayOrigin = $fb->origin_city ?? 'Origin';
+                    $displayDest = $fb->destination_city ?? 'Destination';
+                }
                 
                 $statusColor = '#f97316';
                 $statusBg = '#fff7ed';
-                if($booking->status == 'confirmed' || $booking->status == 'successful') {
+                if($booking->status == 'confirmed' || $booking->status == 'successful' || $booking->status == 'paid') {
                     $statusColor = '#10b981';
                     $statusBg = '#f0fdf4';
                 }
@@ -76,9 +87,12 @@
             <div class="trip-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div class="d-flex align-items-center gap-3">
-                        <span class="pnr-tag">{{ $fb->pnr ?? $booking->booking_reference ?? 'REF-'.$booking->id }}</span>
+                        <span class="pnr-tag">{{ $fb->pnr ?? $booking->api_reference ?? ($booking->booking_reference ?? 'REF-'.$booking->id) }}</span>
                         <span class="status-pill" style="background: {{ $statusBg }}; color: {{ $statusColor }};">
                             {{ strtoupper($booking->status) }}
+                        </span>
+                        <span class="badge bg-light text-navy border rounded-pill x-small px-3 py-1 fw-800 opacity-75">
+                            <i class="fas {{ $type == 'hotel' ? 'fa-hotel' : 'fa-plane' }} me-1"></i> {{ strtoupper($type) }}
                         </span>
                     </div>
                     <div class="text-muted x-small fw-bold opacity-75">
@@ -88,25 +102,25 @@
                 
                 <div class="row align-items-center">
                     <div class="col-md-3">
-                        <div class="city-code fw-900 text-navy mb-0">{{ $origin }}</div>
-                        <div class="x-small fw-bold text-muted text-uppercase letter-spacing-1">{{ $fb->origin_city ?? 'Origin' }}</div>
+                        <div class="city-code fw-900 text-navy mb-0" style="{{ $type == 'hotel' ? 'font-size: 18px;' : '' }}">{{ $origin }}</div>
+                        <div class="x-small fw-bold text-muted text-uppercase letter-spacing-1">{{ $displayOrigin }}</div>
                     </div>
                     <div class="col-md-5 text-center px-4">
                         <div class="airline-info mb-2">
-                             <span class="text-accent">{{ $airline }}</span> • {{ $fb->cabin_class ?? 'Economy' }}
+                             <span class="text-accent">{{ $airline }}</span> • {{ $fb->cabin_class ?? 'Standard' }}
                         </div>
                         <div class="d-flex align-items-center gap-3">
                             <div class="flex-grow-1 border-top border-2 border-dashed opacity-25"></div>
                             <div class="p-2 rounded-circle bg-light">
-                                <i class="fas {{ $type == 'flight' ? 'fa-plane' : 'fa-hotel' }} text-navy fs-6"></i>
+                                <i class="fas {{ $type == 'hotel' ? 'fa-hotel' : 'fa-plane' }} text-navy fs-6"></i>
                             </div>
                             <div class="flex-grow-1 border-top border-2 border-dashed opacity-25"></div>
                         </div>
-                        <div class="x-small fw-800 text-muted mt-2">{{ $details['duration'] ?? '--' }} Duration</div>
+                        <div class="x-small fw-800 text-muted mt-2">{{ $durationText }}</div>
                     </div>
                     <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                        <div class="city-code fw-900 text-navy mb-0">{{ $destination }}</div>
-                        <div class="x-small fw-bold text-muted text-uppercase letter-spacing-1">{{ $fb->destination_city ?? 'Destination' }}</div>
+                        <div class="city-code fw-900 text-navy mb-0" style="{{ $type == 'hotel' ? 'font-size: 18px;' : '' }}">{{ $destination }}</div>
+                        <div class="x-small fw-bold text-muted text-uppercase letter-spacing-1">{{ $displayDest }}</div>
                     </div>
                 </div>
 

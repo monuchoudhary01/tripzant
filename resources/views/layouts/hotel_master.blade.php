@@ -96,7 +96,7 @@
 
             <!-- Dashboard -->
             <div class="ps-nav-group pb-0">
-                <a href="{{ route('hotel.dashboard') }}" class="ps-nav-link {{ request()->routeIs('hotel.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('hotel_dashboard.dashboard') }}" class="ps-nav-link {{ request()->routeIs('hotel_dashboard.dashboard') ? 'active' : '' }}">
                     <i class="fas fa-th-large"></i> Dashboard
                 </a>
             </div>
@@ -130,7 +130,7 @@
             <!-- Travel Super App -->
             <div class="ps-nav-label">Travel Services (Book For Guest)</div>
             <div class="ps-nav-group">
-                <a href="{{ route('hotel.search') }}" class="ps-nav-link {{ request()->routeIs('hotel.search') ? 'active' : '' }}">
+                <a href="{{ route('hotel_dashboard.search') }}" class="ps-nav-link {{ request()->routeIs('hotel_dashboard.search') ? 'active' : '' }}">
                     <i class="fas fa-plane-departure"></i> Flight Engine
                 </a>
                 <a href="{{ route('hotels.index') }}" class="ps-nav-link {{ request()->routeIs('hotels.index') ? 'active' : '' }}">
