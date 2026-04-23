@@ -121,7 +121,13 @@
                 <div class="h-search-summary">
                     <div class="h-summary-item"><i class="fas fa-map-marker-alt"></i> {{ $params['destinationCode'] }}</div>
                     <div class="h-summary-item"><i class="fas fa-calendar-alt"></i> {{ date('d M', strtotime($params['checkIn'])) }} - {{ date('d M', strtotime($params['checkOut'])) }}</div>
-                    <div class="h-summary-item"><i class="fas fa-user"></i> {{ $params['adults'] }} Adults, 1 Room</div>
+                    <div class="h-summary-item"><i class="fas fa-user"></i> 
+                        {{ $params['adults'] }} {{ $params['adults'] > 1 ? 'Adults' : 'Adult' }}
+                        @if(($params['children'] ?? 0) > 0)
+                            , {{ $params['children'] }} {{ $params['children'] > 1 ? 'Children' : 'Child' }}
+                        @endif
+                        • 1 Room
+                    </div>
                     <a href="{{ route('home') }}" class="text-primary text-decoration-none fw-800 small ms-2 border-start ps-3"><i class="fas fa-edit me-1"></i> Edit Search</a>
                 </div>
             </div>
@@ -265,6 +271,8 @@
                             <input type="hidden" name="hotel_code" value="{{ $hotel['code'] }}">
                             <input type="hidden" name="checkIn" value="{{ $params['checkIn'] }}">
                             <input type="hidden" name="checkOut" value="{{ $params['checkOut'] }}">
+                            <input type="hidden" name="adults" value="{{ $params['adults'] }}">
+                            <input type="hidden" name="children" value="{{ $params['children'] ?? 0 }}">
                             <button type="submit" class="btn btn-primary fw-800 w-100 py-3 rounded-pill">VIEW ROOMS <i class="fas fa-arrow-right ms-2"></i></button>
                         </form>
                     </div>

@@ -134,62 +134,81 @@ class HotelService
     }
 
     /**
-     * Get Detailed information. HotelBeds includes rate details in standard search,
-     * so we just do a targeted search for the specific hotel.
+     * Get Detailed information including Content (Images, Desc) and Availability (Rates)
      */
-    public function getDetails($hotelCode, $checkIn, $checkOut)
+    public function getDetails($hotelCode, $checkIn, $checkOut, $adults = 2)
     {
-        $payload = [
-            'stay' => [
-                'checkIn' => $checkIn,
-                'checkOut' => $checkOut,
-            ],
-            'occupancies' => [
-                [
-                    'rooms' => 1,
-                    'adults' => 2,
-                    'children' => 0
-                ]
-            ],
-            'hotels' => [
-                'hotel' => [(int) $hotelCode]
-            ]
+        // 1. Fetch Availability (Rates)
+        $availPayload = [
+            'stay' => ['checkIn' => $checkIn, 'checkOut' => $checkOut],
+            'occupancies' => [['rooms' => 1, 'adults' => (int) $adults, 'children' => 0]],
+            'hotels' => ['hotel' => [(int) $hotelCode]]
         ];
 
         try {
-            $response = Http::withHeaders($this->getHeaders())
-                ->post("{$this->baseUrl}/hotels", $payload);
+            // Get Rates
+            $availResponse = Http::withHeaders($this->getHeaders())
+                ->post("{$this->baseUrl}/hotels", $availPayload);
 
-            if ($response->failed() || empty($response->json()['hotels']['hotels'])) {
+            // Get Content (Images, Facilities, etc.)
+            // Endpoint: /hotel-content-api/3.0/hotels/{code}/details
+            $contentUrl = str_replace('hotel-api/1.0', 'hotel-content-api/3.0', $this->baseUrl) . "/hotels/{$hotelCode}/details?language=ENG";
+            $contentResponse = Http::withHeaders($this->getHeaders())->get($contentUrl);
+
+            $hAvail = $availResponse->json()['hotels']['hotels'][0] ?? null;
+            $hContent = $contentResponse->json()['hotel'] ?? null;
+
+            if (!$hAvail) {
                 return ['content' => [], 'availability' => []];
             }
 
-            $h = $response->json()['hotels']['hotels'][0];
             $markupPct = (float) config('tripzant.markups.b2c', 10);
             
+            // Format Availability
             $avail = ['rooms' => []];
-            foreach ($h['rooms'] as $r) {
+            foreach ($hAvail['rooms'] as $r) {
                 $avail['rooms'][] = [
+                    'code' => $r['code'] ?? '',
                     'name' => $r['name'],
-                    'rates' => array_map(function($rt) use ($markupPct, $h) {
+                    'rates' => array_map(function($rt) use ($markupPct, $hAvail) {
                         return [
                             'rateKey' => $rt['rateKey'],
                             'net' => (float) $rt['net'],
                             'sellingRate' => round((float) $rt['net'] * (1 + $markupPct / 100), 2),
-                            'currency' => 'EUR',
-                            'boardName' => $rt['boardName'],
-                            'hotelCode' => $h['code']
+                            'currency' => $rt['currency'] ?? 'EUR',
+                            'boardName' => $rt['boardName'] ?? 'Room Only',
+                            'hotelCode' => $hAvail['code']
                         ];
-                    }, $r['rates'])
+                    }, $r['rates'] ?? [])
                 ];
             }
 
+            // Format Content (Images)
+            $images = [];
+            if (isset($hContent['images'])) {
+                foreach ($hContent['images'] as $img) {
+                    $images[] = [
+                        'path' => $img['path'],
+                        'roomCode' => $img['roomCode'] ?? null,
+                        'type' => $img['imageTypeCode'] ?? ''
+                    ];
+                }
+            }
+
+            $mainImgPath = isset($images[0]) ? $images[0]['path'] : null;
+            $mainImgUrl = $mainImgPath ? "https://photos.hotelbeds.com/giata/" . $mainImgPath : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?fit=crop&w=800&q=80';
+
             $hotelContent = [
-                'code' => $h['code'],
-                'name' => $h['name'],
-                'destinationCode' => $h['destinationCode'] ?? '',
-                'main_image' => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?fit=crop&w=800&q=80',
-                'facilities' => array_map(function($f) { return $f['description'] ?? $f; }, $h['facilities'] ?? [])
+                'code' => $hAvail['code'],
+                'name' => $hContent['name']['content'] ?? $hAvail['name'],
+                'description' => $hContent['description'] ?? ['content' => 'Luxury stay experience.'],
+                'address' => $hContent['address'] ?? ['content' => $hAvail['destinationName'] ?? 'City Center'],
+                'main_image' => $mainImgUrl,
+                'images' => $images,
+                'facilities' => array_map(function($f) { 
+                    return $f['description']['content'] ?? $f['facilityCode']; 
+                }, $hContent['facilities'] ?? []),
+                'categoryName' => $hContent['category']['description']['content'] ?? 'Hotel'
             ];
 
             return [
@@ -198,6 +217,7 @@ class HotelService
             ];
 
         } catch (\Exception $e) {
+            \Log::error('HotelService getDetails Exception: ' . $e->getMessage());
             return ['content' => [], 'availability' => []];
         }
     }

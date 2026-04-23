@@ -49,8 +49,8 @@
             </div>
             <div class="col-lg-4 d-none d-lg-block">
                 @php 
-                    $sideImg1 = isset($hotelContent['images'][1]['path']) ? "http://photos.hotelbeds.com/giata/" . $hotelContent['images'][1]['path'] : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop';
-                    $sideImg2 = isset($hotelContent['images'][2]['path']) ? "http://photos.hotelbeds.com/giata/" . $hotelContent['images'][2]['path'] : 'https://images.unsplash.com/photo-1582719508461-905c673771fd?q=80&w=2070&auto=format&fit=crop';
+                    $sideImg1 = isset($hotelContent['images'][1]['path']) ? "https://photos.hotelbeds.com/giata/" . $hotelContent['images'][1]['path'] : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop';
+                    $sideImg2 = isset($hotelContent['images'][2]['path']) ? "https://photos.hotelbeds.com/giata/" . $hotelContent['images'][2]['path'] : 'https://images.unsplash.com/photo-1582719508461-905c673771fd?q=80&w=2070&auto=format&fit=crop';
                 @endphp
                 <div class="gallery-side mb-2 shadow-sm" style="background:#e2e8f0;">
                     <img src="{{ $sideImg1 }}" onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop';" class="w-100 h-100 object-fit-cover" alt="Gallery 1">
@@ -136,11 +136,11 @@
                 @if(isset($hotelAvail['rooms']))
                     @foreach($hotelAvail['rooms'] as $room)
                     @php
-                        $rImg = 'https://images.unsplash.com/photo-1505691938895-1758d7eaa511?q=80&w=400&auto=format&fit=crop';
+                        $rImg = $hotelContent['main_image'] ?? 'https://images.unsplash.com/photo-1505691938895-1758d7eaa511?q=80&w=400&auto=format&fit=crop';
                         if(isset($hotelContent['images'])) {
                             foreach($hotelContent['images'] as $img) {
                                 if(isset($img['roomCode']) && strpos($room['code'], $img['roomCode']) !== false) {
-                                    $rImg = "http://photos.hotelbeds.com/giata/" . $img['path'];
+                                    $rImg = "https://photos.hotelbeds.com/giata/" . $img['path'];
                                     break;
                                 }
                             }
@@ -154,7 +154,13 @@
                             <div class="col-md-8 p-4">
                                 <h5 class="fw-900 text-navy mb-1">{{ $room['name'] }}</h5>
                                 <div class="d-flex gap-2 mb-4">
-                                    <span class="h-tag small fw-700 text-muted border px-2 rounded"><i class="fas fa-user-friends me-1"></i> {{ $params['adults'] ?? 2 }} Adults</span>
+                                    <span class="h-tag small fw-700 text-muted border px-2 rounded">
+                                        <i class="fas fa-user-friends me-1"></i> 
+                                        {{ $params['adults'] }} {{ $params['adults'] > 1 ? 'Adults' : 'Adult' }}
+                                        @if(($params['children'] ?? 0) > 0)
+                                            , {{ $params['children'] }} {{ $params['children'] > 1 ? 'Children' : 'Child' }}
+                                        @endif
+                                    </span>
                                     <span class="h-tag small fw-700 text-muted border px-2 rounded"><i class="fas fa-bed me-1"></i> {{ $room['name'] }}</span>
                                 </div>
                                 
@@ -171,7 +177,8 @@
                                             <div class="h3 fw-900 text-navy outfit mb-1">₹{{ number_format($rate['sellingRate'] ?? 0, 0) }}</div>
                                             <form action="{{ route('hotel.checkout') }}" method="GET">
                                                 <input type="hidden" name="rate_key" value="{{ $rate['rateKey'] }}">
-                                                <input type="hidden" name="adults" value="{{ $params['adults'] ?? 2 }}">
+                                                <input type="hidden" name="adults" value="{{ $params['adults'] }}">
+                                                <input type="hidden" name="children" value="{{ $params['children'] ?? 0 }}">
                                                 <input type="hidden" name="checkIn" value="{{ $params['checkIn'] }}">
                                                 <input type="hidden" name="checkOut" value="{{ $params['checkOut'] }}">
                                                 <button type="submit" class="btn btn-primary w-100 rounded-pill fw-800">BOOK ROOM</button>
@@ -209,7 +216,11 @@
                                 <div class="p-stat mb-1">Occupancy</div>
                                 <div class="fw-800 text-navy d-flex align-items-center gap-2">
                                     <i class="fas fa-user-friends text-primary"></i>
-                                    {{ $params['adults'] ?? 2 }} Adults • 1 Room
+                                    {{ $params['adults'] }} {{ $params['adults'] > 1 ? 'Adults' : 'Adult' }}
+                                    @if(($params['children'] ?? 0) > 0)
+                                        , {{ $params['children'] }} {{ $params['children'] > 1 ? 'Children' : 'Child' }}
+                                    @endif
+                                    • 1 Room
                                 </div>
                             </div>
                             <div class="divider-dashed"></div>

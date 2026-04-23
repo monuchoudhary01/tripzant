@@ -129,7 +129,7 @@ class TravelPayoutsFlightService
         $airlineCode = $data['airline'] ?? 'TP';
         
         return [
-            'id' => md5(json_encode($data) . $date . rand(1, 1000)),
+            'id' => md5(json_encode($data) . $date),
             'airline_code' => $airlineCode,
             'airline' => $this->getAirlineName($airlineCode),
             'flight_number' => $data['flight_number'] ?? ('TP' . rand(100, 999)), 
@@ -161,7 +161,7 @@ class TravelPayoutsFlightService
         $airlineCode = !empty($data['airline']) ? $data['airline'] : $this->getAirlineCodeFromName($airline);
         
         return [
-            'id' => md5(json_encode($data) . time() . rand(1, 1000)),
+            'id' => md5(json_encode($data) . ($departure_at ?? $date ?? '')),
             'airline_code' => $airlineCode,
             'airline' => $airline,
             'flight_number' => $data['flight_number'] ?? rand(100, 9999), 
@@ -192,7 +192,7 @@ class TravelPayoutsFlightService
         $date = substr($departure_at, 0, 10);
         
         return [
-            'id' => md5(json_encode($data) . time() . rand(1, 1000)),
+            'id' => md5(json_encode($data) . ($departure_at ?? $date ?? '')),
             'airline_code' => $airlineCode,
             'airline' => $this->getAirlineName($airlineCode),
             'flight_number' => $data['flight_number'] ?? rand(100, 9999), 

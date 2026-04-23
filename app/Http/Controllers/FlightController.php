@@ -206,7 +206,8 @@ class FlightController extends Controller
     {
         $id = $request->input('id');
         
-        $fullResult = \Illuminate\Support\Facades\Cache::get('flight_search_full', []);
+        $cacheKey = 'flight_search_' . session()->getId();
+        $fullResult = \Illuminate\Support\Facades\Cache::get($cacheKey) ?: \Illuminate\Support\Facades\Cache::get('flight_search_full', []);
         $rawFlights = $fullResult['raw_data'] ?? [];
         
         // Handle dictionaries which might be in meta or root

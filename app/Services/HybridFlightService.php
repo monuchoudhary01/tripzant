@@ -96,7 +96,9 @@ class HybridFlightService
         ];
 
         // Cache results for 30 mins to support Details/Booking views
-        Cache::put('flight_search_full', $finalResponse, now()->addMinutes(30));
+        $cacheKey = 'flight_search_' . session()->getId();
+        Cache::put($cacheKey, $finalResponse, now()->addMinutes(30));
+        Cache::put('flight_search_full', $finalResponse, now()->addMinutes(30)); // Keep for legacy
 
         return $finalResponse;
     }

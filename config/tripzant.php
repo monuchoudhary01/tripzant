@@ -13,6 +13,7 @@ return [
         'base_url' => env('AMADEUS_API_ENV') === 'production' 
             ? 'https://api.amadeus.com' 
             : 'https://test.api.amadeus.com',
+        'ndc_oid' => env('AMADEUS_NDC_OID', 'BNEA828CT'),
         
         'providers' => [
             'CA' => [
