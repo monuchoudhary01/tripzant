@@ -174,14 +174,10 @@ Route::prefix('esim')->name('esim.')->group(function () {
 Route::get('/checkout', [App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout');
 Route::post('/checkout/process', [App\Http\Controllers\CheckoutController::class, 'process'])->name('checkout.process');
 
-Route::get('/seat-selection', function () {
-    return view('seat-selection');
-})->name('seat.selection');
+Route::get('/seat-selection', [App\Http\Controllers\SeatSelectionController::class, 'index'])->name('seat.selection');
 
-Route::get('/add-ons', function () {
-    return view('add-ons');
-})->name('add.ons');
-
+Route::get('/add-ons', [App\Http\Controllers\SeatSelectionController::class, 'customize'])->name('add.ons');
+Route::get('/booking-confirmation', [App\Http\Controllers\BookingFinalizeController::class, 'show'])->name('booking.confirmation');
 Route::get('/payment', function () {
     return view('payment');
 })->name('payment');
@@ -200,9 +196,6 @@ Route::prefix('tours')->name('tours.')->group(function () {
 });
 
 // Booking Confirmation
-Route::get('/booking-confirmation', function () {
-    return view('booking-confirmation');
-})->name('booking.confirmation');
 
 Route::get('/enhance-trip', function () {
     return view('enhance-trip');

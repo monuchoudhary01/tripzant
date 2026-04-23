@@ -170,6 +170,7 @@
         const formData = new FormData();
         formData.append('phone', phone);
         formData.append('otp', otp);
+        formData.append('redirect_to', window.location.href);
         formData.append('_token', '{{ csrf_token() }}');
 
         fetch('/login/verify-otp', { method: 'POST', body: formData })
@@ -192,6 +193,7 @@
         const formData = new FormData();
         formData.append('email', email);
         formData.append('password', pass);
+        formData.append('redirect_to', window.location.href);
         formData.append('_token', '{{ csrf_token() }}');
 
         fetch('/login-unified', { method: 'POST', body: formData })
@@ -277,6 +279,7 @@
         formData.append('email', email);
         formData.append('otp', otp);
         formData.append('password', newPassword);
+        formData.append('redirect_to', window.location.href);
         formData.append('_token', '{{ csrf_token() }}');
 
         fetch('/password/reset-otp', { method: 'POST', body: formData })

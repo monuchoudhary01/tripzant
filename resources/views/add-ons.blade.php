@@ -140,11 +140,11 @@
         <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-4">
                 <div class="d-flex align-items-center gap-2">
-                    <img src="https://logowik.com/content/uploads/images/indigo7491.jpg" height="25">
-                    <span class="fw-900 text-navy">DEL ✈️ BOM</span>
+                    <img src="https://img.icons8.com/color/48/airplane-take-off.png" height="25">
+                    <span class="fw-900 text-navy">{{ $flight['departure_city'] ?? 'DEL' }} ✈️ {{ $flight['arrival_city'] ?? 'BOM' }}</span>
                 </div>
                 <div style="width: 1px; height: 20px; background: #ddd;"></div>
-                <div class="small fw-bold text-muted"><i class="far fa-calendar me-1"></i> Apr 12 — Economy</div>
+                <div class="small fw-bold text-muted"><i class="far fa-calendar me-1"></i> {{ isset($flight['departure_at']) ? date('M d', strtotime($flight['departure_at'])) : 'Upcoming' }} — {{ $flight['cabin'] ?? 'Economy' }}</div>
             </div>
             <div class="small fw-900 text-primary d-none d-md-block">Step 3/4: Personalize Journey</div>
         </div>
@@ -301,9 +301,10 @@
 
 @section('scripts')
 <script>
-    const passengers = JSON.parse(localStorage.getItem('last_booking_passengers') || '[]');
-    const seats = JSON.parse(localStorage.getItem('selected_seats') || '{}');
-    let baseFlightTotal = 80530;
+    const passengers = @json($passengers);
+    const seatsMulti = JSON.parse(localStorage.getItem('selected_seats_multi') || '{}');
+    const flightData = @json($flight);
+    let baseFlightTotal = {{ $booking->total_amount ?? 0 }};
     let seatTotal = 0;
     
     let state = {
@@ -313,7 +314,13 @@
     };
 
     function init() {
-        Object.values(seats).forEach(s => seatTotal += (s.price || 0));
+        // Calculate total from multi-leg seats
+        Object.values(seatsMulti).forEach(legSeats => {
+            Object.values(legSeats).forEach(s => {
+                seatTotal += (s.price || 0);
+            });
+        });
+
         renderBaggageGrid();
         updateFare();
     }
@@ -401,7 +408,7 @@
             icon: 'success',
             confirmButtonColor: '#005eb8'
         }).then(() => {
-            window.location.href = '/payment';
+            window.location.href = '/booking-confirmation?reference={{ $reference }}';
         });
     }
 

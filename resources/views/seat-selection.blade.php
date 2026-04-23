@@ -132,7 +132,7 @@
         padding: 25px;
         height: min-content;
         position: sticky;
-        top: 20px;
+        top: 90px;
     }
 
     .pax-row {
@@ -193,7 +193,7 @@
             <h2 class="fw-bold text-navy mb-1">Passenger Seating</h2>
             <div class="d-flex align-items-center gap-2">
                 <span class="badge bg-primary">AMADEUS ALTEA</span>
-                <span class="text-muted small fw-bold">Flight Allocation HK1</span>
+                <span class="text-muted small fw-bold" id="flightInfoLabel">Flight Allocation HK1</span>
             </div>
         </div>
         <div class="col-md-6 text-end">
@@ -253,11 +253,19 @@
 
 @section('scripts')
 <script>
-    const passengers = JSON.parse(localStorage.getItem('last_booking_passengers') || '[]');
+    const passengers = @json($passengers);
+    const flightData = @json($flight);
+    const legs = @json($legs);
+    
+    let currentLegIndex = 0;
     let currentPassengerIndex = 0;
-    let selectedSeatsByPassenger = {}; 
-    let baseFare = 80530; 
+    
+    // Structure: { legIndex: { paxIndex: { seatId, price, type } } }
+    let selectionsByLeg = {}; 
+    
+    let baseFare = {{ $booking->total_amount ?? 0 }}; 
 
+    // Dynamic Seat pricing and config
     const seatTypes = {
         legroom: { label: 'Premium', price: 1500, class: 'extra-legroom' },
         front: { label: 'Preferred', price: 800, class: 'front-row' },
@@ -265,12 +273,76 @@
     };
 
     function init() {
-        if (!passengers.length) {
-            Swal.fire('Error', 'Manifest not found. Please re-enter traveler details.', 'error');
+        if (!passengers || !passengers.length) {
+            Swal.fire({
+                title: 'Data Unavailable',
+                text: 'We couldn\'t load your manifest details. Please return to the flight listing.',
+                icon: 'warning',
+                confirmButtonColor: '#005eb8'
+            }).then(() => window.location.href = '/flights');
             return;
         }
 
+        // Initialize selections for all legs
+        legs.forEach((leg, idx) => {
+            selectionsByLeg[idx] = {};
+        });
+
+        renderLegSwitcher();
+        updateFlightHeader();
         document.getElementById('paxCount').innerText = passengers.length;
+        renderPaxList();
+        renderSeatMap();
+        updateSummary();
+    }
+
+    function renderLegSwitcher() {
+        const switcherContainer = document.createElement('div');
+        switcherContainer.className = 'd-flex gap-3 mb-5 p-2 bg-white rounded-pill shadow-sm border overflow-hidden w-fit mx-auto';
+        switcherContainer.style.width = 'fit-content';
+        
+        if (legs.length <= 1) return; // Don't show switcher if only one leg
+
+        switcherContainer.innerHTML = legs.map((leg, idx) => `
+            <button class="btn rounded-pill px-4 py-2 fw-800 transition-all ${idx === currentLegIndex ? 'btn-primary shadow-sm' : 'btn-light text-muted'}" 
+                    style="font-size: 13px; letter-spacing: 0.5px; min-width: 160px;"
+                    onclick="switchLeg(${idx})">
+                <i class="fas ${idx === 0 ? 'fa-plane-departure' : 'fa-plane-arrival'} me-2"></i>
+                ${leg.dep_city} → ${leg.arr_city}
+            </button>
+        `).join('');
+
+        const headerSection = document.querySelector('.amadeus-wrapper > .row.align-items-center.mb-5');
+        headerSection.after(switcherContainer);
+    }
+
+    function updateFlightHeader() {
+        const leg = legs[currentLegIndex];
+        if (leg) {
+            document.getElementById('flightInfoLabel').innerText = `${leg.airline} | Flight ${leg.flight_number} | ${leg.dep_city} → ${leg.arr_city}`;
+        }
+    }
+
+    function switchLeg(index) {
+        if (index === currentLegIndex) return;
+        
+        currentLegIndex = index;
+        currentPassengerIndex = 0; // Reset pax focus on leg change? Or keep same? Let's reset for clarity.
+        
+        // Update Switcher UI
+        const buttons = document.querySelectorAll('.amadeus-wrapper > div:nth-child(2) button');
+        buttons.forEach((btn, idx) => {
+            if (idx === currentLegIndex) {
+                btn.classList.replace('btn-light', 'btn-primary');
+                btn.classList.replace('text-muted', 'shadow-sm');
+            } else {
+                btn.classList.replace('btn-primary', 'btn-light');
+                btn.classList.remove('shadow-sm');
+                btn.classList.add('text-muted');
+            }
+        });
+
+        updateFlightHeader();
         renderPaxList();
         renderSeatMap();
         updateSummary();
@@ -278,17 +350,19 @@
 
     function renderPaxList() {
         const container = document.getElementById('passengerList');
+        const currentLegSelections = selectionsByLeg[currentLegIndex];
+
         container.innerHTML = passengers.map((p, index) => {
-            const isAssigned = selectedSeatsByPassenger[index];
+            const isAssigned = currentLegSelections[index];
             return `
-                <div class="pax-row ${index === currentPassengerIndex ? 'active' : ''} ${isAssigned ? 'assigned' : ''}" 
+                <div class="pax-row ${index === currentPassengerIndex ? 'active animate__animated animate__pulse' : ''} ${isAssigned ? 'assigned' : ''}" 
                      onclick="switchPassenger(${index})">
                     <div>
                         <div class="small fw-bold opacity-50">TRAVELER ${index+1}</div>
                         <div class="fw-bold">${p.first_name || 'Manifest'} ${p.last_name || 'Entry'}</div>
                     </div>
                     <div class="text-end">
-                        ${isAssigned ? `<span class="badge bg-success">${isAssigned.seatId}</span>` : '<span class="text-muted x-small">No Seat</span>'}
+                        ${isAssigned ? `<span class="badge bg-success">${isAssigned.seatId}</span>` : '<span class="text-muted x-small">No Seat Selected</span>'}
                     </div>
                 </div>`;
         }).join('');
@@ -302,24 +376,49 @@
     function renderSeatMap() {
         const grid = document.getElementById('seatMap');
         grid.innerHTML = '';
+        grid.className = 'seat-grid animate__animated animate__fadeIn';
         
-        for (let row = 1; row <= 25; row++) {
+        const leg = legs[currentLegIndex];
+        const currentLegSelections = selectionsByLeg[currentLegIndex];
+
+        // Dynamic Columns based on Cabin/Airline
+        let columns = ['A', 'B', 'C', 'D', 'E', 'F'];
+        const isBusiness = (leg && (leg.cabin === 'BUSINESS' || leg.cabin === 'FIRST'));
+        
+        if (isBusiness) {
+            columns = ['A', 'C', 'D', 'F']; // 2+2 layout for Business
+        }
+
+        const maxRows = isBusiness ? 5 : 30; // Fewer rows for Business
+        
+        for (let row = 1; row <= maxRows; row++) {
             grid.innerHTML += `<div class="row-label">${row}</div>`;
 
-            ['A', 'B', 'C', 'D', 'E', 'F'].forEach((letter, i) => {
+            columns.forEach((letter, i) => {
                 const seatId = `${row}${letter}`;
-                const isOccupied = (row === 3 && letter === 'A') || (row === 5 && letter === 'F') || (Math.random() < 0.1 && row > 10);
+                
+                // Deterministic "Taken" seats based on flight number + leg index to feel dynamic
+                const seed = (leg ? leg.flight_number.toString().length : 0) + row + i + currentLegIndex;
+                const isOccupied = (seed % 7 === 0) || (seed % 11 === 0);
                 
                 let type = 'regular';
-                if (row === 1 || row === 12) type = 'legroom';
+                if (row === 1 || row === 11) type = 'legroom';
                 else if (row <= 4) type = 'front';
 
                 const typeData = seatTypes[type];
-                const isSelected = Object.values(selectedSeatsByPassenger).some(s => s.seatId === seatId);
+                const isSelected = Object.values(currentLegSelections).some(s => s.seatId === seatId);
+
+                // Grid column positioning logic
+                let gridCol = i + 1;
+                if (columns.length === 6) {
+                    gridCol = (i < 3) ? i + 1 : i + 2; 
+                } else {
+                    gridCol = (i < 2) ? i + 1 : i + 2;
+                }
 
                 const seatHtml = `
                     <div class="seat ${isOccupied ? 'occupied' : ''} ${typeData.class} ${isSelected ? 'selected' : ''}" 
-                         style="grid-column: ${i < 3 ? i + 1 : i + 2}"
+                         style="grid-column: ${gridCol}"
                          onclick="selectSeat('${seatId}', '${type}', ${isOccupied})">
                         ${letter}
                     </div>
@@ -332,11 +431,14 @@
     function selectSeat(seatId, type, isOccupied) {
         if (isOccupied) return;
 
-        for (let pIdx in selectedSeatsByPassenger) {
-            if (selectedSeatsByPassenger[pIdx].seatId === seatId && parseInt(pIdx) !== currentPassengerIndex) {
+        const currentLegSelections = selectionsByLeg[currentLegIndex];
+
+        // Prevent picking same seat for different passengers on the SAME leg
+        for (let pIdx in currentLegSelections) {
+            if (currentLegSelections[pIdx].seatId === seatId && parseInt(pIdx) !== currentPassengerIndex) {
                 Swal.fire({
                     title: 'Allocated',
-                    text: 'This seat has already been assigned to another traveler in your manifest.',
+                    text: 'This seat has already been assigned to another traveler for this flight.',
                     icon: 'info',
                     confirmButtonColor: '#005eb8'
                 });
@@ -345,12 +447,13 @@
         }
 
         const typeData = seatTypes[type];
-        selectedSeatsByPassenger[currentPassengerIndex] = {
+        currentLegSelections[currentPassengerIndex] = {
             seatId: seatId,
             price: typeData.price,
             type: typeData.label
         };
 
+        // Auto-advance to next passenger if not at end
         if (currentPassengerIndex < passengers.length - 1) {
             currentPassengerIndex++;
         }
@@ -368,18 +471,25 @@
         baseFareText.innerText = `₹${baseFare.toLocaleString()}`;
 
         let html = '';
-        Object.keys(selectedSeatsByPassenger).forEach(index => {
-            const seat = selectedSeatsByPassenger[index];
-            const p = passengers[index];
-            if (seat && seat.price > 0) {
-                seatTotal += seat.price;
-                html += `
-                    <div class="d-flex justify-content-between mb-1 small text-muted">
-                        <span>Seat ${seat.seatId} (${seat.type})</span>
-                        <span>+₹${seat.price.toLocaleString()}</span>
-                    </div>
-                `;
-            }
+        let totalAssignedAllLegs = 0;
+
+        legs.forEach((leg, legIdx) => {
+            const legSelections = selectionsByLeg[legIdx];
+            const legTotal = Object.values(legSelections).length;
+            totalAssignedAllLegs += legTotal;
+
+            Object.keys(legSelections).forEach(pIdx => {
+                const seat = legSelections[pIdx];
+                if (seat && seat.price > 0) {
+                    seatTotal += seat.price;
+                    html += `
+                        <div class="d-flex justify-content-between mb-1 small text-muted">
+                            <span>Leg ${legIdx+1}: Seat ${seat.seatId}</span>
+                            <span>+₹${seat.price.toLocaleString()}</span>
+                        </div>
+                    `;
+                }
+            });
         });
 
         seatExtrasText.innerHTML = html;
@@ -387,26 +497,37 @@
         document.getElementById('finalPriceText').innerText = `₹${total.toLocaleString()}`;
 
         const btn = document.getElementById('proceedBtn');
-        const assignedCount = Object.keys(selectedSeatsByPassenger).length;
-        btn.disabled = (assignedCount !== passengers.length);
+        const totalNeeded = passengers.length * legs.length;
+        btn.disabled = (totalAssignedAllLegs !== totalNeeded);
+        
+        if (totalAssignedAllLegs === totalNeeded) {
+            btn.classList.add('animate__animated', 'animate__pulse', 'animate__infinite');
+        } else {
+            btn.classList.remove('animate__animated', 'animate__pulse', 'animate__infinite');
+        }
     }
 
     function saveSeatsAndProceed() {
-        localStorage.setItem('selected_seats', JSON.stringify(selectedSeatsByPassenger));
+        localStorage.setItem('selected_seats_multi', JSON.stringify(selectionsByLeg));
         
-        console.group("🚀 Amadeus Seat Assignment Logs (SSR SEAT)");
-        passengers.forEach((p, index) => {
-            const seat = selectedSeatsByPassenger[index];
-            if (seat) {
-                const ssrLine = `SSR SEAT HK1 /${seat.seatId}/P${index + 1}`;
-                console.log(`%cTraveler ${index+1} (${p.first_name}): ${ssrLine}`, "color: #005eb8; font-weight: bold;");
-            }
+        console.group("🚀 Amadeus Multi-Leg Seat Assignment Logs (SSR SEAT)");
+        legs.forEach((leg, legIdx) => {
+            const legSelections = selectionsByLeg[legIdx];
+            console.log(`%cLEG ${legIdx+1}: ${leg.dep_city} → ${leg.arr_city}`, "color: #0b3d61; font-weight: 900; background: #e6f0f8; padding: 2px 10px; border-radius: 4px;");
+            
+            passengers.forEach((p, pIdx) => {
+                const seat = legSelections[pIdx];
+                if (seat) {
+                    const ssrLine = `SSR SEAT HK1 /${seat.seatId}/P${pIdx + 1}/SEG${legIdx + 1}`;
+                    console.log(`%c  Traveler ${pIdx+1} (${p.first_name}): ${ssrLine}`, "color: #005eb8; font-weight: bold;");
+                }
+            });
         });
         console.groupEnd();
 
         Swal.fire({
             title: 'Inventory Booked',
-            text: 'Passenger seats have been successfully synchronized with the airline manifest.',
+            text: `Successfully assigned ${passengers.length * legs.length} seats across all segments.`,
             icon: 'success',
             confirmButtonColor: '#005eb8'
         }).then(() => {
