@@ -53,7 +53,7 @@ class AmadeusService
             }
 
                 try {
-                $response = Http::asForm()->post($this->baseUrl . '/v1/security/oauth2/token', [
+                $response = Http::when(app()->isLocal(), fn($r) => $r->withoutVerifying())->asForm()->post($this->baseUrl . '/v1/security/oauth2/token', [
                     'grant_type' => 'client_credentials',
                     'client_id' => $this->apiKey,
                     'client_secret' => $this->apiSecret,
@@ -100,7 +100,7 @@ class AmadeusService
         ];
 
         try {
-            $response = Http::withHeaders($headers)->get($this->baseUrl . $endpoint, $params);
+            $response = Http::when(app()->isLocal(), fn($r) => $r->withoutVerifying())->withHeaders($headers)->get($this->baseUrl . $endpoint, $params);
             $executionTime = microtime(true) - $startTime;
         } catch (\Exception $e) {
             return [
@@ -158,7 +158,7 @@ class AmadeusService
         ];
 
         try {
-            $response = Http::withHeaders($headers)->post($this->baseUrl . $endpoint, $payload);
+            $response = Http::when(app()->isLocal(), fn($r) => $r->withoutVerifying())->withHeaders($headers)->post($this->baseUrl . $endpoint, $payload);
             $executionTime = microtime(true) - $startTime;
         } catch (\Exception $e) {
             return [

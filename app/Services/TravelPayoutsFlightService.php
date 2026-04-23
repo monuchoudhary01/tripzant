@@ -26,7 +26,7 @@ class TravelPayoutsFlightService
         $flights = [];
 
         // 1. Fetch Calendar Data
-        $resCalendar = Http::get("https://api.travelpayouts.com/v1/prices/calendar", [
+        $resCalendar = Http::when(app()->isLocal(), fn($r) => $r->withoutVerifying())->get("https://api.travelpayouts.com/v1/prices/calendar", [
             'origin' => $origin,
             'destination' => $destination,
             'token' => $this->token,
@@ -41,7 +41,7 @@ class TravelPayoutsFlightService
         }
 
         // 2. Fetch Latest Prices (Gives more variety)
-        $resLatest = Http::get("https://api.travelpayouts.com/v2/prices/latest", [
+        $resLatest = Http::when(app()->isLocal(), fn($r) => $r->withoutVerifying())->get("https://api.travelpayouts.com/v2/prices/latest", [
             'origin' => $origin,
             'destination' => $destination,
             'beginning_of_period' => $date,
@@ -59,7 +59,7 @@ class TravelPayoutsFlightService
         }
 
         // 3. Fetch Month Matrix
-        $resMatrix = Http::get("https://api.travelpayouts.com/v2/prices/month-matrix", [
+        $resMatrix = Http::when(app()->isLocal(), fn($r) => $r->withoutVerifying())->get("https://api.travelpayouts.com/v2/prices/month-matrix", [
             'origin' => $origin,
             'destination' => $destination,
             'month' => $month,
@@ -75,7 +75,7 @@ class TravelPayoutsFlightService
         }
 
         // 4. Fetch Cheap Prices
-        $resCheap = Http::get("https://api.travelpayouts.com/v1/prices/cheap", [
+        $resCheap = Http::when(app()->isLocal(), fn($r) => $r->withoutVerifying())->get("https://api.travelpayouts.com/v1/prices/cheap", [
             'origin' => $origin,
             'destination' => $destination,
             'depart_date' => $month, 
