@@ -14,8 +14,8 @@
                     <div class="col-lg-7 p-4 p-md-5 bg-white d-flex flex-column justify-content-center">
                         <div class="mx-auto w-100" style="max-width: 440px;">
                             <div class="text-center mb-5">
-                                <h1 class="fw-900 text-navy mb-1" id="signup-modal-title" style="font-size: 28px;">Create Account</h1>
-                                <p class="text-muted small fw-bold">Join Trip Zant and explore the world!</p>
+                                <h1 class="fw-900 text-navy mb-1" id="signup-modal-title" style="font-size: 28px;">Customer Sign Up</h1>
+                                <p class="text-muted small fw-bold">Create a traveler account and explore the world!</p>
                             </div>
 
                             <div id="signup-form-container">
@@ -40,7 +40,7 @@
                                         <label class="small fw-700 text-muted mb-1">Password</label>
                                         <input type="password" name="password" class="form-control border rounded-3 p-3 shadow-none fw-700" placeholder="••••••••" style="height: 50px;" required>
                                     </div>
-                                    <button type="submit" id="unified-signup-btn" class="btn btn-primary w-100 rounded-pill fw-800 py-3 shadow-sm mb-3" style="height: 54px; background: #0076f7;">
+                                    <button type="submit" id="unified-signup-btn" class="btn btn-login-header w-100 rounded-pill fw-800 py-3 shadow-sm mb-3" style="height: 54px;">
                                         CREATE ACCOUNT
                                     </button>
                                 </form>
@@ -61,7 +61,7 @@
                             </div>
 
                             <div class="text-center mt-5 pt-4 border-top">
-                                <p class="small text-muted fw-bold mb-0">Already have an account? <a href="javascript:void(0)" onclick="switchToLoginModal()" class="text-primary text-decoration-none">Sign In</a></p>
+                                <p class="small text-muted fw-bold mb-0">Already have a customer account? <a href="javascript:void(0)" onclick="switchToLoginModal()" class="text-primary text-decoration-none">Sign In</a></p>
                             </div>
                         </div>
                     </div>

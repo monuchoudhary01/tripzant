@@ -2195,11 +2195,13 @@ footer::before {
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 10px;
-  transition: .3s;
+  padding: 10px 12px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  margin-bottom: 2px;
 }
-.custom-cb:hover { background: #f8fafc; }
+.custom-cb:hover { background: #f0f7ff; }
+.custom-cb:active { transform: scale(0.98); }
 .cb-box {
   width: 20px; height: 20px;
   border: 2px solid #e2e8f0;
@@ -2222,8 +2224,49 @@ input[type="checkbox"]:checked + .custom-cb .cb-box::after {
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
 }
-.cb-label { font-size: 14px; font-weight: 700; color: var(--navy); }
-.cb-count { font-size: 11px; color: var(--gray-300); margin-left: auto; font-weight: 600; }
+.cb-label { font-size: 14px; font-weight: 700; color: var(--navy); line-height: 1; margin-top: 1px; }
+.cb-count { font-size: 11px; color: var(--gray-400); margin-left: auto; font-weight: 700; opacity: 0.8; }
+
+/* Horizontal Quick Filters Bar */
+.quick-filters-bar {
+    background: #fff;
+    border-radius: 16px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow-x: auto;
+    margin-bottom: 20px;
+    border: 1.5px solid #f1f5f9;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+.quick-filter-pill {
+    padding: 8px 16px;
+    border-radius: 50px;
+    background: #f8faff;
+    border: 1.2px solid #e2e8f0;
+    color: var(--navy);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.quick-filter-pill:hover {
+    background: #f0f7ff;
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.quick-filter-pill.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(37,99,235,0.2);
+}
+.quick-filter-pill i { font-size: 14px; opacity: 0.8; }
 
 .animate-fade {
   animation: animateFade .6s ease-out both;

@@ -26,22 +26,34 @@ class CheckoutController extends Controller
                 $totalPrice = array_sum(array_column($item, 'price'));
             }
         } elseif ($type === 'flight') {
-            $cacheKey = 'flight_search_' . session()->getId();
-            $flightResults = Cache::get($cacheKey) ?: Cache::get('flight_search_full');
+            // 1. Try Global Cache First (Most robust)
+            $item = \Illuminate\Support\Facades\Cache::get('flight_data_' . $id);
             
-            if ($flightResults && isset($flightResults['data'])) {
-                foreach ($flightResults['data'] as $flight) {
-                    $fId = is_array($flight) ? ($flight['id'] ?? '') : ($flight->id ?? '');
-                    if ($fId == $id) {
-                        $item = is_array($flight) ? $flight : $flight->toArray();
+            if (empty($item)) {
+                // 2. Try Session Cache
+                $cacheKey = 'flight_search_' . session()->getId();
+                $cachedResults = \Illuminate\Support\Facades\Cache::get($cacheKey) ?: \Illuminate\Support\Facades\Cache::get('flight_search_full', []);
+                $rawFlights = $cachedResults['data'] ?? [];
+                
+                foreach ($rawFlights as $flight) {
+                    $fid = is_object($flight) ? ($flight->id ?? null) : ($flight['id'] ?? null);
+                    if ($fid == $id) {
+                        $item = is_object($flight) ? $flight->toArray() : $flight;
                         break;
                     }
                 }
             }
 
             if ($item) {
-                $priceData = $item['price'] ?? ($item['total_price'] ?? 0);
-                $totalPrice = is_array($priceData) ? ($priceData['total'] ?? 100) : $priceData;
+                $item = is_object($item) ? $item->toArray() : $item;
+                $priceVal = $item['price'] ?? ($item['total_price'] ?? 0);
+                
+                // If price is an object (Amadeus raw style), extract total
+                if (is_array($priceVal) || is_object($priceVal)) {
+                    $priceVal = is_array($priceVal) ? ($priceVal['total'] ?? 0) : ($priceVal->total ?? 0);
+                }
+                
+                $totalPrice = (float) $priceVal;
             }
         } else {
             if ($type === 'homestay') $item = \App\Models\Homestay::find($id);
@@ -63,11 +75,27 @@ class CheckoutController extends Controller
     {
         try {
             $type = $request->input('type', 'flight');
+            
+            // Get amount — from JSON body (numeric) or form post (string)
             $totalAmount = floatval($request->input('total_amount', 0));
             $travelers = $request->input('travelers', []);
 
+            // If amount is still 0, try to recover from cached item
             if ($totalAmount <= 0) {
-                throw new \Exception("Invalid amount: {$totalAmount}");
+                $itemData = $request->input('item_data');
+                if ($itemData) {
+                    $item = is_string($itemData) ? json_decode($itemData, true) : (array)$itemData;
+                    $priceVal = $item['price'] ?? ($item['total_price'] ?? 0);
+                    if (is_array($priceVal)) $priceVal = $priceVal['total'] ?? 0;
+                    $totalAmount = floatval($priceVal);
+                }
+            }
+
+            if ($totalAmount <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment amount invalid hai (₹0). Flight dobara search karein ya page reload karein.'
+                ]);
             }
 
             // Store pending booking in session
@@ -81,9 +109,9 @@ class CheckoutController extends Controller
 
             $stripe = app(\App\Services\StripeService::class);
             $session = $stripe->createCheckoutSession([
-                'item_name' => ucfirst($type) . ' Booking',
+                'item_name' => ucfirst($type) . ' Booking - Tripzant',
                 'amount' => $totalAmount,
-                'email' => Auth::user()->email ?? $travelers[0]['email'] ?? null,
+                'email' => Auth::user()->email ?? ($travelers[0]['email'] ?? null),
                 'success_url' => route('checkout.success') . '?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => url()->previous(),
                 'metadata' => [
@@ -99,11 +127,16 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            throw new \Exception($session['message'] ?? 'Stripe Session Failed');
+            // Stripe returned an error array
+            $stripeMsg = $session['message'] ?? 'Stripe payment session create nahi ho saka.';
+            throw new \Exception($stripeMsg);
 
         } catch (\Exception $e) {
             \App\Services\AuditLogService::log('BOOKING', 'PAYMENT_ERROR', $e->getMessage(), $request->all());
-            return response()->json(['success' => false, 'message' => 'Processing Error: ' . $e->getMessage()]);
+            return response()->json([
+                'success' => false, 
+                'message' => 'Payment Error: ' . $e->getMessage()
+            ]);
         }
     }
 
@@ -116,6 +149,7 @@ class CheckoutController extends Controller
 
         $type = $sessionData['type'];
         $totalAmount = $sessionData['total_amount'];
+        $travelers = $sessionData['travelers'] ?? [];
 
         // Create Booking
         $booking = Booking::create([
@@ -127,6 +161,17 @@ class CheckoutController extends Controller
             'status' => 'confirmed',
             'api_booking_details' => json_encode($sessionData)
         ]);
+
+        // Save each traveler as a BookingItem so seat-selection can load the manifest
+        foreach ($travelers as $index => $traveler) {
+            \App\Models\BookingItem::create([
+                'booking_id' => $booking->id,
+                'item_name' => ($traveler['first_name'] ?? 'Traveler') . ' ' . ($traveler['last_name'] ?? ($index + 1)),
+                'item_type' => 'traveler',
+                'amount' => 0,
+                'details' => json_encode($traveler)
+            ]);
+        }
 
         // Create Payment Record
         \App\Models\Payment::create([

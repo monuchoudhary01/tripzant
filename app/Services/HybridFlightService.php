@@ -98,6 +98,16 @@ class HybridFlightService
         // Cache results for 30 mins to support Details/Booking views
         $cacheKey = 'flight_search_' . session()->getId();
         Cache::put($cacheKey, $finalResponse, now()->addMinutes(30));
+        
+        // Global ID lookup cache - extremely robust for checkout
+        foreach ($allResults as $flight) {
+            $fId = is_object($flight) ? ($flight->id ?? null) : ($flight['id'] ?? null);
+            if ($fId) {
+                $fArray = is_object($flight) ? $flight->toArray() : $flight;
+                Cache::put('flight_data_' . $fId, $fArray, now()->addMinutes(60));
+            }
+        }
+
         Cache::put('flight_search_full', $finalResponse, now()->addMinutes(30)); // Keep for legacy
 
         return $finalResponse;

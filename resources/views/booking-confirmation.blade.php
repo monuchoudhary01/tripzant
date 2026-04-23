@@ -206,37 +206,122 @@
                 </div>
                 @endforeach
 
+                {{-- ✈️ Flight Details Section --}}
+                <div class="bg-light rounded-4 p-4 mb-4">
+                    <h6 class="fw-900 text-navy mb-4">
+                        <i class="fas fa-plane me-2"></i> Flight Details
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-3 col-6">
+                            <div class="x-small text-muted fw-bold mb-1">AIRLINE</div>
+                            <div class="fw-900">{{ $flight['airline_name'] ?? ($flight['airline'] ?? 'N/A') }}</div>
+                            <div class="x-small text-muted">{{ $flight['airline_code'] ?? '' }} {{ $flight['flight_number'] ?? '' }}</div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="x-small text-muted fw-bold mb-1">CABIN</div>
+                            <div class="fw-900">{{ ucfirst(strtolower($flight['cabin'] ?? 'Economy')) }}</div>
+                            <div class="x-small text-muted">{{ $flight['fare_class'] ?? 'E' }} Class</div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="x-small text-muted fw-bold mb-1">DURATION</div>
+                            <div class="fw-900">{{ $flight['duration'] ?? 'N/A' }}</div>
+                            <div class="x-small text-muted">{{ ($flight['number_of_changes'] ?? 0) == 0 ? 'Non-stop' : ($flight['number_of_changes'].' Stop(s)') }}</div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="x-small text-muted fw-bold mb-1">BAGGAGE</div>
+                            <div class="fw-900">{{ $flight['baggage'] ?? '15' }}{{ $flight['baggage_unit'] ?? 'KG' }}</div>
+                            <div class="x-small text-muted">Check-in included</div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="x-small text-muted fw-bold mb-1">FARE TYPE</div>
+                            <div class="fw-900 {{ ($flight['is_refundable'] ?? false) ? 'text-success' : 'text-danger' }}">
+                                {{ ($flight['is_refundable'] ?? false) ? 'Refundable' : 'Non-Refundable' }}
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="x-small text-muted fw-bold mb-1">BOOKING DATE</div>
+                            <div class="fw-900">{{ $booking->created_at ? date('M d, Y', strtotime($booking->created_at)) : 'N/A' }}</div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="x-small text-muted fw-bold mb-1">TOTAL PAID</div>
+                            <div class="fw-900 text-primary fs-5">₹{{ number_format($booking->total_amount ?? 0) }}</div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="x-small text-muted fw-bold mb-1">CURRENCY</div>
+                            <div class="fw-900">{{ $booking->currency ?? 'INR' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 👥 Passenger Manifest --}}
                 <div class="bg-light rounded-4 p-4 mb-5">
                     <h6 class="fw-900 text-navy mb-4"><i class="fas fa-users me-2"></i> Passenger Manifest</h6>
                     <div class="table-responsive">
                         <table class="table table-borderless align-middle mb-0">
                             <thead>
                                 <tr class="x-small fw-900 text-muted uppercase">
+                                    <th>#</th>
                                     <th>Name</th>
-                                    <th>Type</th>
+                                    <th>Contact</th>
                                     <th>Seat</th>
                                     <th class="text-end">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @if(isset($booking->items))
-                                @foreach($booking->items as $item)
-                                    @php $details = json_decode($item->details, true); @endphp
-                                    @if(is_array($details))
-                                    @foreach($details as $p)
-                                    <tr>
-                                        <td>
-                                            <div class="fw-900">{{ $p['first_name'] ?? 'Guest' }} {{ $p['last_name'] ?? '' }}</div>
-                                            <div class="x-small text-muted fw-bold">{{ $p['title'] ?? 'Mr' }}</div>
-                                        </td>
-                                        <td><span class="badge bg-white text-navy border font-monospace x-small">ADT</span></td>
-                                        <td><div class="fw-900 text-primary">{{ $p['seat'] ?? 'Auto' }}</div></td>
-                                        <td class="text-end"><i class="fas fa-check-circle text-success me-1"></i> <span class="x-small fw-900 text-success">ALLOCATED</span></td>
-                                    </tr>
-                                    @endforeach
-                                    @endif
-                                @endforeach
-                                @endif
+                                @php
+                                    // Collect travelers — each BookingItem is now a single traveler (flat array)
+                                    $travelers = [];
+                                    foreach ($booking->items as $bItem) {
+                                        $d = json_decode($bItem->details, true);
+                                        if (!is_array($d)) continue;
+                                        // Flat format: {first_name, last_name, ...}
+                                        if (isset($d['first_name'])) {
+                                            $travelers[] = $d;
+                                        } else {
+                                            // Legacy nested format
+                                            foreach ($d as $t) {
+                                                if (is_array($t) && isset($t['first_name'])) $travelers[] = $t;
+                                            }
+                                        }
+                                    }
+
+                                    // Fallback from api_booking_details
+                                    if (empty($travelers) && $booking->api_booking_details) {
+                                        $apiD = json_decode($booking->api_booking_details, true);
+                                        foreach ($apiD['travelers'] ?? [] as $t) {
+                                            if (is_array($t) && isset($t['first_name'])) $travelers[] = $t;
+                                        }
+                                    }
+                                @endphp
+
+                                @forelse($travelers as $tIdx => $p)
+                                <tr>
+                                    <td><span class="fw-900 text-muted">{{ $tIdx + 1 }}</span></td>
+                                    <td>
+                                        <div class="fw-900">{{ $p['first_name'] ?? 'Guest' }} {{ $p['last_name'] ?? '' }}</div>
+                                        <div class="x-small text-muted fw-bold">{{ $p['title'] ?? 'Mr' }} · Adult</div>
+                                    </td>
+                                    <td>
+                                        <div class="x-small fw-bold">{{ $p['email'] ?? '—' }}</div>
+                                        <div class="x-small text-muted">{{ $p['mobile'] ?? '' }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-900 text-primary seat-cell" data-pax="{{ $tIdx }}">
+                                            {{ $p['seat'] ?? 'Auto' }}
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <i class="fas fa-check-circle text-success me-1"></i>
+                                        <span class="x-small fw-900 text-success">ALLOCATED</span>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted fw-bold py-4">
+                                        <i class="fas fa-user-slash me-2"></i>No passenger data found for this booking.
+                                    </td>
+                                </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
@@ -250,10 +335,10 @@
                     </div>
                     <div class="col-md-6">
                         @php
-                            $msgName = $flight['airline_name'] ?? 'Flight';
+                            $msgName = $flight['airline_name'] ?? ($flight['airline'] ?? 'Flight');
                             $msgDep = $flight['departure_city'] ?? 'Origin';
                             $msgArr = $flight['arrival_city'] ?? 'Dest';
-                            $msg = "Hey! My booking with Tripzant is confirmed. PNR: " . ($pnr ?? '---') . " for $msgName ($msgDep to $msgArr).";
+                            $msg = "Hey! My booking with Tripzant is confirmed. PNR: " . ($pnr ?? '---') . " for $msgName ($msgDep to $msgArr). Total: ₹" . number_format($booking->total_amount ?? 0);
                             $waUrl = "https://wa.me/?text=" . urlencode($msg);
                         @endphp
                         <a href="{{ $waUrl }}" target="_blank" class="share-btn-wa w-100 justify-content-center">
@@ -283,22 +368,18 @@
             colors: ['#005eb8', '#003366', '#10b981']
         });
 
-        // Patch Seats from LocalStorage (Since this is a client-side flow demo)
+        // Patch seats from localStorage using data-pax attribute
         const seatsMulti = JSON.parse(localStorage.getItem('selected_seats_multi') || '{}');
-        const rows = document.querySelectorAll('tbody tr');
-        
-        rows.forEach((row, pIdx) => {
-            const seatCell = row.querySelector('.text-primary');
-            if (seatCell) {
-                // Find seat for Leg 0 for this passenger
-                const seatData = seatsMulti[0] ? seatsMulti[0][pIdx] : null;
-                if (seatData && seatData.seatId) {
-                    seatCell.innerText = seatData.seatId;
-                }
+        document.querySelectorAll('.seat-cell').forEach(cell => {
+            const pIdx = parseInt(cell.getAttribute('data-pax'));
+            const seatData = seatsMulti[0]?.[pIdx];
+            if (seatData?.seatId) {
+                cell.innerText = seatData.seatId;
+                cell.classList.add('badge', 'bg-primary', 'text-white', 'px-2', 'py-1', 'rounded-3');
             }
         });
 
-        // Clear selection to prevent stale data in next booking
+        // Clear stale localStorage data
         localStorage.removeItem('selected_seats_multi');
         localStorage.removeItem('selected_addons');
     });

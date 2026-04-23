@@ -389,11 +389,46 @@
         </div>
     </div>
 
+    <style>
+        .custom-cb { 
+            display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 6px 0;
+            transition: all 0.2s ease;
+        }
+        .cb-box { 
+            width: 18px; height: 18px; border: 2.5px solid #cbd5e1; border-radius: 4px;
+            position: relative; transition: all 0.2s ease; background: #fff;
+        }
+        input:checked + .custom-cb .cb-box { 
+            background: #2563eb; border-color: #2563eb;
+        }
+        input:checked + .custom-cb .cb-box::after { 
+            content: '\f00c'; font-family: 'Font Awesome 5 Free'; font-weight: 900;
+            color: #fff; font-size: 10px; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .cb-label { font-size: 13px; font-weight: 700; color: #475569; flex-grow: 1; }
+        .cb-count { font-size: 11px; font-weight: 800; color: #94a3b8; }
+        .custom-cb:hover .cb-box { border-color: #2563eb; }
+
+        .quick-filters-bar {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+            padding: 12px 15px; background: #fff; border-radius: 12px; border: 1px solid #eef2f6;
+        }
+        .quick-filter-pill {
+            padding: 8px 16px; border-radius: 50px; border: 1.5px solid #e2e8f0;
+            font-size: 12px; font-weight: 800; color: #64748b; cursor: pointer;
+            transition: 0.3s; display: flex; align-items: center; gap: 8px;
+        }
+        .quick-filter-pill:hover { border-color: #2563eb; color: #2563eb; background: #f0f7ff; }
+        .quick-filter-pill.active { background: #2563eb; color: #fff; border-color: #2563eb; box-shadow: 0 5px 15px rgba(37,99,235,0.3); }
+        .quick-filter-pill i { font-size: 11px; }
+    </style>
+
     <div class="container py-4">
         <div class="row g-4">
             <!-- Filters Sidebar -->
             <div class="col-lg-3">
-                <div class="filter-card-v4 sticky-top" style="top:270px; z-index: 900;">
+                <div class="filter-card-v4 sticky-top shadow-sm" style="top:180px; z-index: 900;">
                     <div class="filter-title-v4"><span><i class="fas fa-sliders"></i></span> FILTERS</div>
 
                     <div class="filter-group-v4">
@@ -517,6 +552,23 @@
 
             <!-- Results -->
             <div class="col-lg-9">
+                <!-- Quick Filters Bar (Horizontal) -->
+                <div class="quick-filters-bar shadow-sm">
+                    <div class="fw-800 text-muted x-small me-2 text-uppercase" style="letter-spacing: 1px;">Quick Filters:</div>
+                    <div class="quick-filter-pill" onclick="toggleQuickFilter('pf1', this)">
+                        <i class="fas fa-plane-arrival"></i> Non Stop
+                    </div>
+                    <div class="quick-filter-pill" onclick="toggleQuickFilter('pf2', this)">
+                        <i class="fas fa-clock"></i> Morning
+                    </div>
+                    <div class="quick-filter-pill" onclick="toggleQuickFilter('pf3', this)">
+                        <i class="fas fa-undo"></i> Refundable
+                    </div>
+                    <div class="quick-filter-pill" onclick="toggleQuickFilter('s1', this)">
+                        <i class="fas fa-stopwatch"></i> 1 Stop
+                    </div>
+                </div>
+
                 <!-- Dynamic Fare Calendar (Interactive) -->
                 <div class="fare-calendar-v5 mb-4 shadow-sm">
                     <div class="d-flex align-items-center">
@@ -1834,6 +1886,42 @@
     document.addEventListener('DOMContentLoaded', () => {
         const filterSidebar = document.querySelector('.filter-card-v4');
         if (!filterSidebar) return;
+
+        // Quick Filter Syncing Logic
+        window.toggleQuickFilter = function(sidebarId, pillEl) {
+            const sidebarCb = document.getElementById(sidebarId);
+            if (sidebarCb) {
+                sidebarCb.checked = !sidebarCb.checked;
+                // Trigger change event to fire runMasterFilters
+                sidebarCb.dispatchEvent(new Event('change', { bubbles: true }));
+                
+                // Sync pill UI
+                if (sidebarCb.checked) pillEl.classList.add('active');
+                else pillEl.classList.remove('active');
+            }
+        };
+
+        // Sync Sidebar to Pills on load or change
+        function syncSidebarToPills() {
+            const mapping = { 'pf1': 'Non Stop', 'pf2': 'Morning', 'pf3': 'Refundable', 's1': '1 Stop' };
+            Object.keys(mapping).forEach(id => {
+                const cb = document.getElementById(id);
+                const pills = document.querySelectorAll('.quick-filter-pill');
+                pills.forEach(p => {
+                    if (p.innerText.includes(mapping[id])) {
+                        if (cb && cb.checked) p.classList.add('active');
+                        else p.classList.remove('active');
+                    }
+                });
+            });
+        }
+        
+        // Add to runMasterFilters or as separate observer
+        const originalRunMasterFilters = window.runMasterFilters;
+        window.runMasterFilters = function() {
+            if (typeof originalRunMasterFilters === 'function') originalRunMasterFilters();
+            syncSidebarToPills();
+        };
 
         const mainPriceRange = document.querySelector('.custom-range');
         const countDisplay = document.querySelector('.results-bar h5');

@@ -244,6 +244,15 @@
     </div>
 </div>
 
+@php
+    $userName = auth()->check() ? auth()->user()->name : '';
+    $nameParts = explode(' ', $userName);
+    $firstName = $nameParts[0] ?? '';
+    if ($firstName === 'New') $firstName = ''; // Handle default "New User"
+    $lastName = (count($nameParts) > 1) ? implode(' ', array_slice($nameParts, 1)) : '';
+    if ($lastName === 'User') $lastName = '';
+@endphp
+
 <div class="container py-5">
     <div class="row g-4">
         <!-- Left Column -->
@@ -319,11 +328,11 @@
                         </div>
                         <div class="col-md-5">
                             <label class="form-label-premium">First Name</label>
-                            <input type="text" class="form-control custom-input" placeholder="e.g. Rahul" value="">
+                            <input type="text" class="form-control custom-input traveler-fname" placeholder="e.g. Rahul" value="{{ $firstName }}">
                         </div>
                         <div class="col-md-5">
                             <label class="form-label-premium">Last Name</label>
-                            <input type="text" class="form-control custom-input" placeholder="e.g. Sharma" value="">
+                            <input type="text" class="form-control custom-input traveler-lname" placeholder="e.g. Sharma" value="{{ $lastName }}">
                         </div>
                         
                         <div class="col-md-4">
@@ -343,13 +352,13 @@
                             <label class="form-label-premium">Mobile Number</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0 custom-input px-2" style="border-radius: 12px 0 0 12px; font-size:12px;">+91</span>
-                                <input type="tel" class="form-control custom-input border-start-0" value="" style="border-radius: 0 12px 12px 0;" placeholder="Mobile Number">
+                                <input type="tel" class="form-control custom-input border-start-0 traveler-mobile" value="{{ auth()->user()->mobile ?? auth()->user()->phone ?? '' }}" style="border-radius: 0 12px 12px 0;" placeholder="Mobile Number">
                             </div>
                         </div>
                         
                         <div class="col-md-6 mt-3">
                             <label class="form-label-premium">Email Address</label>
-                            <input type="email" class="form-control custom-input" placeholder="your@email.com" value="{{ auth()->user()->email ?? '' }}">
+                            <input type="email" class="form-control custom-input traveler-email" placeholder="your@email.com" value="{{ auth()->user()->email ?? '' }}">
                         </div>
 
                         <div class="col-12 mt-4 pt-3 border-top border-light">
@@ -627,7 +636,7 @@
                 const email = block.querySelector('input[type="email"]')?.value;
                 const mobile = block.querySelector('input[type="tel"]')?.value;
 
-                if (!fname || !lname || !email || !mobile) throw new Error(`Incomplete details for Traveler #${idx + 1}`);
+                if (!fname || !lname || !email || !mobile) throw new Error(`Traveler #${idx + 1} ki details incomplete hain. Sabhi fields fill karein.`);
 
                 travelers.push({
                     first_name: fname, last_name: lname, email: email, mobile: mobile,
@@ -635,12 +644,25 @@
                 });
             });
 
+            // Robust total amount parsing — strip ₹, spaces, commas
+            const rawTotal = document.getElementById('summaryTotal')?.innerText || '';
+            let parsedAmount = parseFloat(rawTotal.replace(/[₹,\s]/g, '')) || 0;
+
+            // Server-side fallback if JS total is 0 (e.g. DOM not updated yet)
+            if (parsedAmount <= 0) {
+                parsedAmount = parseFloat("{{ $totalPrice ?? 0 }}") || 0;
+            }
+
+            if (parsedAmount <= 0) {
+                throw new Error('Booking amount calculate nahi ho saka. Page reload karein.');
+            }
+
             const payload = {
                 _token: "{{ csrf_token() }}",
                 type: "{{ $type }}",
                 travelers: travelers,
                 extra_services: extraCharges.details,
-                total_amount: document.getElementById('summaryTotal').innerText.replace(/[₹,]/g, '').trim(),
+                total_amount: parsedAmount,
                 item_data: @json($item)
             };
 
@@ -650,14 +672,28 @@
                 body: JSON.stringify(payload)
             });
 
+            // Handle non-JSON responses (e.g. 500 server error page)
+            const contentType = resp.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                const text = await resp.text();
+                console.error('Non-JSON response:', text.substring(0, 500));
+                throw new Error('Server error: ' + resp.status + '. Please try again.');
+            }
+
             const data = await resp.json();
             if (data.success && data.redirect) {
                 window.location.href = data.redirect;
             } else {
-                throw new Error(data.message || 'Payment initiation failed.');
+                throw new Error(data.message || 'Payment initiation failed. Please try again.');
             }
         } catch (e) {
-            Swal.fire('Error', e.message, 'error');
+            Swal.fire({
+                icon: 'error',
+                title: 'Booking Error',
+                text: e.message,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#002f55'
+            });
             btn.innerHTML = originalText;
             btn.classList.remove('disabled');
         }
@@ -715,8 +751,22 @@
     }
 
     function initItinerary() {
-        const itemData = @json($item);
-        if (!itemData) return;
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlId = urlParams.get('id');
+
+        let itemData = @json($item);
+        const storedFlight = localStorage.getItem('selectedFlight');
+
+        // Robust recovery from localStorage if server data is missing
+        if ((!itemData || (Array.isArray(itemData) && itemData.length === 0)) && storedFlight) {
+            const parsed = JSON.parse(storedFlight);
+            if (parsed.id == urlId) {
+                console.log("Recovered itinerary from localStorage");
+                itemData = parsed;
+            }
+        }
+
+        if (!itemData || (Array.isArray(itemData) && itemData.length === 0)) return;
 
         const container = document.getElementById('itineraryBreakdown');
         if (!container) return;
@@ -752,11 +802,56 @@
         container.innerHTML = html;
     }
 
+    // State Persistence (Survives login refresh)
+    function saveCheckoutFormState() {
+        const travelers = [];
+        document.querySelectorAll('.traveler-block').forEach(block => {
+            const data = {};
+            block.querySelectorAll('input, select').forEach(input => {
+                const label = input.closest('div')?.querySelector('.form-label-premium')?.innerText || 'field';
+                data[label] = input.value;
+            });
+            travelers.push(data);
+        });
+        sessionStorage.setItem('checkout_form_state', JSON.stringify(travelers));
+    }
+
+    function loadCheckoutFormState() {
+        const saved = sessionStorage.getItem('checkout_form_state');
+        if (!saved) return;
+        const travelers = JSON.parse(saved);
+        
+        // Match traveler count
+        for (let i = 1; i < travelers.length; i++) {
+            const addBtn = document.getElementById('addTravelerBtn');
+            if (addBtn) addBtn.click();
+        }
+
+        document.querySelectorAll('.traveler-block').forEach((block, idx) => {
+            if (travelers[idx]) {
+                block.querySelectorAll('input, select').forEach(input => {
+                    const label = input.closest('div')?.querySelector('.form-label-premium')?.innerText || 'field';
+                    if (travelers[idx][label] !== undefined) {
+                        input.value = travelers[idx][label];
+                    }
+                });
+            }
+        });
+    }
+
     // Initial Start
     document.addEventListener('DOMContentLoaded', () => {
         try {
+            loadCheckoutFormState();
             initItinerary();
             refreshTotal();
+            
+            // Attach auto-save
+            const mainForm = document.getElementById('booking-main-form');
+            if (mainForm) {
+                mainForm.addEventListener('input', saveCheckoutFormState);
+                mainForm.addEventListener('change', saveCheckoutFormState);
+            }
         } catch (e) {
             console.error("Initialization Error:", e);
         }

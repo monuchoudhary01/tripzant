@@ -204,23 +204,70 @@
                 </div>
             </div>
 
-            <!-- 3. Flexible Trip / Cancellation Protection -->
-            <div class="addon-card-premium">
+            <!-- 3. Flexible Trip / Cancellation Protection (Dynamic) -->
+            @php
+                $isRefundable   = $flight['is_refundable'] ?? false;
+                $cabinClass     = strtoupper($flight['cabin'] ?? 'ECONOMY');
+                $airlineCode    = $flight['airline_code'] ?? '';
+                $airlineName    = $flight['airline'] ?? $flight['airline_name'] ?? 'Airline';
+                // Cancel fee varies by cabin
+                $flexPriceMap   = ['ECONOMY' => 699, 'BUSINESS' => 1299, 'FIRST' => 1999];
+                $flexPrice      = $flexPriceMap[$cabinClass] ?? 699;
+                // Change fee varies by cabin
+                $changeFeeMap   = ['ECONOMY' => 3500, 'BUSINESS' => 5000, 'FIRST' => 7500];
+                $airlineChangeFee = $changeFeeMap[$cabinClass] ?? 3500;
+            @endphp
+            <div class="addon-card-premium" id="flexCard">
                 <div class="d-flex justify-content-between align-items-start mb-4">
                     <div class="d-flex gap-3 align-items-center">
-                        <div class="icon-box" style="background:#fff7ed; color:#f97316;"><i class="fas fa-undo-alt"></i></div>
+                        <div class="icon-box" style="background:#fff7ed; color:#f97316;">
+                            <i class="fas fa-undo-alt"></i>
+                        </div>
                         <div>
-                            <h4 class="fw-900 mb-1">Flexible Trip Protection</h4>
-                            <p class="text-muted small mb-0">Cancel for ANY reason / Free date change up to 24h.</p>
+                            <h4 class="fw-900 mb-1">Flexible Trip Protection
+                                @if($isRefundable)
+                                    <span class="badge bg-success ms-2" style="font-size:10px;">REFUNDABLE FARE</span>
+                                @else
+                                    <span class="badge bg-danger ms-2" style="font-size:10px;">NON-REFUNDABLE</span>
+                                @endif
+                            </h4>
+                            <p class="text-muted small mb-0">
+                                Cancel for ANY reason before departure / Free date change up to 24h before.
+                            </p>
                         </div>
                     </div>
                     <div class="form-check form-switch fs-4">
-                        <input class="form-check-input" type="checkbox" id="flexSwitch" onchange="updateFare()">
+                        <input class="form-check-input" type="checkbox" id="flexSwitch"
+                               onchange="updateFare()" data-price="{{ $flexPrice }}">
                     </div>
                 </div>
-                <div class="p-3 bg-light rounded-4 x-small fw-bold">
-                    <span class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i> Refund protection included</span> | 
-                    <span class="ms-2">Zero change fee at ₹899/Pax</span>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 text-center">
+                            <div class="x-small text-muted fw-bold mb-1">{{ $airlineName }} Cancel Fee</div>
+                            <div class="fw-900 text-danger">₹{{ number_format($airlineChangeFee) }}<span class="x-small">/pax</span></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 text-center" style="border-color:#22c55e !important; background:#f0fdf4;">
+                            <div class="x-small text-muted fw-bold mb-1">With Protection</div>
+                            <div class="fw-900 text-success">₹0 <span class="x-small">change fee</span></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 text-center">
+                            <div class="x-small text-muted fw-bold mb-1">Protection Cost</div>
+                            <div class="fw-900 text-primary">₹{{ number_format($flexPrice) }}<span class="x-small">/pax</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 rounded-4 x-small fw-bold d-flex gap-3 flex-wrap"
+                     style="background:#fff7ed; border:1px solid #fed7aa;">
+                    <span><i class="fas fa-check text-orange me-1" style="color:#f97316"></i>Cancel 2h before departure — full refund</span>
+                    <span><i class="fas fa-check text-orange me-1" style="color:#f97316"></i>Reschedule once free of charge</span>
+                    <span><i class="fas fa-check text-orange me-1" style="color:#f97316"></i>{{ $cabinClass }} class applicable</span>
                 </div>
             </div>
 
@@ -248,20 +295,79 @@
                 </div>
             </div>
 
-            <!-- 4. Special Assistance -->
-            <div class="addon-card-premium">
+            <!-- 5. Special Assistance (Dynamic per Passenger) -->
+            @php
+                // Dynamic assistance options based on airline capabilities
+                $assistOptions = [
+                    ['value' => 'none',       'label' => 'No Assistance Required',         'cost' => 0,   'icon' => 'fa-times-circle', 'color' => 'text-muted'],
+                    ['value' => 'wchr',       'label' => 'Wheelchair to Gate (WCHR)',       'cost' => 0,   'icon' => 'fa-wheelchair',    'color' => 'text-primary'],
+                    ['value' => 'wchs',       'label' => 'Wheelchair to Seat (WCHS)',       'cost' => 0,   'icon' => 'fa-wheelchair',    'color' => 'text-primary'],
+                    ['value' => 'wchc',       'label' => 'Cabin Wheelchair (WCHC)',         'cost' => 0,   'icon' => 'fa-wheelchair',    'color' => 'text-primary'],
+                    ['value' => 'blind',      'label' => 'Visually Impaired Assistance',    'cost' => 0,   'icon' => 'fa-eye-slash',     'color' => 'text-warning'],
+                    ['value' => 'deaf',       'label' => 'Hearing Impaired Assistance',     'cost' => 0,   'icon' => 'fa-deaf',          'color' => 'text-warning'],
+                    ['value' => 'medical',    'label' => 'Medical / Stretcher (MEDA)',      'cost' => 500, 'icon' => 'fa-ambulance',     'color' => 'text-danger'],
+                    ['value' => 'unaccomp',   'label' => 'Unaccompanied Minor (UM)',        'cost' => 800, 'icon' => 'fa-child',         'color' => 'text-info'],
+                ];
+                // Some airlines don't support stretcher on short routes
+                $isShortHaul = isset($flight['duration']) && (int)str_replace(['h','m',' '],['','',''],$flight['duration'] ?? '2h') <= 2;
+                if ($isShortHaul) {
+                    $assistOptions = array_filter($assistOptions, fn($o) => $o['value'] !== 'medical');
+                }
+                $passengerList = $passengers ?? [];
+            @endphp
+            <div class="addon-card-premium" id="assistCard">
                 <div class="d-flex gap-3 align-items-center mb-4">
                     <div class="icon-box"><i class="fas fa-wheelchair"></i></div>
                     <div>
-                        <h4 class="fw-900 mb-1">Special Assistance</h4>
-                        <p class="text-muted small mb-0">Request airport or in-flight medical support.</p>
+                        <h4 class="fw-900 mb-1">Special Assistance
+                            <span class="badge bg-primary ms-2" style="font-size:10px;">IATA SSR</span>
+                        </h4>
+                        <p class="text-muted small mb-0">
+                            Per-passenger assistance request — notified directly to {{ $airlineName ?? 'the airline' }}.
+                        </p>
                     </div>
                 </div>
-                <select class="form-select py-3 rounded-4" id="assistSelect" onchange="updateFare()">
-                    <option value="none">No Assistance Required</option>
-                    <option value="wheelchair">Wheelchair Required (to Gate)</option>
-                    <option value="medical">Medical / Stretcher Support</option>
-                </select>
+
+                <div id="assistGrid">
+                    @forelse($passengerList as $pIdx => $pax)
+                    <div class="d-md-flex gap-3 align-items-center mb-3 p-3 border rounded-4">
+                        <div class="mb-3 mb-md-0" style="min-width:160px;">
+                            <div class="fw-900 text-navy small">{{ $pax['first_name'] ?? 'Traveler '.($pIdx+1) }} {{ $pax['last_name'] ?? '' }}</div>
+                            <div class="x-small text-muted fw-bold">Traveler {{ $pIdx + 1 }}</div>
+                        </div>
+                        <select class="form-select py-2 rounded-3 fw-bold"
+                                id="assist_{{ $pIdx }}"
+                                onchange="updateFare()"
+                                style="font-size:13px;">
+                            @foreach($assistOptions as $opt)
+                            <option value="{{ $opt['value'] }}" data-cost="{{ $opt['cost'] }}">
+                                {{ $opt['label'] }}{{ $opt['cost'] > 0 ? ' (+₹'.$opt['cost'].')' : ' (Free)' }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @empty
+                    {{-- Fallback: show single dropdown if no passenger data --}}
+                    <div class="d-md-flex gap-3 align-items-center mb-3 p-3 border rounded-4">
+                        <div class="mb-3 mb-md-0" style="min-width:160px;">
+                            <div class="fw-900 text-navy small">All Passengers</div>
+                        </div>
+                        <select class="form-select py-2 rounded-3 fw-bold" id="assist_0" onchange="updateFare()">
+                            @foreach($assistOptions as $opt)
+                            <option value="{{ $opt['value'] }}" data-cost="{{ $opt['cost'] }}">
+                                {{ $opt['label'] }}{{ $opt['cost'] > 0 ? ' (+₹'.$opt['cost'].')' : ' (Free)' }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @endforelse
+                </div>
+
+                <div class="mt-3 p-3 rounded-3 x-small fw-bold d-flex gap-3 flex-wrap"
+                     style="background:#eff6ff; border:1px solid #bfdbfe;">
+                    <span><i class="fas fa-info-circle text-primary me-1"></i>Wheelchair & hearing/visual assistance are always free</span>
+                    <span><i class="fas fa-plane text-primary me-1"></i>SSR request sent to {{ $airlineName ?? 'airline' }} at ticket issuance</span>
+                </div>
             </div>
         </div>
 
@@ -302,6 +408,8 @@
 @section('scripts')
 <script>
     const passengers = @json($passengers);
+    // PHP fallback: traveler count even if passengers array is empty (e.g. old bookings)
+    const paxCount = {{ max(count($passengers), $booking->items->where('item_type','traveler')->count(), 1) }};
     const seatsMulti = JSON.parse(localStorage.getItem('selected_seats_multi') || '{}');
     const flightData = @json($flight);
     let baseFlightTotal = {{ $booking->total_amount ?? 0 }};
@@ -325,29 +433,74 @@
         updateFare();
     }
 
+    // --- Dynamic Baggage Config from Flight API Data ---
+    const includedBaggageKg = parseInt(flightData?.baggage || flightData?.checked_bags || 15);
+    const baggageUnit       = flightData?.baggage_unit || 'KG';
+    const cabinClass        = (flightData?.cabin || 'ECONOMY').toUpperCase();
+    const airlineName       = flightData?.airline || flightData?.airline_name || 'Airline';
+    const isBusinessOrFirst = cabinClass === 'BUSINESS' || cabinClass === 'FIRST';
+
+    // Dynamic upgrade tiers based on cabin class
+    const baggageTiers = isBusinessOrFirst
+        ? [ { kg: 0,  price: 0,    label: '+0KG (Included)' },
+            { kg: 10, price: 1200, label: `+10${baggageUnit}` },
+            { kg: 20, price: 2200, label: `+20${baggageUnit}` },
+            { kg: 32, price: 3500, label: `+32${baggageUnit}` } ]
+        : [ { kg: 0,  price: 0,    label: '+0KG' },
+            { kg: 5,  price: 800,  label: `+5${baggageUnit}` },
+            { kg: 10, price: 1500, label: `+10${baggageUnit}` },
+            { kg: 15, price: 2400, label: `+15${baggageUnit}` } ];
+
     function renderBaggageGrid() {
         const wrap = document.getElementById('paxBaggageGrid');
-        wrap.innerHTML = passengers.map((p, i) => `
+        if (!wrap) return;
+
+        // Show dynamic included info
+        const infoBar = `
+            <div class="d-flex gap-3 mb-4 p-3 bg-light rounded-4 align-items-center flex-wrap">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fas fa-suitcase-rolling text-primary"></i>
+                    <span class="fw-900 small text-navy">${airlineName}</span>
+                </div>
+                <div class="vr"></div>
+                <div class="small fw-bold">
+                    <span class="badge bg-success me-1"><i class="fas fa-check me-1"></i>Included</span>
+                    Cabin: 7${baggageUnit} + Check-in: ${includedBaggageKg}${baggageUnit}
+                </div>
+                <div class="vr"></div>
+                <div class="small fw-bold text-muted">
+                    <i class="fas fa-plane me-1"></i>${cabinClass} CLASS
+                </div>
+            </div>`;
+
+        const paxRows = passengers.map((p, i) => `
             <div class="p-3 border-bottom d-md-flex justify-content-between align-items-center">
                 <div class="mb-3 mb-md-0">
-                    <div class="fw-900 text-navy">${p.first_name} ${p.last_name || ''}</div>
-                    <div class="x-small text-muted fw-bold">Standard 15KG included</div>
+                    <div class="fw-900 text-navy">${p.first_name || 'Traveler'} ${p.last_name || ''}</div>
+                    <div class="x-small text-muted fw-bold">
+                        <i class="fas fa-suitcase me-1 text-success"></i>
+                        ${includedBaggageKg}${baggageUnit} check-in included
+                    </div>
                 </div>
-                <div class="token-group">
-                    <div class="token-btn bag-${i} active" onclick="setBag(${i}, 0, 0)">+0KG</div>
-                    <div class="token-btn bag-${i}" onclick="setBag(${i}, 5, 800)">+5KG (₹800)</div>
-                    <div class="token-btn bag-${i}" onclick="setBag(${i}, 10, 1500)">+10KG (₹1500)</div>
+                <div class="token-group flex-wrap">
+                    ${baggageTiers.map((tier, ti) => `
+                        <div class="token-btn bag-${i} ${ti === 0 ? 'active' : ''}" 
+                             onclick="setBag(${i}, ${tier.kg}, ${tier.price}, ${ti})">
+                            ${tier.label}
+                            ${tier.price > 0 ? `<div class="x-small mt-1">₹${tier.price.toLocaleString()}</div>` : ''}
+                        </div>`).join('')}
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('');
+
+        wrap.innerHTML = infoBar + paxRows;
     }
 
-    function setBag(idx, weight, price) {
-        state.bags[idx] = {weight, price};
-        const btns = document.querySelectorAll(`.bag-${idx}`);
-        btns.forEach(b => b.classList.remove('active'));
-        const activeIdx = weight === 0 ? 0 : (weight === 5 ? 1 : 2);
-        btns[activeIdx].classList.add('active');
+    function setBag(idx, weight, price, tierIndex) {
+        state.bags[idx] = { weight, price };
+        // Deactivate all tokens for this passenger
+        document.querySelectorAll(`.bag-${idx}`).forEach((b, ti) => {
+            b.classList.toggle('active', ti === tierIndex);
+        });
         updateFare();
     }
 
@@ -366,17 +519,19 @@
 
         // Baggage logic
         Object.keys(state.bags).forEach(k => {
-            if(state.bags[k].price > 0) {
+            if (state.bags[k].price > 0) {
                 extraTotal += state.bags[k].price;
+                // Safely get passenger name — fallback if array is empty
+                const paxName = passengers[k]?.first_name || `Traveler ${parseInt(k) + 1}`;
                 logHtml += `<div class="d-flex justify-content-between small text-primary mb-1">
-                                <span>Bag upgrade (${state.bags[k].weight}KG - ${passengers[k].first_name})</span>
-                                <span>+₹${state.bags[k].price}</span>
+                                <span>Bag upgrade (${state.bags[k].weight}${baggageUnit} - ${paxName})</span>
+                                <span>+₹${state.bags[k].price.toLocaleString()}</span>
                             </div>`;
             }
         });
 
         // Meal logic
-        if(state.meal.price > 0) {
+        if (state.meal.price > 0) {
             extraTotal += state.meal.price;
             logHtml += `<div class="d-flex justify-content-between small text-primary mb-1">
                             <span>Meal: ${state.meal.name}</span>
@@ -384,19 +539,62 @@
                         </div>`;
         }
 
-        // Insurance logic
+        // Insurance logic — use Math.max to never show x0
         state.ins = document.getElementById('insSwitch').checked;
-        if(state.ins) {
-            const cost = passengers.length * 499;
+        if (state.ins) {
+            const travelerCount = Math.max(passengers.length, paxCount, 1);
+            const insCostPerPax = 499;
+            const cost = travelerCount * insCostPerPax;
             extraTotal += cost;
             logHtml += `<div class="d-flex justify-content-between small text-success mb-1">
-                            <span>Travel Insurance (x${passengers.length})</span>
-                            <span>+₹${cost}</span>
+                            <span><i class="fas fa-shield-alt me-1"></i>Travel Insurance (${travelerCount} pax × ₹${insCostPerPax})</span>
+                            <span>+₹${cost.toLocaleString()}</span>
                         </div>`;
         }
 
+        // Flexible protection — price from data-price attribute (set dynamically per cabin)
+        const flexEl = document.getElementById('flexSwitch');
+        const flexChecked = flexEl?.checked;
+        if (flexChecked) {
+            const travelerCount = Math.max(passengers.length, paxCount, 1);
+            const flexPricePerPax = parseInt(flexEl?.dataset?.price || 699);
+            const flexCost = travelerCount * flexPricePerPax;
+            extraTotal += flexCost;
+            logHtml += `<div class="d-flex justify-content-between small text-warning mb-1">
+                            <span><i class="fas fa-undo-alt me-1"></i>Flexible Protection (${travelerCount} pax × ₹${flexPricePerPax})</span>
+                            <span>+₹${flexCost.toLocaleString()}</span>
+                        </div>`;
+        }
+
+        // Special Assistance — per passenger
+        // Use getAttribute (more reliable than dataset on <option> elements)
+        let assistTotal = 0;
+        document.querySelectorAll('[id^="assist_"]').forEach((sel, idx) => {
+            const val = sel.value;
+            if (!val || val === 'none') return;
+
+            const selectedOpt = sel.options[sel.selectedIndex];
+            const cost = parseInt(selectedOpt?.getAttribute('data-cost') ?? 0) || 0;
+            const label = selectedOpt?.text?.split(' (')[0] || val;
+            const paxName = passengers[idx]?.first_name || `Traveler ${idx + 1}`;
+
+            if (cost > 0) {
+                assistTotal += cost;
+                logHtml += `<div class="d-flex justify-content-between small text-info mb-1">
+                                <span><i class="fas fa-wheelchair me-1"></i>${label} — ${paxName}</span>
+                                <span>+₹${cost.toLocaleString()}</span>
+                            </div>`;
+            } else {
+                logHtml += `<div class="d-flex justify-content-between small text-muted mb-1">
+                                <span><i class="fas fa-wheelchair me-1"></i>${label} — ${paxName}</span>
+                                <span class="text-success fw-bold">FREE</span>
+                            </div>`;
+            }
+        });
+        extraTotal += assistTotal;
+
         document.getElementById('baseDisplay').innerText = `₹${(baseFlightTotal + seatTotal).toLocaleString()}`;
-        document.getElementById('itemizedLog').innerHTML = logHtml;
+        document.getElementById('itemizedLog').innerHTML = logHtml || '<p class="text-muted x-small fw-bold">No extras added yet</p>';
         document.getElementById('totalDisplay').innerText = `₹${(baseFlightTotal + seatTotal + extraTotal).toLocaleString()}`;
     }
 

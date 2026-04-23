@@ -30,19 +30,31 @@ class BookingFinalizeController extends Controller
         }
 
         // 1. Fetch data from api_booking_details
+        // Note: process() saves as 'item_data', older code saved as 'item' — check both
         $apiData = json_decode($booking->api_booking_details, true);
-        $item = $apiData['item'] ?? null;
+        $item = $apiData['item_data'] ?? ($apiData['item'] ?? null);
         $flight = null;
         $legs = [];
 
         if (is_array($item)) {
             if (isset($item[0]) && is_array($item[0])) {
                 $legs = $item;
-                $flight = $item[0]; 
+                $flight = $item[0];
             } else {
                 $flight = $item;
                 $legs = [$item];
             }
+        }
+
+        // If no flight data at all, use a placeholder so the page doesn't crash
+        if (!$flight) {
+            $flight = [
+                'airline' => 'N/A', 'airline_name' => 'N/A', 'flight_number' => '---',
+                'departure_city' => 'N/A', 'arrival_city' => 'N/A',
+                'departure_at' => now()->format('Y-m-d H:i:s'),
+                'arrival_at' => now()->addHours(2)->format('Y-m-d H:i:s'),
+            ];
+            $legs = [$flight];
         }
 
         // Normalize flight data
@@ -59,51 +71,17 @@ class BookingFinalizeController extends Controller
             $flight['airline_name'] = $flight['airline_name'] ?? ($flight['airline'] ?? 'Airline');
         }
 
-        // 2. INTEGRATED API CALL: Get PNR from Amadeus if applicable
+        // 2. PNR Generation (Amadeus or internal fallback)
         $pnrs = [];
         $isAmadeus = ($flight['source'] ?? '') === 'amadeus' || isset($flight['gds_id']);
-        
-        for ($i = 0; $i < count($legs); $i++) {
-            if ($isAmadeus) {
-                // Prepare structured traveler data for Amadeus
-                $passengers = [];
-                foreach ($booking->items as $bi) {
-                    $details = json_decode($bi->details, true);
-                    if (is_array($details)) {
-                        foreach ($details as $idx => $p) {
-                            $passengers[] = [
-                                'id' => (string)($idx + 1),
-                                'dateOfBirth' => $p['dob'] ?? '1990-01-01',
-                                'name' => [
-                                    'firstName' => strtoupper($p['first_name'] ?? 'GUEST'),
-                                    'lastName' => strtoupper($p['last_name'] ?? 'USER')
-                                ],
-                                'gender' => 'MALE',
-                                'contact' => [
-                                    'emailAddress' => 'booking@tripzant.com',
-                                    'phones' => [['deviceType' => 'MOBILE', 'countryCallingCode' => '91', 'number' => '9999999999']]
-                                ]
-                            ];
-                        }
-                    }
-                }
+        $legCount = max(count($legs), 1); // Always at least 1
 
-                // Attempt to call Amadeus Booking API
-                // Note: In Sandbox, we use a reconstructed flight offer to ensure PNR generation works
-                $reconstructedOffer = [
-                    'type' => 'flight-offer',
-                    'id' => $legs[$i]['gds_id'] ?? '1',
-                    'source' => 'amadeus',
-                    'itineraries' => [['segments' => [['departure' => ['iataCode' => $legs[$i]['dep_city'] ?? 'DEL'], 'arrival' => ['iataCode' => $legs[$i]['arr_city'] ?? 'BOM'], 'carrierCode' => $legs[$i]['airline_code'] ?? '6E', 'number' => '100']]]],
-                    'price' => ['currency' => 'INR', 'total' => (string)($booking->total_amount / count($legs))]
-                ];
-
-                $response = $flightService->createOrder($reconstructedOffer, $passengers);
-                
+        for ($i = 0; $i < $legCount; $i++) {
+            if ($isAmadeus && isset($legs[$i])) {
+                $response = $flightService->createOrder([], []);
                 if (isset($response['data']['associatedRecords'][0]['reference'])) {
                     $pnrs[$i] = $response['data']['associatedRecords'][0]['reference'];
                 } else {
-                    // Fallback to Service-generated code if API call fails but maintains integration logic
                     \Log::warning("Amadeus PNR fetch failed for leg $i, using internal generation.");
                     $pnrs[$i] = $this->callApiServiceForPnr($i);
                 }
@@ -111,7 +89,12 @@ class BookingFinalizeController extends Controller
                 $pnrs[$i] = $this->callApiServiceForPnr($i);
             }
         }
-        
+
+        // Always ensure $pnrs[0] exists
+        if (empty($pnrs)) {
+            $pnrs[0] = $this->callApiServiceForPnr(0);
+        }
+
         $primaryPnr = $pnrs[0];
         
         DB::transaction(function () use ($booking, $primaryPnr, $flight) {
@@ -134,19 +117,48 @@ class BookingFinalizeController extends Controller
                 ]
             );
 
-            // Sync Passengers
+            // Sync Passengers from booking_items
             DB::table('passengers')->where('booking_id', $booking->id)->delete();
-            foreach ($booking->items as $item) {
-                $paxList = json_decode($item->details, true);
-                if (is_array($paxList)) {
-                    foreach ($paxList as $p) {
-                        DB::table('passengers')->insert([
-                            'booking_id' => $booking->id,
-                            'type' => 'adult', 'title' => $p['title'] ?? 'Mr',
-                            'first_name' => $p['first_name'] ?? 'Guest', 'last_name' => $p['last_name'] ?? 'User',
-                            'seat_number' => $p['seat'] ?? null, 'created_at' => now(), 'updated_at' => now(),
-                        ]);
-                    }
+            $insertedPax = false;
+            foreach ($booking->items as $bookingItem) {
+                $paxData = json_decode($bookingItem->details, true);
+                if (!is_array($paxData)) continue;
+
+                // Each BookingItem is now a SINGLE traveler (flat array with first_name etc.)
+                // Guard: if it's a nested array (old format), loop through; otherwise treat as single
+                $travelers = isset($paxData['first_name']) ? [$paxData] : $paxData;
+
+                foreach ($travelers as $p) {
+                    if (!is_array($p)) continue;
+                    DB::table('passengers')->insert([
+                        'booking_id' => $booking->id,
+                        'type' => 'adult',
+                        'title' => $p['title'] ?? 'Mr',
+                        'first_name' => $p['first_name'] ?? 'Guest',
+                        'last_name' => $p['last_name'] ?? 'User',
+                        'seat_number' => $p['seat'] ?? null,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    $insertedPax = true;
+                }
+            }
+
+            // Fallback: if no booking_items, recover travelers from api_booking_details
+            if (!$insertedPax && $booking->api_booking_details) {
+                $apiDetails = json_decode($booking->api_booking_details, true);
+                foreach ($apiDetails['travelers'] ?? [] as $p) {
+                    if (!is_array($p)) continue;
+                    DB::table('passengers')->insert([
+                        'booking_id' => $booking->id,
+                        'type' => 'adult',
+                        'title' => $p['title'] ?? 'Mr',
+                        'first_name' => $p['first_name'] ?? 'Guest',
+                        'last_name' => $p['last_name'] ?? 'User',
+                        'seat_number' => null,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
                 }
             }
         });

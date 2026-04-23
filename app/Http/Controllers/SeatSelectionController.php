@@ -36,7 +36,7 @@ class SeatSelectionController extends Controller
         $legs = [];
         if ($booking->api_booking_details) {
             $apiData = json_decode($booking->api_booking_details, true);
-            $flight = $apiData['item'] ?? null;
+            $flight = $apiData['item_data'] ?? ($apiData['item'] ?? null);
             
             // Handle both single flight object and array of flights (split mode)
             if (is_array($flight)) {
@@ -51,10 +51,22 @@ class SeatSelectionController extends Controller
             }
         }
 
+        // Try to get passengers from booking_items first
         foreach ($booking->items as $item) {
             $details = json_decode($item->details, true);
             if (is_array($details)) {
-                $passengers = array_merge($passengers, $details);
+                $passengers[] = $details;
+            }
+        }
+
+        // Fallback: if no items, recover travelers from api_booking_details
+        if (empty($passengers) && $booking->api_booking_details) {
+            $apiData = json_decode($booking->api_booking_details, true);
+            $travelers = $apiData['travelers'] ?? [];
+            foreach ($travelers as $traveler) {
+                if (is_array($traveler)) {
+                    $passengers[] = $traveler;
+                }
             }
         }
 
@@ -95,19 +107,31 @@ class SeatSelectionController extends Controller
         $flight = null;
         if ($booking->api_booking_details) {
             $apiData = json_decode($booking->api_booking_details, true);
-            $flight = $apiData['item'] ?? null;
+            $flight = $apiData['item_data'] ?? ($apiData['item'] ?? null);
+            // If multi-leg array, use first leg
+            if (is_array($flight) && isset($flight[0]) && is_array($flight[0])) {
+                $flight = $flight[0];
+            }
         }
 
+        // Get passengers from booking_items
         foreach ($booking->items as $item) {
             $details = json_decode($item->details, true);
             if (is_array($details)) {
-                $passengers = array_merge($passengers, $details);
+                $passengers[] = isset($details['first_name']) ? $details : array_values($details);
             }
+        }
+        $passengers = array_filter(array_map(fn($p) => is_array($p) && isset($p['first_name']) ? $p : null, $passengers));
+
+        // Fallback: recover from api_booking_details travelers
+        if (empty($passengers) && $booking->api_booking_details) {
+            $apiData = json_decode($booking->api_booking_details, true);
+            $passengers = array_filter($apiData['travelers'] ?? [], fn($t) => is_array($t));
         }
 
         return view('add-ons', [
             'booking' => $booking,
-            'passengers' => $passengers,
+            'passengers' => array_values($passengers),
             'flight' => $flight,
             'reference' => $booking->booking_reference
         ]);

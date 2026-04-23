@@ -1,7 +1,7 @@
 <!-- ====== DYNAMIC PARTNER AUTH MODAL ====== -->
 <div class="modal fade" id="partnerModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content border-0 shadow-2xl overflow-hidden" style="border-radius: 25px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+        <div class="modal-content border-0 shadow-2xl overflow-hidden" style="border-radius: 30px; background: #fff;">
             <div class="modal-body p-0">
                 <button type="button" class="btn-close position-absolute top-0 end-0 m-4 shadow-none" data-bs-dismiss="modal" style="z-index: 10;"></button>
                 <div class="row g-0">
@@ -36,13 +36,13 @@
                     <!-- Right Form Column -->
                     <div class="col-lg-8 p-4 p-md-5 bg-white">
                         <!-- Switcher Tabs -->
-                        <div class="d-flex justify-content-center mb-5">
-                            <ul class="nav nav-pills bg-light p-1 rounded-pill shadow-sm" id="partnerTab" role="tablist">
+                        <div class="d-flex justify-content-center mb-4">
+                            <ul class="nav nav-pills bg-light p-1 rounded-pill shadow-sm" id="partnerTab" role="tablist" style="border: 1px solid #f1f5f9;">
                                 <li class="nav-item">
-                                    <button class="nav-link active rounded-pill px-4 fw-bold" id="partner-signup-tab" data-bs-toggle="pill" data-bs-target="#partner-signup" type="button" style="font-size: 13px;">Apply Now</button>
+                                    <button class="nav-link active rounded-pill px-5 fw-800 tracking-wider" id="partner-signup-tab" data-bs-toggle="pill" data-bs-target="#partner-signup" type="button" style="font-size: 11px;">APPLY NOW</button>
                                 </li>
                                 <li class="nav-item">
-                                    <button class="nav-link rounded-pill px-4 fw-bold" id="partner-login-tab" data-bs-toggle="pill" data-bs-target="#partner-login" type="button" style="font-size: 13px;">Partner Login</button>
+                                    <button class="nav-link rounded-pill px-5 fw-800 tracking-wider" id="partner-login-tab" data-bs-toggle="pill" data-bs-target="#partner-login" type="button" style="font-size: 11px;">PARTNER LOGIN</button>
                                 </li>
                             </ul>
                         </div>
@@ -50,8 +50,10 @@
                         <div class="tab-content" id="partnerTabContent">
                             <!-- Signup View -->
                             <div class="tab-pane fade show active" id="partner-signup">
-                                <h1 class="fw-900 text-navy mb-1" style="font-size: 28px;">Become a Provider</h1>
-                                <p class="text-muted small fw-bold mb-5">Registration requires administrative review and approval.</p>
+                                <div class="text-center mb-4">
+                                    <h1 class="fw-900 text-navy mb-1" style="font-size: 28px;">Partner Registration</h1>
+                                    <p class="text-muted small fw-bold">Join as a provider. All applications are manually reviewed.</p>
+                                </div>
 
                                 <form id="dynamic-partner-form" class="row g-4">
                                     @csrf
@@ -93,20 +95,23 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-12 mt-5">
-                                        <button type="submit" id="partner-submit-btn" class="btn btn-outline-navy w-100 py-3 rounded-pill fw-900 border-2" style="height: 56px;" disabled>
+                                    <div class="col-12 mt-4">
+                                        <button type="submit" id="partner-submit-btn" class="btn btn-navy w-100 py-3 rounded-pill fw-900 shadow-lg" disabled>
                                             SUBMIT ONBOARDING REQUEST <i class="fas fa-paper-plane ms-2"></i>
                                         </button>
                                     </div>
                                     <div class="col-12 text-center mt-3">
-                                        <p class="small text-muted mb-0 fw-bold">Already a partner? <a href="javascript:void(0)" onclick="switchToPartnerLogin()" class="text-primary text-decoration-none">Login here</a></p>
+                                        <p class="small text-muted mb-0 fw-bold">Already a registered partner? <a href="javascript:void(0)" onclick="switchToPartnerLogin()" class="text-primary text-decoration-none">Login here</a></p>
                                     </div>
                                 </form>
                             </div>
 
                             <!-- Login View -->
                             <div class="tab-pane fade" id="partner-login">
-                                <h3 class="fw-900 text-navy mb-4">Partner Login</h3>
+                                <div class="text-center mb-4">
+                                    <h1 class="fw-900 text-navy mb-1" style="font-size: 28px;">Partner Login</h1>
+                                    <p class="text-muted small fw-bold">Access your provider dashboard</p>
+                                </div>
                                 <form id="partner-login-form" class="row g-3">
                                     @csrf
                                     <div class="col-12 text-start">

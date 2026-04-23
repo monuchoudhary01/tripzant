@@ -13,15 +13,15 @@
                     <div class="col-lg-7 p-4 p-md-5 bg-white d-flex flex-column justify-content-center">
                         <div class="mx-auto w-100" style="max-width: 440px;">
                             <div class="text-center mb-4">
-                                <h1 class="fw-900 text-navy mb-1" style="font-size: 28px;">User Login</h1>
-                                <p class="text-muted small fw-bold">Select your preferred login method.</p>
+                                <h1 class="fw-900 text-navy mb-1" style="font-size: 28px;">Customer Login</h1>
+                                <p class="text-muted small fw-bold">Sign in to your Trip Zant account</p>
                             </div>
 
                             <!-- Tabs for Mobile / Email -->
                             <div class="d-flex justify-content-center mb-5" id="loginMethodTabsContainer">
-                                <div class="nav nav-pills bg-light p-1 rounded-pill shadow-sm" id="loginMethodTabs" role="tablist">
-                                    <button class="nav-link active rounded-pill px-4 fw-800 tracking-wider" id="mobile-login-tab" data-bs-toggle="pill" data-bs-target="#mobile-panel" type="button" style="font-size: 11px;">MOBILE LOGIN</button>
-                                    <button class="nav-link rounded-pill px-4 fw-800 tracking-wider" id="email-login-tab" data-bs-toggle="pill" data-bs-target="#email-panel" type="button" style="font-size: 11px;">EMAIL LOGIN</button>
+                                <div class="nav nav-pills bg-light p-1 rounded-pill shadow-sm" id="loginMethodTabs" role="tablist" style="border: 1px solid #f1f5f9;">
+                                    <button class="nav-link active rounded-pill px-4 fw-800 tracking-wider" id="mobile-login-tab" data-bs-toggle="pill" data-bs-target="#mobile-panel" type="button" style="font-size: 10px;">MOBILE LOGIN</button>
+                                    <button class="nav-link rounded-pill px-4 fw-800 tracking-wider" id="email-login-tab" data-bs-toggle="pill" data-bs-target="#email-panel" type="button" style="font-size: 10px;">EMAIL LOGIN</button>
                                 </div>
                             </div>
 
@@ -37,7 +37,7 @@
                                             </span>
                                             <input type="text" id="phone-input" class="form-control border-0 shadow-none fw-700" placeholder="Enter Mobile Number" style="font-size: 16px;">
                                         </div>
-                                        <button type="button" onclick="sendLoginOtp()" id="mobile-continue-btn" class="btn btn-primary w-100 rounded-pill fw-800 py-3 shadow-sm mb-4" style="height: 56px; background: #0076f7;">CONTINUE</button>
+                                        <button type="button" onclick="sendLoginOtp()" id="mobile-continue-btn" class="btn btn-login-header w-100 rounded-pill fw-800 py-3 shadow-sm mb-4" style="height: 56px;">CONTINUE</button>
                                         
                                         <div class="text-center position-relative mb-4">
                                             <hr class="opacity-10">
@@ -59,7 +59,7 @@
                                         <div class="d-flex justify-content-center mb-4">
                                             <input type="text" id="otp-input" class="form-control text-center fw-900 border" maxlength="4" style="width: 140px; height: 56px; font-size: 24px; letter-spacing: 5px; border-radius: 12px; border-color: #dee2e6 !important;" placeholder="0000">
                                         </div>
-                                        <button type="button" onclick="verifyLoginOtp()" class="btn btn-primary w-100 rounded-pill fw-800 py-3 shadow-sm mb-3" style="height: 56px; background: #0076f7;">VERIFY & LOGIN</button>
+                                        <button type="button" onclick="verifyLoginOtp()" class="btn btn-login-header w-100 rounded-pill fw-800 py-3 shadow-sm mb-3" style="height: 56px;">VERIFY & LOGIN</button>
                                         <div class="text-center"><a href="javascript:void(0)" onclick="resetMobileView()" class="small text-primary fw-bold text-decoration-none">Change Number</a></div>
                                     </div>
                                 </div>
@@ -82,13 +82,21 @@
                                 
                                 <!-- Forgot Password Panel -->
                                 <div class="tab-pane fade" id="forgot-password-panel">
-                                    <div id="forgot-email-view">
-                                        <div class="mb-4">
-                                            <label class="small fw-700 text-muted mb-2">Registered Email Address</label>
-                                            <input type="email" id="forgot-email-input" class="form-control border rounded-3 p-3 shadow-none fw-700" placeholder="name@example.com" style="height: 54px; border-color: #dee2e6 !important;">
+                                    <div id="forgot-email-view" class="text-center">
+                                        <div class="p-3 bg-primary bg-opacity-10 rounded-circle d-inline-block mb-3">
+                                            <i class="fas fa-lock-open text-primary fs-3"></i>
                                         </div>
-                                        <button type="button" onclick="sendPasswordResetOtp()" class="btn btn-navy w-100 rounded-pill fw-800 py-3 shadow-sm mb-4" style="height: 56px; background: #002f55; color: white;">SEND RESET OTP</button>
-                                        <div class="text-center"><a href="javascript:void(0)" onclick="resetLoginView()" class="small text-primary fw-bold text-decoration-none"><i class="fas fa-arrow-left me-1"></i> Back to Login</a></div>
+                                        <h4 class="fw-800 text-navy mb-2">Forgot Password?</h4>
+                                        <p class="text-muted small mb-4">Enter your email to receive a reset OTP.</p>
+                                        
+                                        <div class="text-start">
+                                            <div class="mb-4">
+                                                <label class="small fw-700 text-muted mb-2">Registered Email Address</label>
+                                                <input type="email" id="forgot-email-input" class="form-control border rounded-3 p-3 shadow-none fw-700" placeholder="name@example.com" style="height: 54px; border-color: #dee2e6 !important;">
+                                            </div>
+                                            <button type="button" onclick="sendPasswordResetOtp()" class="btn btn-login-header w-100 rounded-pill fw-800 py-3 shadow-sm mb-4" style="height: 56px;">SEND RESET OTP</button>
+                                            <div class="text-center"><a href="javascript:void(0)" onclick="resetLoginView()" class="small text-primary fw-bold text-decoration-none"><i class="fas fa-arrow-left me-1"></i> Back to Login</a></div>
+                                        </div>
                                     </div>
                                     
                                     <div id="forgot-otp-view" class="d-none">
@@ -102,14 +110,14 @@
                                         <div class="mb-3">
                                             <input type="password" id="new-password-input" class="form-control border rounded-3 p-3 shadow-none fw-700" placeholder="New Password" style="height: 54px; border-color: #dee2e6 !important;">
                                         </div>
-                                        <button type="button" onclick="verifyPasswordResetOtp()" class="btn btn-primary w-100 rounded-pill fw-800 py-3 shadow-sm mb-3" style="height: 56px; background: #0076f7;">UPDATE PASSWORD</button>
+                                        <button type="button" onclick="verifyPasswordResetOtp()" class="btn btn-login-header w-100 rounded-pill fw-800 py-3 shadow-sm mb-3" style="height: 56px;">UPDATE PASSWORD</button>
                                         <div class="text-center"><a href="javascript:void(0)" onclick="resetLoginView()" class="small text-primary fw-bold text-decoration-none">Back to Login</a></div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="text-center mt-5 pt-4 border-top">
-                                <p class="small text-muted fw-bold mb-3">Don't have an account? <a href="javascript:void(0)" onclick="switchToSignupModal()" class="text-primary text-decoration-none">Sign Up</a></p>
+                                <p class="small text-muted fw-bold mb-3">Don't have a customer account? <a href="javascript:void(0)" onclick="switchToSignupModal()" class="text-primary text-decoration-none">Sign Up</a></p>
                                 <p class="x-small text-muted fw-bold mb-0">By continuing, you agree to our <a href="#" class="text-navy text-decoration-none">Terms of Service</a> & <a href="#" class="text-navy text-decoration-none">Privacy Policy</a></p>
                             </div>
                         </div>

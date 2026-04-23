@@ -24,14 +24,21 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => 'Your account is under review.']);
         }
 
+        // Restrict to Customer (role_id 3)
+        if ($user->role_id != 3) {
+            return response()->json(['success' => false, 'message' => 'This account is not authorized for Customer Login. Please use the Partner or Admin portal.']);
+        }
+
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             $user = Auth::user();
             AuditLogService::log('Auth', 'Unified Login', 'User logged in: ' . $user->name, null, ['role' => $user->role]);
 
             // Support both session intended and manual redirect_to parameter
-            $intended = session()->pull('url.intended', $request->input('redirect_to'));
-            $redirectUrl = $intended ?? $this->getRedirectUrl($user->role);
+            // PRIORITY: If redirect_to is passed explicitly (e.g. from AJAX modal), use it.
+            $redirect_to = $request->input('redirect_to');
+            $intended = session()->pull('url.intended');
+            $redirectUrl = $redirect_to ?: ($intended ?? $this->getRedirectUrl($user->role));
 
             return response()->json(['success' => true, 'redirect' => $redirectUrl]);
         }
@@ -43,7 +50,7 @@ class AuthController extends Controller
      * Show Login Forms for various roles
      */
     public function showUserLogin() { return redirect('/')->with('showLoginModal', true); }
-    public function showAdminLogin() { return view('auth.login', ['role' => 'admin', 'title' => 'Admin Login']); }
+    public function showAdminLogin() { return view('auth.admin-login', ['role' => 'admin', 'title' => 'Tripzant Admin Portal']); }
     public function showPartnerLogin() { return view('auth.login', ['role' => 'amadeus-partner', 'title' => 'Amadeus GDS Partner Login']); }
     public function showIataLogin() { return view('auth.login', ['role' => 'iata', 'title' => 'IATA Agent Login']); }
     public function showCorporateLogin() { return view('auth.login', ['role' => 'corporate', 'title' => 'Corporate Login']); }
@@ -67,9 +74,12 @@ class AuthController extends Controller
     public function handlePartnerLogin(Request $request) 
     {
         $user = User::where('email', $request->email)->first();
-        if (!$user || !in_array($user->role, ['b2b', 'iata', 'amadeus-partner', 'hotel-partner', 'corporate', 'supplier', 'cargo', 'admin', 'super-admin'])) {
+        
+        // Restrict to Partners (role_id 4 to 12)
+        if (!$user || $user->role_id < 4 || $user->role_id > 12) {
             return response()->json(['success' => false, 'message' => 'This account is not authorized for the Partner Portal.']);
         }
+
         return $this->handleLogin($request, $user->role);
     }
 
@@ -85,9 +95,13 @@ class AuthController extends Controller
         // Check Role
         $isAuthorized = ($user->role === $expectedRole);
         
-        // Special case: Both admin and super-admin can access admin portal
-        if ($expectedRole === 'admin' && ($user->role === 'admin' || $user->role === 'super-admin')) {
-            $isAuthorized = true;
+        // Special case: Only Super Admin (role_id 1) can access admin portal
+        if ($expectedRole === 'admin') {
+            if ($user->role_id == 1) {
+                $isAuthorized = true;
+            } else {
+                $isAuthorized = false;
+            }
         }
 
         if (!$isAuthorized && $expectedRole !== 'user') {
@@ -108,8 +122,8 @@ class AuthController extends Controller
             AuditLogService::log('Auth', 'Login', 'User logged in: ' . $user->name, null, ['role' => $user->role]);
 
             // Support both session intended and manual redirect_to
-            $intended = session()->pull('url.intended', $request->input('redirect_to'));
-            $redirectUrl = $intended ?? $this->getRedirectUrl($user->role);
+                        $redirect_to = $request->input("redirect_to"); $intended = session()->pull("url.intended");
+            $redirectUrl = $redirect_to ?: ($intended ?? $this->getRedirectUrl($user->role));
 
             return response()->json(['success' => true, 'redirect' => $redirectUrl]);
         }
@@ -182,13 +196,18 @@ class AuthController extends Controller
     {
         $user = User::where('phone', $request->phone)->first();
         if ($user && ($request->otp === $user->otp || $request->otp === '1234')) {
+            // Restrict to Customer (role_id 3)
+            if ($user->role_id != 3) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized access for this portal.']);
+            }
+
             Auth::login($user);
             $request->session()->regenerate();
             AuditLogService::log('Auth', 'OTP Login', 'User logged in via phone: ' . $user->phone, null, ['role' => $user->role]);
 
             // Support both session intended and manual redirect_to
-            $intended = session()->pull('url.intended', $request->input('redirect_to'));
-            $redirectUrl = $intended ?? $this->getRedirectUrl($user->role);
+                        $redirect_to = $request->input("redirect_to"); $intended = session()->pull("url.intended");
+            $redirectUrl = $redirect_to ?: ($intended ?? $this->getRedirectUrl($user->role));
 
             return response()->json(['success' => true, 'redirect' => $redirectUrl]);
         }
@@ -213,13 +232,19 @@ class AuthController extends Controller
     {
         $user = User::where('email', $request->email)->first();
         if ($user && ($request->otp === $user->otp || $request->otp === '1234')) {
+            // Restrict to Customer (role_id 3) as this is usually called from Customer Forgot Pass
+            if ($user->role_id != 3) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized access.']);
+            }
+
             $user->password = Hash::make($request->password);
             $user->save();
             Auth::login($user);
             $request->session()->regenerate();
 
-            $intended = session()->pull('url.intended', $request->input('redirect_to'));
-            $redirectUrl = $intended ?? $this->getRedirectUrl($user->role);
+            $redirect_to = $request->input('redirect_to');
+            $intended = session()->pull('url.intended');
+            $redirectUrl = $redirect_to ?: ($intended ?? $this->getRedirectUrl($user->role));
 
             return response()->json(['success' => true, 'redirect' => $redirectUrl]);
         }
@@ -280,8 +305,9 @@ class AuthController extends Controller
             Auth::login($user);
             $request->session()->regenerate();
 
-            $intended = session()->pull('url.intended', $request->input('redirect_to'));
-            $redirectUrl = $intended ?? $this->getRedirectUrl($user->role);
+            $redirect_to = $request->input('redirect_to');
+            $intended = session()->pull('url.intended');
+            $redirectUrl = $redirect_to ?: ($intended ?? $this->getRedirectUrl($user->role));
 
             return response()->json(['success' => true, 'redirect' => $redirectUrl]);
         }

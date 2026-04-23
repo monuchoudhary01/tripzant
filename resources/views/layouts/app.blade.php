@@ -35,11 +35,54 @@
             align-items: center;
         }
         #siteHeader.scrolled {
-            background: rgba(255, 255, 255, 0.9) !important;
+            background: rgba(255, 255, 255, 0.95) !important;
             backdrop-filter: blur(15px);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
-            height: 70px;
+            height: 75px;
         }
+        
+        /* Button Fixes */
+        .btn-partner {
+            height: 42px;
+            border: 2px solid var(--primary) !important;
+            color: var(--primary) !important;
+            font-size: 10.5px !important;
+            letter-spacing: 0.5px;
+            padding: 0 20px !important;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-partner:hover {
+            background-color: var(--primary) !important;
+            color: #fff !important;
+            box-shadow: 0 8px 20px rgba(0, 118, 247, 0.25);
+        }
+        
+        .btn-login-header {
+            height: 42px;
+            background: linear-gradient(135deg, #0076f7 0%, #0056b3 100%);
+            border: none;
+            color: #fff !important;
+            font-size: 10.5px !important;
+            letter-spacing: 0.5px;
+            padding: 0 20px !important;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-login-header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 118, 247, 0.3);
+            color: #fff !important;
+        }
+
         main { padding-top: 5px; }
 
         /* Modal Backdrop Override - WEBSITE NO VISIBLE */
@@ -130,21 +173,21 @@
             <div class="d-flex align-items-center gap-3">
                 <div class="d-none d-lg-flex align-items-center gap-3">
                     @if(!auth()->check() || auth()->user()->role !== 'user')
-                        <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#partnerModal" class="btn btn-outline-primary rounded-pill px-3 fw-bold d-flex align-items-center gap-2 shadow-sm transition-fast hvr-grow" style="height: 44px; border: 2px solid #0076f7; color: #0076f7;">
-                            <i class="fas fa-handshake"></i>
-                            <span style="font-size: 11px; letter-spacing: 0.5px;">BECOME A PARTNER</span>
+                        <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#partnerModal" class="btn btn-partner rounded-pill fw-bold shadow-sm hvr-grow">
+                            <i class="fas fa-handshake fs-6"></i>
+                            <span>BECOME A PARTNER</span>
                         </a>
 
                         @if(auth()->check())
                             <!-- If logged in as Partner/Admin, show a small dashboard link instead of Login -->
-                            <a href="{{ auth()->user()->getDashboardUrl() }}" class="btn btn-navy rounded-pill px-4 fw-900 d-flex align-items-center gap-2 shadow-sm hover-shadow transition-fast" style="height: 44px;">
+                            <a href="{{ auth()->user()->getDashboardUrl() }}" class="btn btn-navy rounded-pill px-4 fw-900 d-flex align-items-center gap-2 shadow-sm hover-shadow transition-fast" style="height: 42px;">
                                 <i class="fas fa-th-large"></i>
                                 <span class="text-uppercase tracking-wider" style="font-size: 11px;">Go to Dashboard</span>
                             </a>
                         @else
-                            <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#loginModal" class="btn btn-primary rounded-pill px-4 fw-900 d-flex align-items-center gap-2 shadow-sm hover-shadow transition-fast" style="height: 44px; background: linear-gradient(135deg, #0076f7 0%, #0056b3 100%);">
+                            <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#loginModal" class="btn btn-login-header rounded-pill fw-800 shadow-sm hvr-grow">
                                 <i class="fas fa-user-circle fs-5"></i>
-                                <span class="text-uppercase tracking-wider" style="font-size: 12px;">LOGIN / SIGNUP</span>
+                                <span class="text-uppercase tracking-wider">LOGIN / SIGNUP</span>
                             </a>
                         @endif
                     @else

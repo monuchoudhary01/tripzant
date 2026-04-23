@@ -274,13 +274,32 @@
 
     function init() {
         if (!passengers || !passengers.length) {
-            Swal.fire({
-                title: 'Data Unavailable',
-                text: 'We couldn\'t load your manifest details. Please return to the flight listing.',
-                icon: 'warning',
-                confirmButtonColor: '#005eb8'
-            }).then(() => window.location.href = '/flights');
-            return;
+            // Fallback: try to recover travelers from api_booking_details stored in booking
+            @if($booking && $booking->api_booking_details)
+            const apiDetails = @json(json_decode($booking->api_booking_details, true));
+            const recoveredTravelers = apiDetails?.travelers || [];
+            if (recoveredTravelers.length > 0) {
+                // Inject recovered travelers into the passengers array
+                recoveredTravelers.forEach(t => passengers.push(t));
+                console.log('Recovered ' + passengers.length + ' travelers from api_booking_details');
+            }
+            @endif
+
+            if (!passengers || !passengers.length) {
+                Swal.fire({
+                    title: 'Traveler Data Not Found',
+                    html: `<p class="text-muted">Traveler details is booking ke liye load nahi ho saki.</p>
+                           <p class="small text-muted mb-0">Aap seat selection skip karke <b>My Bookings</b> page pe ja sakte hain.</p>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'My Bookings',
+                    cancelButtonText: 'Stay Here',
+                    confirmButtonColor: '#005eb8'
+                }).then((result) => {
+                    if (result.isConfirmed) window.location.href = '/dashboard/bookings';
+                });
+                return;
+            }
         }
 
         // Initialize selections for all legs
@@ -510,28 +529,37 @@
     function saveSeatsAndProceed() {
         localStorage.setItem('selected_seats_multi', JSON.stringify(selectionsByLeg));
         
+        // Log SSR seat assignments (safely guard against null legs)
         console.group("🚀 Amadeus Multi-Leg Seat Assignment Logs (SSR SEAT)");
         legs.forEach((leg, legIdx) => {
             const legSelections = selectionsByLeg[legIdx];
-            console.log(`%cLEG ${legIdx+1}: ${leg.dep_city} → ${leg.arr_city}`, "color: #0b3d61; font-weight: 900; background: #e6f0f8; padding: 2px 10px; border-radius: 4px;");
+            const legLabel = leg ? `${leg.dep_city || leg.departure_city || 'DEP'} → ${leg.arr_city || leg.arrival_city || 'ARR'}` : `Segment ${legIdx + 1}`;
+            console.log(`%cLEG ${legIdx+1}: ${legLabel}`, "color: #0b3d61; font-weight: 900; background: #e6f0f8; padding: 2px 10px; border-radius: 4px;");
             
             passengers.forEach((p, pIdx) => {
-                const seat = legSelections[pIdx];
+                const seat = legSelections?.[pIdx];
                 if (seat) {
                     const ssrLine = `SSR SEAT HK1 /${seat.seatId}/P${pIdx + 1}/SEG${legIdx + 1}`;
-                    console.log(`%c  Traveler ${pIdx+1} (${p.first_name}): ${ssrLine}`, "color: #005eb8; font-weight: bold;");
+                    console.log(`%c  Traveler ${pIdx+1} (${p.first_name || 'PAX'}): ${ssrLine}`, "color: #005eb8; font-weight: bold;");
                 }
             });
         });
         console.groupEnd();
 
+        const totalSeats = passengers.length * Math.max(legs.length, 1);
+        const bookingRef = "{{ $reference ?? '' }}";
+
         Swal.fire({
-            title: 'Inventory Booked',
-            text: `Successfully assigned ${passengers.length * legs.length} seats across all segments.`,
+            title: '✅ Seats Confirmed!',
+            html: `<p class="mb-1">Successfully assigned <b>${totalSeats}</b> seat(s).</p>
+                   <p class="text-muted small mb-0">Proceeding to add-ons & extras...</p>`,
             icon: 'success',
-            confirmButtonColor: '#005eb8'
+            confirmButtonColor: '#005eb8',
+            confirmButtonText: 'Continue →',
+            timer: 3000,
+            timerProgressBar: true
         }).then(() => {
-            window.location.href = '/add-ons';
+            window.location.href = '/add-ons' + (bookingRef ? '?reference=' + bookingRef : '');
         });
     }
 
