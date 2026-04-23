@@ -271,7 +271,7 @@
 
         .mc-stepper-mmt { 
             background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;
-            position: sticky; top: 90px; z-index: 999; margin-bottom: 25px;
+            position: sticky; top: 195px !important; z-index: 998 !important; margin-bottom: 25px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
         .mc-step-tab { cursor: pointer; transition: all 0.3s; background: #fff; border-right: 1px solid #eee; position: relative; }
@@ -393,7 +393,7 @@
         <div class="row g-4">
             <!-- Filters Sidebar -->
             <div class="col-lg-3">
-                <div class="filter-card-v4 sticky-top" style="top:165px; z-index: 900;">
+                <div class="filter-card-v4 sticky-top" style="top:270px; z-index: 900;">
                     <div class="filter-title-v4"><span><i class="fas fa-sliders"></i></span> FILTERS</div>
 
                     <div class="filter-group-v4">
@@ -1401,8 +1401,8 @@
             // Extract data from attributes for reliability
             const price = parseInt(el.getAttribute('data-price')) || 0;
             const airline = el.getAttribute('data-airline') || 'Airline';
-            const depTime = el.querySelector('.dep-time') ? el.querySelector('.dep-time').innerText : '00:00';
-            const arrTime = el.querySelector('.fw-900.text-navy:not(.dep-time)') ? el.querySelector('.fw-900.text-navy:not(.dep-time)').innerText : '00:00';
+            const depTime = el.querySelector('.dep-time') ? el.querySelector('.dep-time').innerText : '10:00';
+            const arrTime = el.querySelector('.arr-time') ? el.querySelector('.arr-time').innerText : '12:00';
             
             selectedMCFlights[index] = {
                 airline: airline,
@@ -1414,8 +1414,9 @@
                     dep_city: el.getAttribute('data-leg') === 'onward' ? '{{ $origin }}' : '{{ $destination }}',
                     arr_time: arrTime,
                     arr_city: el.getAttribute('data-leg') === 'onward' ? '{{ $destination }}' : '{{ $origin }}',
-                    duration: el.dataset.duration || '0h 0m',
-                    date: el.dataset.date || (index == 0 ? '{{ $travelDate }}' : '{{ $returnDate }}')
+                    price: price,
+                    duration: el.getAttribute('data-duration') || '0h 0m',
+                    date: el.getAttribute('data-date') || (index == 0 ? '{{ $travelDate }}' : '{{ $returnDate }}')
                 }
             };
             
@@ -2512,22 +2513,43 @@
             // If it's a multi-segment itinerary (Round Trip or MC)
             if (isMultiCity || isRoundTrip) {
                 const legIndex = data.leg.includes('-') ? data.leg.split('-')[1] : (data.leg === 'onward' ? 0 : 1);
-                // Find the specific card within its correct leg container
                 const container = document.getElementById(`mc-leg-${legIndex}`);
+                
+                // Try to find the physical card to trigger visual highlights
+                let targetCard = null;
                 if (container) {
                     const cards = container.querySelectorAll('.result-card');
-                    let targetCard = null;
                     cards.forEach(c => {
-                        if (c.getAttribute('data-price') == data.price && c.getAttribute('data-airline') == data.airline) {
+                        // More flexible matching for price and airline
+                        const cPrice = c.getAttribute('data-price');
+                        const cAirline = c.getAttribute('data-airline');
+                        if (cPrice == data.price && (cAirline == data.airline || data.airline.includes(cAirline))) {
                             targetCard = c;
                         }
                     });
-                    
-                    if (targetCard) {
-                        window.selectGroupFlight(targetCard, `mc-${legIndex}`);
-                        return;
+                }
+                
+                // If we found the card, use the existing selectGroupFlight for visuals
+                if (targetCard) {
+                    window.selectGroupFlight(targetCard, `mc-${legIndex}`);
+                } else {
+                    // Fallback: Manually update the state if card lookup failed
+                    console.warn("Card lookup failed, updating state manually");
+                    selectedMCFlights[legIndex] = {
+                        airline: data.airline,
+                        price: parseInt(data.price),
+                        details: data
+                    };
+                    const infoEl = document.getElementById(`mc-bar-info-${legIndex}`);
+                    if(infoEl) {
+                        infoEl.innerText = `₹${parseInt(data.price).toLocaleString()}`;
+                        infoEl.classList.replace('text-white-50', 'text-white');
                     }
                 }
+                
+                // Auto-move to next leg for better UX
+                setTimeout(() => proceedToNextLeg(), 300);
+                return;
             }
 
             localStorage.setItem('selectedFlight', JSON.stringify(data));
@@ -2627,15 +2649,37 @@
 
     function initMmtDates() {
         if (typeof flatpickr === 'undefined') return;
-        const config = { 
+        
+        const depPicker = flatpickr("#mmtDeparture", {
             dateFormat: "D, d M Y", 
             minDate: "today", 
             theme: "dark",
             disableMobile: "true",
+            static: true,
+            onChange: function(selectedDates, dateStr, instance) {
+                const retPicker = document.getElementById('mmtReturn')._flatpickr;
+                if (retPicker) {
+                    // Update minDate for return to be same or after departure
+                    retPicker.set('minDate', dateStr);
+                    
+                    // If return date is now before departure, auto-adjust to +1 day
+                    const currentRet = retPicker.selectedDates[0];
+                    if (currentRet && currentRet < selectedDates[0]) {
+                        const newRet = new Date(selectedDates[0]);
+                        newRet.setDate(newRet.getDate() + 1);
+                        retPicker.setDate(newRet);
+                    }
+                }
+            }
+        });
+
+        const retPicker = flatpickr("#mmtReturn", {
+            dateFormat: "D, d M Y", 
+            minDate: "{{ $travelDate ?: 'today' }}", 
+            theme: "dark",
+            disableMobile: "true",
             static: true
-        };
-        flatpickr("#mmtDeparture", config);
-        flatpickr("#mmtReturn", config);
+        });
     }
 
     function initMmtAutocomplete() {
@@ -2733,7 +2777,12 @@
         const trip = document.getElementById('mmtTripType').value;
 
         if (!o || !d || !depDate) {
-            Swal.fire({ title: 'Missing Information', text: 'Origin, destination and date are required.', icon: 'warning' });
+            Swal.fire({ title: 'Missing Information', text: 'Origin, destination and departure date are required.', icon: 'warning' });
+            return;
+        }
+
+        if (trip === 'roundtrip' && retDate && retDate < depDate) {
+            Swal.fire({ title: 'Invalid Date', text: 'Return date cannot be before departure date.', icon: 'warning' });
             return;
         }
 

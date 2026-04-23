@@ -29,8 +29,8 @@ class AuthController extends Controller
             $user = Auth::user();
             AuditLogService::log('Auth', 'Unified Login', 'User logged in: ' . $user->name, null, ['role' => $user->role]);
 
-            // Check for intended URL (e.g., hotel checkout)
-            $intended = session()->pull('url.intended', null);
+            // Support both session intended and manual redirect_to parameter
+            $intended = session()->pull('url.intended', $request->input('redirect_to'));
             $redirectUrl = $intended ?? $this->getRedirectUrl($user->role);
 
             return response()->json(['success' => true, 'redirect' => $redirectUrl]);
@@ -107,8 +107,8 @@ class AuthController extends Controller
             $user = Auth::user();
             AuditLogService::log('Auth', 'Login', 'User logged in: ' . $user->name, null, ['role' => $user->role]);
 
-            // Honour intended URL (hotel checkout redirect)
-            $intended = session()->pull('url.intended', null);
+            // Support both session intended and manual redirect_to
+            $intended = session()->pull('url.intended', $request->input('redirect_to'));
             $redirectUrl = $intended ?? $this->getRedirectUrl($user->role);
 
             return response()->json(['success' => true, 'redirect' => $redirectUrl]);
@@ -180,7 +180,14 @@ class AuthController extends Controller
         $user = User::where('phone', $request->phone)->first();
         if ($user && ($request->otp === $user->otp || $request->otp === '1234')) {
             Auth::login($user);
-            return response()->json(['success' => true, 'redirect' => $this->getRedirectUrl($user->role)]);
+            $request->session()->regenerate();
+            AuditLogService::log('Auth', 'OTP Login', 'User logged in via phone: ' . $user->phone, null, ['role' => $user->role]);
+
+            // Support both session intended and manual redirect_to
+            $intended = session()->pull('url.intended', $request->input('redirect_to'));
+            $redirectUrl = $intended ?? $this->getRedirectUrl($user->role);
+
+            return response()->json(['success' => true, 'redirect' => $redirectUrl]);
         }
         return response()->json(['success' => false, 'message' => 'Invalid OTP.']);
     }
@@ -206,7 +213,12 @@ class AuthController extends Controller
             $user->password = Hash::make($request->password);
             $user->save();
             Auth::login($user);
-            return response()->json(['success' => true, 'redirect' => $this->getRedirectUrl($user->role)]);
+            $request->session()->regenerate();
+
+            $intended = session()->pull('url.intended', $request->input('redirect_to'));
+            $redirectUrl = $intended ?? $this->getRedirectUrl($user->role);
+
+            return response()->json(['success' => true, 'redirect' => $redirectUrl]);
         }
         return response()->json(['success' => false, 'message' => 'Invalid OTP.']);
     }
@@ -260,7 +272,12 @@ class AuthController extends Controller
             $user->is_verified = true;
             $user->save();
             Auth::login($user);
-            return response()->json(['success' => true, 'redirect' => $this->getRedirectUrl($user->role)]);
+            $request->session()->regenerate();
+
+            $intended = session()->pull('url.intended', $request->input('redirect_to'));
+            $redirectUrl = $intended ?? $this->getRedirectUrl($user->role);
+
+            return response()->json(['success' => true, 'redirect' => $redirectUrl]);
         }
         return response()->json(['success' => false, 'message' => 'Invalid OTP']);
     }

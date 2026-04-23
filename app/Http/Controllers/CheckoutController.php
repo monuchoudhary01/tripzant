@@ -14,37 +14,61 @@ class CheckoutController extends Controller
     public function index(Request $request)
     {
         $type = $request->input('type', 'flight');
-        $id = $request->input('id', $request->input('amp;id')); // Fix for &amp; in URL
+        $mode = $request->input('mode');
+        $id = $request->input('id', $request->input('amp;id'));
         $item = null;
 
-        if ($type === 'flight') {
+        $totalPrice = 0;
+        if ($mode === 'split') {
+            $item = json_decode($request->input('flights'), true);
+            $type = 'flight';
+            if (is_array($item)) {
+                $totalPrice = array_sum(array_column($item, 'price'));
+            }
+        } elseif ($type === 'flight') {
             $flightResults = Cache::get('flight_search_full');
-            if ($flightResults && isset($flightResults['raw_data'])) {
-                // Find the flight by ID
-                foreach ($flightResults['raw_data'] as $flight) {
-                    if (($flight['id'] ?? '') == $id) {
-                        $item = $flight;
+            
+            // Try Unified Data first (has city names, times etc.)
+            if ($flightResults && isset($flightResults['data'])) {
+                foreach ($flightResults['data'] as $flight) {
+                    $fId = is_array($flight) ? ($flight['id'] ?? '') : ($flight->id ?? '');
+                    if ($fId == $id) {
+                        $item = is_array($flight) ? $flight : $flight->toArray();
                         break;
                     }
                 }
             }
-            // Fallback to first if ID not found but data exists
-            if (!$item && isset($flightResults['data'][0])) {
-                $item = $flightResults['data'][0];
+
+            // Fallback to Raw Data if not found in unified (for backward compatibility)
+            if (!$item && $flightResults && isset($flightResults['raw_data'])) {
+                foreach ($flightResults['raw_data'] as $flight) {
+                    $fId = is_array($flight) ? ($flight['id'] ?? '') : ($flight->id ?? '');
+                    if ($fId == $id) {
+                        $item = is_array($flight) ? $flight : $flight->toArray();
+                        break;
+                    }
+                }
             }
-        } elseif ($type === 'homestay') {
-            $item = \App\Models\Homestay::find($id);
-        } elseif ($type === 'tour') {
-            $item = \App\Models\Tour::find($id);
-        } elseif ($type === 'esim') {
-            $item = \App\Models\EsimPlan::find($id);
-        } elseif ($type === 'insurance') {
-            $item = \App\Models\InsurancePlan::find($id);
+
+            if ($item) {
+                // Extract numeric price from potential Amadeus price object
+                $priceData = $item['price'] ?? ($item['total_price'] ?? 0);
+                $totalPrice = is_array($priceData) ? ($priceData['total'] ?? 100) : $priceData;
+            }
+        } else {
+            if ($type === 'homestay') $item = \App\Models\Homestay::find($id);
+            elseif ($type === 'tour') $item = \App\Models\Tour::find($id);
+            elseif ($type === 'esim') $item = \App\Models\EsimPlan::find($id);
+            elseif ($type === 'insurance') $item = \App\Models\InsurancePlan::find($id);
+            
+            if ($item && isset($item->price)) {
+                $totalPrice = $item->price;
+            }
         }
 
         $stripeKey = \App\Models\GlobalSetting::where('key', 'stripe_publishable_key')->value('value');
 
-        return view('checkout', compact('type', 'item', 'stripeKey'));
+        return view('checkout', compact('type', 'item', 'stripeKey', 'totalPrice'));
     }
 
     public function process(Request $request)
@@ -113,8 +137,8 @@ class CheckoutController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Payment Successful! Your booking is confirmed.',
-                'redirect' => route('booking.confirmation', ['id' => $booking->booking_reference])
+                'message' => 'Payment Successful! Now select your preferred seats.',
+                'redirect' => route('seat.selection', ['reference' => $booking->booking_reference])
             ]);
 
         } catch (\Stripe\Exception\CardException $e) {

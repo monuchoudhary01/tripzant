@@ -302,7 +302,9 @@
                 icon: 'success',
                 confirmButtonColor: '#005eb8'
             }).then(() => {
-                window.location.href = '/booking-confirmation';
+                const urlParams = new URLSearchParams(window.location.search);
+                const ref = urlParams.get('reference');
+                window.location.href = '/booking-confirmation' + (ref ? '?reference=' + ref : '');
             });
         });
     }

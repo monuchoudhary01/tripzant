@@ -20,6 +20,7 @@
             --navy: #002f55;
             --primary: #0076f7;
             --orange: #ff8c00;
+            --header-height: 85px;
         }
         .btn-navy { background: var(--navy); color: #fff; }
         .btn-navy:hover { background: #001f3a; color: #fff; }
@@ -27,6 +28,20 @@
         .fw-900 { font-weight: 900 !important; }
         .x-small { font-size: 10px; }
         
+        #siteHeader {
+            height: var(--header-height);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            display: flex;
+            align-items: center;
+        }
+        #siteHeader.scrolled {
+            background: rgba(255, 255, 255, 0.9) !important;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+            height: 70px;
+        }
+        main { padding-top: 5px; }
+
         /* Modal Backdrop Override - WEBSITE NO VISIBLE */
         .modal-backdrop.show {
             opacity: 0.98 !important;

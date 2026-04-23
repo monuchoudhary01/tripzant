@@ -110,7 +110,7 @@
                             </div>
                         </div>
                         <div class="col-4">
-                            <div class="fw-900 text-navy" style="font-size:24px; line-height:1;">{{ $arrTime }}</div>
+                            <div class="fw-900 text-navy arr-time" style="font-size:24px; line-height:1;">{{ $arrTime }}</div>
                             <div class="text-muted fw-800 uppercase mt-1" style="font-size:11px;">{{ $arrCity }}</div>
                         </div>
                     </div>

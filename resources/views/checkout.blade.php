@@ -378,9 +378,63 @@
                 <i class="fas fa-plus-circle me-2"></i> ADD ANOTHER TRAVELER
             </button>
 
+            <!-- NEW: Customize Your Journey (MMT Style Flow) -->
+            <div class="checkout-card mb-4" id="customizeSection">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-900 text-navy mb-0"><i class="fas fa-magic me-2 text-primary"></i> Personalize Your Journey</h5>
+                    <span class="badge bg-primary bg-opacity-10 text-primary fw-800 rounded-pill px-3 py-1" style="font-size: 10px;">OPTIONAL</span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded-4 d-flex align-items-center gap-3 hvr-grow bg-white shadow-sm" onclick="openSeatModal()" style="cursor:pointer; transition: 0.3s; border: 1.5px solid #f1f5f9 !important;">
+                            <div class="icon-box-customize bg-primary-light text-primary"><i class="fas fa-chair"></i></div>
+                            <div class="flex-grow-1">
+                                <div class="fw-900 text-navy mb-0" style="font-size:14px;">Select Preferred Seat</div>
+                                <div class="small text-muted fw-bold">Windows, Aisle or Extra Legroom</div>
+                                <div id="selectedSeatBadge" class="d-none mt-1"><span class="badge bg-success bg-opacity-10 text-success fw-800" style="font-size:9px;">SEAT SELECTED</span></div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted opacity-30"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded-4 d-flex align-items-center gap-3 hvr-grow bg-white shadow-sm" onclick="openAddonsModal()" style="cursor:pointer; transition: 0.3s; border: 1.5px solid #f1f5f9 !important;">
+                            <div class="icon-box-customize bg-orange-light text-warning"><i class="fas fa-suitcase-rolling"></i></div>
+                            <div class="flex-grow-1">
+                                <div class="fw-900 text-navy mb-0" style="font-size:14px;">Baggage & Meals</div>
+                                <div class="small text-muted fw-bold">Pre-book & save up to 40%</div>
+                                <div id="selectedAddonBadge" class="d-none mt-1"><span class="badge bg-primary bg-opacity-10 text-primary fw-800" style="font-size:9px;">ADD-ONS ADDED</span></div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted opacity-30"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                .icon-box-customize {
+                    width: 45px;
+                    height: 45px;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 18px;
+                }
+                .bg-primary-light { background: #eff6ff; }
+                .bg-orange-light { background: #fff7ed; }
+                .bg-success-light { background: #f0fdf4; }
+            </style>
+
             <!-- Payment -->
             <div class="checkout-card" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
-                <h5 class="fw-900 text-navy mb-4">Secure Payment Gateway</h5>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-900 text-navy mb-0">Secure Payment Gateway</h5>
+                    @if(str_contains($stripeKey, 'pk_test'))
+                        <span class="badge bg-warning text-dark fw-800 px-3 py-2 rounded-pill shadow-sm" style="font-size: 10px; letter-spacing: 0.5px;"><i class="fas fa-flask-vial me-2"></i> STRIPE TEST MODE</span>
+                    @else
+                        <span class="badge bg-success text-white fw-800 px-3 py-2 rounded-pill shadow-sm" style="font-size: 10px; letter-spacing: 0.5px;"><i class="fas fa-shield-check me-2"></i> LIVE MODE</span>
+                    @endif
+                </div>
                 
                 <div class="alert bg-white border rounded-4 p-3 mb-4 d-flex align-items-center gap-4 shadow-sm border-primary border-opacity-25">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" height="28">
@@ -391,7 +445,7 @@
                     </div>
                 </div>
 
-                <div class="p-4 bg-white border border-light rounded-4 shadow-sm">
+                <div class="p-4 bg-white border @if(str_contains($stripeKey, 'pk_test')) border-warning @else border-light @endif rounded-4 shadow-sm" style="border-width: 2px !important;">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <label class="form-label-premium mb-0">Credit / Debit Card Details</label>
                         <div class="d-flex gap-2 payment-icons">
@@ -400,7 +454,7 @@
                             <img src="https://img.icons8.com/color/48/amex.png" width="28">
                         </div>
                     </div>
-                    <div id="card-element" class="form-control custom-input bg-light bg-opacity-25 py-3" style="min-height: 52px; display: flex; align-items: center;">
+                    <div id="card-element" class="form-control custom-input bg-light bg-opacity-10 py-3" style="min-height: 54px; border: 1.5px solid #e2e8f0;">
                         <!-- Stripe Element will be injected here -->
                     </div>
                     <div id="card-errors" role="alert" class="text-danger small mt-2 fw-bold"></div>
@@ -417,7 +471,11 @@
         <!-- Price Summary Column -->
         <div class="col-lg-4">
             <div class="checkout-card sticky-top" style="top: 150px;">
-                <h5 class="fw-900 text-navy mb-4">Price Summary</h5>
+                <h5 class="fw-900 text-navy mb-1">Price Summary</h5>
+                <div id="itineraryBreakdown" class="mb-4">
+                    <!-- Dynamic segments will be injected here -->
+                </div>
+                
                 <div class="fare-summary-row border-bottom pb-2 mb-2">
                     <span class="text-muted fw-bold small">Base Fare</span>
                     <span id="summaryBaseFare" class="text-navy fw-800">₹0</span>
@@ -426,6 +484,20 @@
                     <span class="text-muted fw-bold small">Taxes & Service Fee</span>
                     <span id="summaryTaxes" class="text-navy fw-800">₹0</span>
                 </div>
+                <!-- Dynamic Add-ons -->
+                <div id="seatChargeRow" class="fare-summary-row border-bottom pb-2 mb-2 d-none">
+                    <div class="d-flex justify-content-between w-100">
+                        <span class="text-muted fw-bold small">Assigned Seats</span>
+                        <span id="summarySeatFare" class="text-navy fw-800">₹0</span>
+                    </div>
+                </div>
+                <div id="addonChargeRow" class="fare-summary-row border-bottom pb-2 mb-2 d-none">
+                    <div class="d-flex justify-content-between w-100">
+                        <span class="text-muted fw-bold small">Extra Baggage & Meals</span>
+                        <span id="summaryAddonFare" class="text-navy fw-800">₹0</span>
+                    </div>
+                </div>
+
                 <div id="discountRow" class="fare-summary-row text-success border-bottom pb-2 mb-2 d-none">
                     <span class="fw-bold small">Promotional Discount</span>
                     <span id="summaryDiscount" class="fw-800">-₹0</span>
@@ -450,97 +522,116 @@
         </div>
     </div>
 </div>
+
+<!-- Seat Modal -->
+<div class="modal fade" id="seatModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-4">
+            <div class="modal-header border-0"><h5 class="modal-title fw-900">Select Your Seat</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body text-center">
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                    @foreach(['1A','1B','1C','2A','2B','2C'] as $seat)
+                        <div class="m-seat" onclick="selectSeatInModal('{{$seat}}', 500)">{{$seat}}</div>
+                    @endforeach
+                </div>
+            </div>
+            <div class="modal-footer border-0"><button class="btn btn-primary w-100 rounded-pill" data-bs-dismiss="modal">Save Selection</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Addons Modal -->
+<div class="modal fade" id="addonsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-4">
+            <div class="modal-header border-0"><h5 class="modal-title fw-900">Baggage & Meals</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="meal-card-m mb-3" onclick="selectMealInModal(300, 'Veg Meal')">Veg Meal (+₹300)</div>
+                        <div class="meal-card-m" onclick="selectMealInModal(400, 'Non-Veg Meal')">Non-Veg Meal (+₹400)</div>
+            </div>
+            <div class="modal-footer border-0"><button class="btn btn-primary w-100 rounded-pill" data-bs-dismiss="modal">Save Selection</button></div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
 <script src="https://js.stripe.com/v3/"></script>
 <script>
-    const isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
     const stripeKey = "{{ $stripeKey }}";
     const stripe = Stripe(stripeKey);
     const elements = stripe.elements();
-
-    // Style for Stripe Element
-    const style = {
-        base: {
-            color: '#0b3d61',
-            fontFamily: '"Outfit", sans-serif',
-            fontSmoothing: 'antialiased',
-            fontSize: '14px',
-            '::placeholder': { color: '#94a3b8' }
-        },
-        invalid: { color: '#ef4444', iconColor: '#ef4444' }
-    };
-
-    const card = elements.create('card', { style: style });
+    const card = elements.create('card', {
+        style: {
+            base: { fontSize: '16px', color: '#1a1a2e', '::placeholder': { color: '#a0aec0' } }
+        }
+    });
     card.mount('#card-element');
 
-    card.on('change', function(event) {
-        const displayError = document.getElementById('card-errors');
-        if (event.error) displayError.textContent = event.error.message;
-        else displayError.textContent = '';
-    });
+    // MMT Style State Management
+    let extraCharges = {
+        seats: 0,
+        baggage: 0,
+        meals: 0,
+        details: { seats: [], baggage: null, meal: null }
+    };
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const type = "{{ $type }}";
-        @if(isset($item))
+    function refreshTotal() {
         const itemData = @json($item);
-        console.log("Item Data Initialized:", itemData);
-
-        if (itemData) {
-            // Restore Flight Header Details
-            if (type === 'flight') {
-                let dep = '???', arr = '???';
-                if (itemData.itineraries && itemData.itineraries[0]) {
-                    const segs = itemData.itineraries[0].segments;
-                    dep = segs[0].departure.iataCode;
-                    arr = segs[segs.length-1].arrival.iataCode;
-                } else if (itemData.departure_city && itemData.arrival_city) {
-                    dep = itemData.departure_city;
-                    arr = itemData.arrival_city;
-                }
-                const summaryTitle = document.querySelector('.sticky-top h5');
-                if (summaryTitle) {
-                    const detailEl = document.createElement('div');
-                    detailEl.className = 'x-small fw-800 text-muted text-uppercase mb-3';
-                    detailEl.innerHTML = `<i class="fas fa-plane me-1"></i> ${dep} → ${arr}`;
-                    summaryTitle.after(detailEl);
-                }
+        let basePrice = {{ $totalPrice ?? 0 }};
+        
+        if (basePrice <= 0 && itemData) {
+            if (Array.isArray(itemData)) {
+                basePrice = itemData.reduce((sum, f) => sum + parseFloat(f.price || 0), 0);
+            } else if (itemData.price && typeof itemData.price === 'object') {
+                basePrice = itemData.price.total || 0;
+            } else if (itemData.price) {
+                basePrice = itemData.price;
             }
-
-            // Resolve Price logic for both Amadeus (raw) and UnifiedFlight (internal)
-            let basePrice = 0;
-            if (type === 'flight') {
-                if (itemData.price && typeof itemData.price === 'object') {
-                    basePrice = itemData.price.total || 0;
-                } else if (itemData.price) {
-                    basePrice = itemData.price;
-                }
-            } else {
-                basePrice = itemData.price || 0;
-            }
-
-            const baseFare = parseFloat(basePrice) || 0;
-            const taxes = Math.round(baseFare * 0.12); 
-            const total = baseFare + taxes; 
-
-            document.getElementById('summaryBaseFare').innerText = '₹' + baseFare.toLocaleString('en-IN');
-            document.getElementById('summaryTaxes').innerText = '₹' + taxes.toLocaleString('en-IN');
-            document.getElementById('summaryTotal').innerText = '₹' + total.toLocaleString('en-IN');
         }
-        @endif
-    });
+
+        const seatFare = extraCharges.seats;
+        const addonFare = extraCharges.baggage + extraCharges.meals;
+        const tax = (basePrice + seatFare + addonFare) * 0.12;
+        const total = basePrice + seatFare + addonFare + tax;
+
+        // Update UI Breakdown
+        document.getElementById('summaryBaseFare').innerText = '₹' + Math.round(basePrice).toLocaleString();
+        document.getElementById('summaryTaxes').innerText = '₹' + Math.round(tax).toLocaleString();
+        
+        if (seatFare > 0) {
+            document.getElementById('seatChargeRow').classList.remove('d-none');
+            document.getElementById('summarySeatFare').innerText = '₹' + Math.round(seatFare).toLocaleString();
+            document.getElementById('selectedSeatBadge')?.classList.remove('d-none');
+        }
+
+        if (addonFare > 0) {
+            document.getElementById('addonChargeRow').classList.remove('d-none');
+            document.getElementById('summaryAddonFare').innerText = '₹' + Math.round(addonFare).toLocaleString();
+            document.getElementById('selectedAddonBadge')?.classList.remove('d-none');
+        }
+
+        document.getElementById('summaryTotal').innerText = '₹' + Math.round(total).toLocaleString();
+    }
+
+    window.openSeatModal = () => new bootstrap.Modal(document.getElementById('seatModal')).show();
+    window.openAddonsModal = () => new bootstrap.Modal(document.getElementById('addonsModal')).show();
+
+    window.selectSeatInModal = function(num, p) {
+        extraCharges.seats = p;
+        extraCharges.details.seats = [num];
+        refreshTotal();
+    };
+
+    window.selectMealInModal = function(p, name) {
+        extraCharges.meals = p;
+        extraCharges.details.meal = name;
+        refreshTotal();
+    };
 
     window.confirmBooking = async function() {
-        if (!isLoggedIn) {
-            // Trigger Website Login Modal instead of Info Alert
-            const modalEl = document.getElementById('loginModal');
-            if (modalEl) {
-                const loginModal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                loginModal.show();
-            } else {
-                Swal.fire('Login Required', 'Please login to continue booking.', 'info');
-            }
+        if (!{{ Auth::check() ? 'true' : 'false' }}) {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('loginModal')).show();
             return;
         }
 
@@ -551,26 +642,21 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> AUTHORIZING...';
             btn.classList.add('disabled');
 
-            // 1. Create Stripe Token
             const {token, error} = await stripe.createToken(card);
-            if (error) {
-                throw new Error(error.message);
-            }
+            if (error) throw new Error(error.message);
 
-            // 2. Collect Traveler Data
             const travelers = [];
             document.querySelectorAll('.traveler-block').forEach((block, idx) => {
                 const fname = block.querySelector('input[placeholder*="Rahul"]')?.value || block.querySelector('input[placeholder*="First"]')?.value;
                 const lname = block.querySelector('input[placeholder*="Sharma"]')?.value || block.querySelector('input[placeholder*="Last"]')?.value;
-                if (!fname || !lname) throw new Error(`Please enter full name for Traveler #${idx + 1}`);
+                const email = block.querySelector('input[type="email"]')?.value;
+                const mobile = block.querySelector('input[type="tel"]')?.value;
+
+                if (!fname || !lname || !email || !mobile) throw new Error(`Incomplete details for Traveler #${idx + 1}`);
 
                 travelers.push({
-                    first_name: fname,
-                    last_name: lname,
-                    dob: block.querySelector('input[type="date"]')?.value || '1995-01-01',
-                    id_number: block.querySelector('input[placeholder*="number"]')?.value || '',
-                    email: block.querySelector('input[type="email"]')?.value || '',
-                    mobile: block.querySelector('input[type="tel"]')?.value || ''
+                    first_name: fname, last_name: lname, email: email, mobile: mobile,
+                    dob: block.querySelector('input[type="date"]')?.value || '1990-01-01'
                 });
             });
 
@@ -579,52 +665,38 @@
                 stripeToken: token.id,
                 type: "{{ $type }}",
                 travelers: travelers,
-                item_id: "{{ $item['id'] ?? '' }}",
+                extra_services: extraCharges.details,
                 total_amount: document.getElementById('summaryTotal').innerText.replace(/[₹,]/g, '').trim()
             };
 
-            const response = await fetch("{{ route('checkout.process') }}", {
+            const resp = await fetch("{{ route('checkout.process') }}", {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': "{{ csrf_token() }}"
-                },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
                 body: JSON.stringify(payload)
             });
 
-            const data = await response.json();
+            const data = await resp.json();
             if (data.success) {
-                Swal.fire({ 
-                    title: '<span class="text-navy fw-900">Booking Confirmed!</span>', 
-                    text: data.message, 
-                    icon: 'success',
-                    confirmButtonColor: '#002f55'
-                }).then(() => window.location.href = data.redirect);
+                Swal.fire({ title: 'Booking Confirmed!', text: 'Payment Successful!', icon: 'success' })
+                .then(() => window.location.href = data.redirect);
             } else {
-                throw new Error(data.message || "Payment processing failed.");
+                throw new Error(data.message);
             }
-
         } catch (e) {
-            Swal.fire({
-                title: '<span class="text-danger fw-900">Payment Failed</span>',
-                text: e.message,
-                icon: 'error',
-                confirmButtonColor: '#0b3d61'
-            });
+            Swal.fire('Error', e.message, 'error');
             btn.innerHTML = originalText;
             btn.classList.remove('disabled');
         }
-    }
+    };
 
     // Add Traveler Logic
     document.getElementById('addTravelerBtn').onclick = function() {
         const container = document.getElementById('travelersContainer');
-        const original = document.querySelector('.traveler-block');
+        const blocks = document.querySelectorAll('.traveler-block');
+        const original = blocks[0];
         const newBlock = original.cloneNode(true);
         
-        const count = document.querySelectorAll('.traveler-block').length + 1;
-        newBlock.id = `traveler-${count}`;
+        const count = blocks.length + 1;
         
         // Fix header text
         const h5 = newBlock.querySelector('h5');

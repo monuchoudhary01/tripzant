@@ -148,14 +148,14 @@
                 <div class="misty-field-block">
                     <label><i class="fas fa-calendar-day me-2 icon-dim"></i> DEPARTURE</label>
                     <div class="m-val-group">
-                        <input type="date" id="flightDate" class="m-val-input-styled" value="2026-04-02">
+                        <input type="date" id="flightDate" class="m-val-input-styled" value="{{ date('Y-m-d', strtotime('+1 day')) }}">
                     </div>
                 </div>
 
                 <div class="misty-field-block" id="returnFieldBlock">
                     <label><i class="fas fa-calendar-plus me-2 icon-dim"></i> RETURN</label>
                     <div class="m-val-group">
-                        <input type="date" id="flightReturnDate" class="m-val-input-styled" disabled>
+                        <input type="date" id="flightReturnDate" class="m-val-input-styled" disabled value="{{ date('Y-m-d', strtotime('+7 days')) }}">
                     </div>
                     <div class="m-msg" id="returnMsg">Add return for savings</div>
                 </div>
@@ -192,7 +192,7 @@
                         </div>
                         <div class="misty-field-block">
                             <label><i class="fas fa-calendar-day me-2 icon-dim"></i> DEPARTURE</label>
-                            <input type="date" class="m-val-input-styled city-date" value="2026-04-02">
+                            <input type="date" class="m-val-input-styled city-date" value="{{ date('Y-m-d', strtotime('+3 days')) }}">
                         </div>
                         <div class="misty-field-block traveller-picker-trigger" onclick="toggleTravellerPicker(event)">
                             <label><i class="fas fa-users me-2 icon-dim"></i> TRAVELLERS & CLASS</label>
@@ -222,7 +222,7 @@
                         </div>
                         <div class="misty-field-block">
                             <label><i class="fas fa-calendar-day me-2 icon-dim"></i> DEPARTURE</label>
-                            <input type="date" class="m-val-input-styled city-date" value="2026-04-05">
+                            <input type="date" class="m-val-input-styled city-date" value="{{ date('Y-m-d', strtotime('+7 days')) }}">
                         </div>
                         <div class="misty-field-block bg-transparent border-0 opacity-0 pointer-none" style="flex:1;"></div>
                     </div>
@@ -340,13 +340,13 @@
                 <div class="misty-field-block">
                     <label><i class="fas fa-calendar-check me-2 icon-dim"></i> CHECK-IN</label>
                     <div class="m-val-group">
-                        <input type="date" id="hotelCheckIn" class="m-val-input-styled" value="2026-04-12">
+                        <input type="date" id="hotelCheckIn" class="m-val-input-styled" value="{{ date('Y-m-d') }}">
                     </div>
                 </div>
                 <div class="misty-field-block">
                     <label><i class="fas fa-calendar-times me-2 icon-dim"></i> CHECK-OUT</label>
                     <div class="m-val-group">
-                        <input type="date" id="hotelCheckOut" class="m-val-input-styled" value="2026-04-15">
+                        <input type="date" id="hotelCheckOut" class="m-val-input-styled" value="{{ date('Y-m-d', strtotime('+3 days')) }}">
                     </div>
                 </div>
                 <div class="misty-field-block traveller-picker-trigger" onclick="toggleTravellerPicker(event)">

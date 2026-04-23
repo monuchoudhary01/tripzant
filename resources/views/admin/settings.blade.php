@@ -91,6 +91,28 @@
             <div style="position:absolute; bottom:-30px; right: -30px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); border-radius: 50%; blur: 20px;"></div>
         </div>
 
+        <div class="card-admin shadow-sm border-0 p-5 mb-4">
+            <h6 class="fw-900 text-navy mb-4 d-flex align-items-center gap-2">
+                <i class="fas fa-credit-card text-primary"></i> Payment Gateway
+            </h6>
+            <p class="x-small text-muted mb-4 fw-bold uppercase">Stripe API Configuration</p>
+            
+            <form action="{{ route('admin.settings.global.update') }}" method="POST">
+                @csrf
+                <div class="mb-4">
+                    <label class="form-label fw-800 smaller text-uppercase opacity-75 mb-2">Publishable Key</label>
+                    <input type="text" name="settings[stripe_publishable_key]" class="form-control px-4 py-3 rounded-pill border-light bg-light font-monospace" value="{{ \App\Models\GlobalSetting::where('key', 'stripe_publishable_key')->value('value') }}" placeholder="pk_test_...">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-800 smaller text-uppercase opacity-75 mb-2">Secret Key</label>
+                    <input type="password" name="settings[stripe_secret_key]" class="form-control px-4 py-3 rounded-pill border-light bg-light font-monospace" value="{{ \App\Models\GlobalSetting::where('key', 'stripe_secret_key')->value('value') }}" placeholder="sk_test_...">
+                </div>
+                <button type="submit" class="btn btn-navy w-100 py-3 rounded-pill fw-900 uppercase shadow-sm">
+                    Update Gateway <i class="fas fa-arrow-right ms-2"></i>
+                </button>
+            </form>
+        </div>
+
         <div class="card-admin shadow-sm border-0 p-5">
             <h6 class="fw-900 text-navy mb-4">Site Favicon Settings</h6>
             <div class="d-flex align-items-center gap-5 p-4 bg-light rounded-4 border-dashed border-2 text-center flex-column">
@@ -105,4 +127,17 @@
         </div>
     </div>
 </div>
+
+<style>
+    .smaller { font-size: 10px; }
+    .x-small { font-size: 11px; }
+    .uppercase { text-transform: uppercase; }
+    .fw-800 { font-weight: 800; }
+    .fw-900 { font-weight: 900; }
+    .text-navy { color: #001f3f; }
+    .bg-navy { background: #001f3f !important; }
+    .btn-navy { background: #001f3f; color: white; border: none; }
+    .btn-navy:hover { background: #000; color: white; }
+    .font-monospace { font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important; font-size: 12px; }
+</style>
 @endsection
