@@ -15,6 +15,15 @@ return [
             : 'https://test.api.amadeus.com',
         'ndc_oid' => env('AMADEUS_NDC_OID', 'BNEA828CT'),
         
+        'soap' => [
+            'dns_node' => 'D2',
+            'header_version' => '4.0',
+            'services' => [
+                'Fare_MasterPricerTravelboard' => '24_1', 
+                'Fare_MasterPricerTravelBoardSearch' => '24_1',
+            ],
+            'connection_type' => 'Internet',
+        ],
         'providers' => [
             'CA' => [
                 'country' => 'Canada',
@@ -58,7 +67,7 @@ return [
             ],
             'AU' => [
                 'country' => 'Australia',
-                'pcc' => 'BNEA8217Z',
+                'pcc' => 'BNEA828CT',
                 'currency' => 'AUD',
                 'wsap' => '1ASIWSBESAT',
                 'user' => 'WSESIIBE',
@@ -71,6 +80,14 @@ return [
                 'wsap' => '1ASIWIBEESI',
                 'user' => 'WSESIIBE',
                 'password' => 'prWC5RnJ%ARx'
+            ],
+            'CA' => [
+                'country' => 'Canada',
+                'pcc' => 'YYCC42484',
+                'currency' => 'CAD',
+                'wsap' => '1ASIWIBEESI',
+                'user' => 'WSESIIBE',
+                'password' => 'zmry#GcJ*9JR'
             ],
         ]
     ],

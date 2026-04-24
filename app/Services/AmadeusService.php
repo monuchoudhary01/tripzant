@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use App\Services\AuditLogService;
 
+/**
+ * Amadeus REST Service
+ * Note: For GDS SOAP operations (MasterPricer v24.6, DNS D2), use AmadeusSoapService.
+ */
 class AmadeusService
 {
     protected $baseUrl;

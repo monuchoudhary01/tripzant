@@ -15,12 +15,29 @@ $token = $amadeus->getAccessToken();
 // 2. Test Flight Search (POST version with NDC sources)
 $results = [];
 if ($token) {
-    $results = $amadeus->flightOffersSearch([
-        'originLocationCode' => 'PAR',
-        'destinationLocationCode' => 'ICN',
-        'departureDate' => date('Y-m-d', strtotime('+7 days')),
-        'adults' => 2,
-        'max' => 5
+    // NDC Search requires a POST payload with specific sources
+    $results = $amadeus->flightOffersSearchPost([
+        'currencyCode' => 'AUD',
+        'originDestinations' => [
+            [
+                'id' => '1',
+                'originLocationCode' => 'SYD',
+                'destinationLocationCode' => 'BNE',
+                'departureDateTimeRange' => [
+                    'date' => date('Y-m-d', strtotime('+14 days'))
+                ]
+            ]
+        ],
+        'travelers' => [
+            [
+                'id' => '1',
+                'travelerType' => 'ADULT'
+            ]
+        ],
+        'sources' => ['GDS', 'NDC'], // Important for NDC certified accounts
+        'searchCriteria' => [
+            'maxFlightOffers' => 5
+        ]
     ]);
 }
 
