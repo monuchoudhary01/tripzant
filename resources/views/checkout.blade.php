@@ -229,11 +229,26 @@
             <div style="width:30px; height:2px; background:#e2e8f0;"></div>
             <div class="step-item completed">
                 <div class="step-number"><i class="fas fa-check"></i></div>
-                <span>Select</span>
+                <span>Select Flight</span>
             </div>
             <div style="width:30px; height:2px; background:#e2e8f0;"></div>
             <div class="step-item active">
                 <div class="step-number">3</div>
+                <span>Traveler Details</span>
+            </div>
+            <div style="width:30px; height:2px; background:#e2e8f0;"></div>
+            <div class="step-item">
+                <div class="step-number">4</div>
+                <span>Seat</span>
+            </div>
+            <div style="width:30px; height:2px; background:#e2e8f0;"></div>
+            <div class="step-item">
+                <div class="step-number">5</div>
+                <span>Add-ons</span>
+            </div>
+            <div style="width:30px; height:2px; background:#e2e8f0;"></div>
+            <div class="step-item">
+                <div class="step-number">6</div>
                 <span>Payment</span>
             </div>
         </div>
@@ -434,31 +449,6 @@
                 .bg-success-light { background: #f0fdf4; }
             </style>
 
-            <!-- Payment -->
-            <div class="checkout-card" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-900 text-navy mb-0">Secure Stripe Payment</h5>
-                    <span class="badge bg-success text-white fw-800 px-3 py-2 rounded-pill shadow-sm" style="font-size: 10px; letter-spacing: 0.5px;"><i class="fas fa-shield-check me-2"></i> SECURE GATEWAY</span>
-                </div>
-                
-                <div class="alert bg-white border rounded-4 p-4 mb-4 d-flex align-items-center gap-4 shadow-sm">
-                    <div class="icon-box bg-primary-light text-primary fs-3">
-                        <i class="fas fa-credit-card"></i>
-                    </div>
-                    <div>
-                        <div class="fw-900 text-navy" style="font-size: 14px;">Redirect to Secure Payment</div>
-                        <div class="fw-bold small text-muted">You will be redirected to Stripe to complete your payment securely.</div>
-                    </div>
-                </div>
-
-                <div class="p-3 rounded-4 bg-light d-flex justify-content-center gap-3 align-items-center opacity-75">
-                    <img src="https://img.icons8.com/color/48/visa.png" width="35">
-                    <img src="https://img.icons8.com/color/48/mastercard.png" width="35">
-                    <img src="https://img.icons8.com/color/48/amex.png" width="35">
-                    <img src="https://img.icons8.com/color/48/google-pay.png" width="35">
-                    <img src="https://img.icons8.com/color/48/apple-pay.png" width="35">
-                </div>
-            </div>
             </div>
         </div>
 
@@ -474,8 +464,12 @@
                     <span class="text-muted fw-bold small">Base Fare</span>
                     <span id="summaryBaseFare" class="text-navy fw-800">₹0</span>
                 </div>
+                <div class="fare-summary-row border-bottom pb-2 mb-2" id="paxMultiplyRow">
+                    <span class="text-muted fw-bold small">Travelers</span>
+                    <span id="summaryPaxCount" class="text-navy fw-800">× 1</span>
+                </div>
                 <div class="fare-summary-row border-bottom pb-2 mb-2">
-                    <span class="text-muted fw-bold small">Taxes & Service Fee</span>
+                    <span class="text-muted fw-bold small">Taxes &amp; Service Fee</span>
                     <span id="summaryTaxes" class="text-navy fw-800">₹0</span>
                 </div>
                 <!-- Dynamic Add-ons -->
@@ -505,12 +499,11 @@
                 </div>
 
                 <button onclick="confirmBooking()" class="btn-confirm btn btn-primary w-100 py-3 rounded-pill fw-900 shadow-lg mt-4" style="font-size: 15px; background: linear-gradient(135deg, #002f55 0%, #0076f7 100%); border:none;">
-                    CONFIRM BOOKING <i class="fas fa-arrow-right ms-2"></i>
+                    PROCEED TO SEAT SELECTION <i class="fas fa-arrow-right ms-2"></i>
                 </button>
                 
-                <div class="text-center mt-3 d-flex align-items-center justify-content-center gap-2">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" height="15" style="opacity:0.5;">
-                    <span class="text-muted fw-bold" style="font-size: 11px;"><i class="fas fa-lock me-1"></i> End-to-End Encrypted</span>
+                <div class="text-center mt-3">
+                    <span class="text-muted fw-bold" style="font-size: 11px;"><i class="fas fa-info-circle me-1"></i> Payment will be collected at the end after selecting seats &amp; add-ons</span>
                 </div>
             </div>
         </div>
@@ -550,10 +543,7 @@
 @endsection
 
 @section('scripts')
-<script src="https://js.stripe.com/v3/"></script>
 <script>
-    const stripeKey = "{{ $stripeKey }}";
-    const stripe = Stripe(stripeKey);
     // MMT Style State Management
     let extraCharges = {
         seats: 0,
@@ -576,13 +566,15 @@
             }
         }
 
+        const paxCount = document.querySelectorAll('.traveler-block').length;
+        const paxTotal = basePrice * paxCount;
         const seatFare = extraCharges.seats;
         const addonFare = extraCharges.baggage + extraCharges.meals;
-        const tax = (basePrice + seatFare + addonFare) * 0.12;
-        const total = basePrice + seatFare + addonFare + tax;
+        const tax = (paxTotal + seatFare + addonFare) * 0.12;
+        const total = paxTotal + seatFare + addonFare + tax;
 
-        // Update UI Breakdown
         document.getElementById('summaryBaseFare').innerText = '₹' + Math.round(basePrice).toLocaleString();
+        document.getElementById('summaryPaxCount').innerText = '× ' + paxCount;
         document.getElementById('summaryTaxes').innerText = '₹' + Math.round(tax).toLocaleString();
         
         if (seatFare > 0) {
@@ -615,7 +607,6 @@
         refreshTotal();
     };
 
-    // Simplified confirmBooking for Stripe Redirect
     window.confirmBooking = async function() {
         if (!{{ Auth::check() ? 'true' : 'false' }}) {
             bootstrap.Modal.getOrCreateInstance(document.getElementById('loginModal')).show();
@@ -626,31 +617,36 @@
         const originalText = btn.innerHTML;
 
         try {
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> REDIRECTING...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> SAVING...';
             btn.classList.add('disabled');
 
             const travelers = [];
+            let hasError = false;
             document.querySelectorAll('.traveler-block').forEach((block, idx) => {
-                const fname = block.querySelector('input[placeholder*="Rahul"]')?.value || block.querySelector('input[placeholder*="First"]')?.value;
-                const lname = block.querySelector('input[placeholder*="Sharma"]')?.value || block.querySelector('input[placeholder*="Last"]')?.value;
-                const email = block.querySelector('input[type="email"]')?.value;
-                const mobile = block.querySelector('input[type="tel"]')?.value;
+                const fname = block.querySelector('.traveler-fname')?.value?.trim();
+                const lname = block.querySelector('.traveler-lname')?.value?.trim();
+                const email = block.querySelector('.traveler-email')?.value?.trim();
+                const mobile = block.querySelector('.traveler-mobile')?.value?.trim();
 
-                if (!fname || !lname || !email || !mobile) throw new Error(`Traveler #${idx + 1} ki details incomplete hain. Sabhi fields fill karein.`);
+                if (!fname || !lname || !email || !mobile) {
+                    hasError = true;
+                    throw new Error(`Traveler #${idx + 1} ki details incomplete hain. Sabhi required fields fill karein.`);
+                }
 
                 travelers.push({
-                    first_name: fname, last_name: lname, email: email, mobile: mobile,
+                    first_name: fname,
+                    last_name: lname,
+                    email: email,
+                    mobile: mobile,
                     dob: block.querySelector('input[type="date"]')?.value || '1990-01-01'
                 });
             });
 
-            // Robust total amount parsing — strip ₹, spaces, commas
             const rawTotal = document.getElementById('summaryTotal')?.innerText || '';
             let parsedAmount = parseFloat(rawTotal.replace(/[₹,\s]/g, '')) || 0;
 
-            // Server-side fallback if JS total is 0 (e.g. DOM not updated yet)
             if (parsedAmount <= 0) {
-                parsedAmount = parseFloat("{{ $totalPrice ?? 0 }}") || 0;
+                parsedAmount = parseFloat("{{ $totalPrice ?? 0 }}") * travelers.length || 0;
             }
 
             if (parsedAmount <= 0) {
@@ -661,22 +657,19 @@
                 _token: "{{ csrf_token() }}",
                 type: "{{ $type }}",
                 travelers: travelers,
-                extra_services: extraCharges.details,
                 total_amount: parsedAmount,
                 item_data: @json($item)
             };
 
-            const resp = await fetch("{{ route('checkout.process') }}", {
+            const resp = await fetch("{{ route('checkout.save-travelers') }}", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
                 body: JSON.stringify(payload)
             });
 
-            // Handle non-JSON responses (e.g. 500 server error page)
             const contentType = resp.headers.get('content-type') || '';
             if (!contentType.includes('application/json')) {
                 const text = await resp.text();
-                console.error('Non-JSON response:', text.substring(0, 500));
                 throw new Error('Server error: ' + resp.status + '. Please try again.');
             }
 
@@ -684,12 +677,12 @@
             if (data.success && data.redirect) {
                 window.location.href = data.redirect;
             } else {
-                throw new Error(data.message || 'Payment initiation failed. Please try again.');
+                throw new Error(data.message || 'Could not proceed. Please try again.');
             }
         } catch (e) {
             Swal.fire({
                 icon: 'error',
-                title: 'Booking Error',
+                title: 'Error',
                 text: e.message,
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#002f55'
@@ -699,7 +692,6 @@
         }
     };
 
-    // Add Traveler Logic
     document.getElementById('addTravelerBtn').onclick = function() {
         const container = document.getElementById('travelersContainer');
         const blocks = document.querySelectorAll('.traveler-block');
@@ -708,29 +700,27 @@
         
         const count = blocks.length + 1;
         
-        // Fix header text
         const h5 = newBlock.querySelector('h5');
         if(h5) h5.innerHTML = `Traveler #${count}`;
         
-        // Remove primary tag if exists in clone
         newBlock.querySelector('.primary-tag')?.remove();
         
-        // Show and configure remove button
         const removeBtn = newBlock.querySelector('.remove-traveler');
         if(removeBtn) {
             removeBtn.classList.remove('d-none');
             removeBtn.onclick = function() {
                 newBlock.remove();
                 reorderTravelers();
+                refreshTotal();
             };
         }
 
-        // Clear all inputs
         newBlock.querySelectorAll('input').forEach(i => i.value = '');
         newBlock.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
         
         container.appendChild(newBlock);
         reorderTravelers();
+        refreshTotal();
     };
 
     function reorderTravelers() {

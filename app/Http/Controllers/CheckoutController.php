@@ -66,9 +66,96 @@ class CheckoutController extends Controller
             }
         }
 
-        $stripeKey = config('services.stripe.key');
+        return view('checkout', compact('type', 'item', 'totalPrice'));
+    }
 
-        return view('checkout', compact('type', 'item', 'stripeKey', 'totalPrice'));
+    public function saveTravelers(Request $request)
+    {
+        try {
+            $type = $request->input('type', 'flight');
+            $travelers = $request->input('travelers', []);
+            $totalAmount = floatval($request->input('total_amount', 0));
+            $itemData = $request->input('item_data');
+
+            if (empty($travelers)) {
+                return response()->json(['success' => false, 'message' => 'Traveler details missing.']);
+            }
+
+            if ($totalAmount <= 0 && $itemData) {
+                $item = is_string($itemData) ? json_decode($itemData, true) : (array)$itemData;
+                $priceVal = $item['price'] ?? ($item['total_price'] ?? 0);
+                if (is_array($priceVal)) $priceVal = $priceVal['total'] ?? 0;
+                $totalAmount = floatval($priceVal) * count($travelers);
+            }
+
+            session(['pending_traveler_booking' => [
+                'type'         => $type,
+                'total_amount' => $totalAmount,
+                'travelers'    => $travelers,
+                'item_data'    => $itemData,
+            ]]);
+
+            $tempRef = 'TEMP-' . strtoupper(bin2hex(random_bytes(4)));
+
+            return response()->json([
+                'success'  => true,
+                'redirect' => route('seat.selection', ['reference' => $tempRef, 'mode' => 'pending'])
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function initiatePayment(Request $request)
+    {
+        try {
+            $reference  = $request->input('reference');
+            $totalAmount = floatval($request->input('total_amount', 0));
+            $addons     = $request->input('addons', []);
+
+            $pendingData = session('pending_traveler_booking', []);
+
+            if ($totalAmount <= 0 && isset($pendingData['total_amount'])) {
+                $totalAmount = floatval($pendingData['total_amount']);
+            }
+
+            if ($totalAmount <= 0) {
+                return response()->json(['success' => false, 'message' => 'Payment amount is invalid (₹0).']);
+            }
+
+            $travelers = $pendingData['travelers'] ?? [];
+            $email     = $travelers[0]['email'] ?? (auth()->user()->email ?? null);
+            $type      = $pendingData['type'] ?? 'flight';
+
+            session(['pending_generic_booking' => [
+                'type'         => $type,
+                'total_amount' => $totalAmount,
+                'travelers'    => $travelers,
+                'addons'       => $addons,
+                'item_data'    => $pendingData['item_data'] ?? null,
+                'reference'    => $reference,
+            ]]);
+
+            $stripe  = app(\App\Services\StripeService::class);
+            $session = $stripe->createCheckoutSession([
+                'item_name'   => 'Flight Booking — Tripzant',
+                'amount'      => $totalAmount,
+                'email'       => $email,
+                'success_url' => route('checkout.success') . '?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url'  => url()->previous(),
+                'metadata'    => ['type' => $type, 'user_id' => auth()->id()],
+            ]);
+
+            if (isset($session->url)) {
+                return response()->json(['success' => true, 'redirect' => $session->url]);
+            }
+
+            throw new \Exception($session['message'] ?? 'Stripe session creation failed.');
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
     }
 
     public function process(Request $request)
@@ -187,7 +274,7 @@ class CheckoutController extends Controller
 
         session()->forget('pending_generic_booking');
 
-        return redirect()->route('seat.selection', ['reference' => $booking->booking_reference])
+        return redirect()->route('booking.confirmation', ['reference' => $booking->booking_reference])
                          ->with('success', 'Payment Successful!');
     }
 }

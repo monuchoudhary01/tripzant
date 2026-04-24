@@ -94,6 +94,127 @@
         .modal-content { box-shadow: 0 0 50px rgba(0,0,0,0.5); }
         .nav-pills .nav-link.active { background-color: var(--navy); color: #fff; }
         .nav-pills .nav-link { color: var(--navy); }
+
+        /* ═══════════════════════════════════════════
+           GLOBAL SWEETALERT2 — PREMIUM UI OVERRIDES
+           ═══════════════════════════════════════════ */
+        .swal2-popup {
+            font-family: 'Outfit', 'Inter', sans-serif !important;
+            border-radius: 24px !important;
+            padding: 36px 32px 28px !important;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.18) !important;
+            border: 1px solid rgba(0, 0, 0, 0.06) !important;
+            backdrop-filter: blur(20px);
+            max-width: 95vw !important;
+        }
+
+        /* Icon */
+        .swal2-icon {
+            margin: 0 auto 16px !important;
+            width: 62px !important;
+            height: 62px !important;
+        }
+        .swal2-icon .swal2-icon-content {
+            font-size: 32px !important;
+        }
+
+        /* Title */
+        .swal2-title {
+            font-size: 18px !important;
+            font-weight: 800 !important;
+            color: #002f55 !important;
+            letter-spacing: -0.3px !important;
+            line-height: 1.3 !important;
+            padding: 0 0 8px !important;
+            margin: 0 !important;
+        }
+
+        /* Body / HTML Container */
+        .swal2-html-container {
+            font-size: 13.5px !important;
+            font-weight: 500 !important;
+            color: #475569 !important;
+            line-height: 1.6 !important;
+            margin: 4px 0 20px !important;
+            padding: 0 4px !important;
+            text-align: center !important;
+        }
+
+        /* Plain text fallback */
+        .swal2-content {
+            font-size: 13.5px !important;
+            color: #475569 !important;
+        }
+
+        /* Confirm Button */
+        .swal2-confirm {
+            font-family: 'Outfit', 'Inter', sans-serif !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.5px !important;
+            text-transform: uppercase !important;
+            padding: 12px 28px !important;
+            border-radius: 12px !important;
+            box-shadow: 0 6px 20px rgba(0, 94, 184, 0.3) !important;
+            transition: all 0.2s ease !important;
+        }
+        .swal2-confirm:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 10px 28px rgba(0, 94, 184, 0.4) !important;
+        }
+
+        /* Cancel Button */
+        .swal2-cancel {
+            font-family: 'Outfit', 'Inter', sans-serif !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.3px !important;
+            padding: 12px 24px !important;
+            border-radius: 12px !important;
+            background: #f1f5f9 !important;
+            color: #64748b !important;
+            border: 1px solid #e2e8f0 !important;
+            transition: all 0.2s ease !important;
+        }
+        .swal2-cancel:hover {
+            background: #e2e8f0 !important;
+            color: #334155 !important;
+        }
+
+        /* Close (×) button */
+        .swal2-close {
+            font-size: 22px !important;
+            color: #94a3b8 !important;
+            transition: 0.2s !important;
+            top: 16px !important;
+            right: 16px !important;
+        }
+        .swal2-close:hover { color: #002f55 !important; transform: rotate(90deg); }
+
+        /* Timer bar */
+        .swal2-timer-progress-bar {
+            background: linear-gradient(90deg, #005eb8, #0076f7) !important;
+            height: 3px !important;
+        }
+
+        /* Actions row gap */
+        .swal2-actions {
+            gap: 10px !important;
+            margin-top: 4px !important;
+        }
+
+        /* Input inside popup (if any) */
+        .swal2-input, .swal2-select, .swal2-textarea {
+            font-family: 'Outfit', 'Inter', sans-serif !important;
+            font-size: 14px !important;
+            border-radius: 10px !important;
+            border: 1.5px solid #e2e8f0 !important;
+            box-shadow: none !important;
+        }
+        .swal2-input:focus, .swal2-select:focus, .swal2-textarea:focus {
+            border-color: #005eb8 !important;
+            box-shadow: 0 0 0 3px rgba(0, 94, 184, 0.1) !important;
+        }
     </style>
     @yield('styles')
 </head>

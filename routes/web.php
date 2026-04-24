@@ -174,13 +174,15 @@ Route::prefix('esim')->name('esim.')->group(function () {
 
 // Checkout Flow
 Route::get('/checkout', [App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout');
+Route::post('/checkout/save-travelers', [App\Http\Controllers\CheckoutController::class, 'saveTravelers'])->name('checkout.save-travelers');
 Route::post('/checkout/process', [App\Http\Controllers\CheckoutController::class, 'process'])->name('checkout.process');
 Route::get('/checkout/success', [App\Http\Controllers\CheckoutController::class, 'success'])->name('checkout.success');
+Route::post('/booking/initiate-payment', [App\Http\Controllers\CheckoutController::class, 'initiatePayment'])->name('booking.initiate-payment');
 
 Route::get('/seat-selection', [App\Http\Controllers\SeatSelectionController::class, 'index'])->name('seat.selection');
-
 Route::get('/add-ons', [App\Http\Controllers\SeatSelectionController::class, 'customize'])->name('add.ons');
 Route::get('/booking-confirmation', [App\Http\Controllers\BookingFinalizeController::class, 'show'])->name('booking.confirmation');
+
 Route::get('/payment', function () {
     return view('payment');
 })->name('payment');

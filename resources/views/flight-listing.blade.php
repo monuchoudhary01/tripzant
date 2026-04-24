@@ -916,9 +916,6 @@
                     </div>
                 @endif
 
-                <div class="text-center TS-4 mt-4">
-                    <button class="btn btn-outline-custom px-5 py-3"><i class="fas fa-plus me-2"></i> Load More Flights</button>
-                </div>
             </div>
         </div>
     </div>
@@ -2428,7 +2425,6 @@
                                         <div class="px-4 py-3 fw-900 small cursor-pointer premium-tab" id="tab-cancel" onclick="switchDetailTab('cancel')">CANCELLATION</div>
                                         <div class="px-4 py-3 fw-900 small cursor-pointer premium-tab" id="tab-date" onclick="switchDetailTab('date')">DATE CHANGE</div>
                                     </div>
-                                    <div class="text-white-50 small fw-bold d-none d-md-block">ID: ${offer.id}</div>
                                 </div>
 
                                 <div class="px-3 mt-4" style="min-height:400px;">
@@ -2437,7 +2433,10 @@
                                         <div class="p-3 border-bottom bg-light">
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <div class="fw-900 text-navy fs-6">${(itineraries[0] && itineraries[0].segments && itineraries[0].segments[0]) ? itineraries[0].segments[0].departure.iataCode : '???'} → ${(itineraries[0] && itineraries[0].segments) ? itineraries[0].segments[itineraries[0].segments.length-1].arrival.iataCode : '???'}</div>
-                                                <div class="badge bg-primary bg-opacity-10 text-primary fw-800">${itineraries.length > 1 ? 'Round Trip' : 'One Way'}</div>
+                                                <div class="d-flex gap-2 align-items-center">
+                                                    <span class="x-small text-muted fw-bold font-monospace bg-white border px-2 py-1 rounded">ID: ${offer.id.substring(0,8)}...</span>
+                                                    <div class="badge bg-primary bg-opacity-10 text-primary fw-800">${itineraries.length > 1 ? 'Round Trip' : 'One Way'}</div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="p-4">
@@ -2502,7 +2501,7 @@
                                     <!-- Fare Summary Content -->
                                     <div id="content-fare" class="detail-content d-none rounded-4 bg-white shadow-sm overflow-hidden animate__animated animate__fadeIn">
                                         <div class="p-4">
-                                            <h5 class="fw-900 text-navy mb-4">Fare Details</h5>
+                                            <h5 class="fw-900 text-navy mb-4 fs-6">Fare Details</h5>
                                             <div class="table-responsive">
                                                 <table class="table table-borderless align-middle">
                                                     <tbody>
@@ -2529,12 +2528,12 @@
                                     </div>
 
                                     <!-- Policies Content -->
-                                    <div id="content-cancel" class="detail-content d-none rounded-4 bg-white shadow-sm p-5 text-center animate__animated animate__fadeIn">
-                                        <div class="p-4 rounded-circle bg-danger bg-opacity-10 d-inline-flex mb-4">
-                                            <i class="fas fa-shield-alt text-danger fs-1"></i>
+                                    <div id="content-cancel" class="detail-content d-none rounded-4 bg-white shadow-sm p-4 text-center animate__animated animate__fadeIn">
+                                        <div class="p-4 rounded-circle bg-danger bg-opacity-10 d-inline-flex mb-3">
+                                            <i class="fas fa-shield-alt text-danger fs-2"></i>
                                         </div>
-                                        <h4 class="fw-900 text-navy">Cancellation Policy</h4>
-                                        <p class="text-muted fw-700 mx-5 px-4 mb-4">Rules for fare basis <strong>${firstFareBasis}</strong></p>
+                                        <h4 class="fw-900 text-navy fs-5">Cancellation Policy</h4>
+                                        <p class="text-muted fw-700 mx-4 px-2 mb-3 x-small">Rules for fare basis <strong>${firstFareBasis}</strong></p>
                                         <div class="badge ${refundable ? 'bg-success' : 'bg-danger'} py-2 px-4 fs-6 rounded-pill mb-4">${refundable ? 'Refundable' : 'Non-Refundable'}</div>
                                         <hr class="my-4 mx-5 opacity-10">
                                         <div class="row text-start g-3">
@@ -2551,21 +2550,21 @@
                                         </div>
                                     </div>
 
-                                    <div id="content-date" class="detail-content d-none rounded-4 bg-white shadow-sm p-5 text-center animate__animated animate__fadeIn">
-                                        <div class="p-4 rounded-circle bg-primary bg-opacity-10 d-inline-flex mb-4">
-                                            <i class="fas fa-history text-primary fs-1"></i>
+                                    <div id="content-date" class="detail-content d-none rounded-4 bg-white shadow-sm p-4 text-center animate__animated animate__fadeIn">
+                                        <div class="p-4 rounded-circle bg-primary bg-opacity-10 d-inline-flex mb-3">
+                                            <i class="fas fa-history text-primary fs-2"></i>
                                         </div>
-                                        <h4 class="fw-900 text-navy">Date Change Policy</h4>
-                                        <p class="text-muted fw-700 mx-5 px-4 mb-4">Modify your travel dates for flight <strong>${(itineraries[0] && itineraries[0].segments && itineraries[0].segments[0]) ? (itineraries[0].segments[0].carrierCode + '-' + itineraries[0].segments[0].number) : 'N/A'}</strong></p>
+                                        <h4 class="fw-900 text-navy fs-5">Date Change Policy</h4>
+                                        <p class="text-muted fw-700 mx-4 px-2 mb-3 x-small">Modify your travel dates for flight <strong>${(itineraries[0] && itineraries[0].segments && itineraries[0].segments[0]) ? (itineraries[0].segments[0].carrierCode + '-' + itineraries[0].segments[0].number) : 'N/A'}</strong></p>
                                         <div class="bg-primary bg-opacity-5 p-3 px-5 rounded-pill d-inline-block border border-primary border-opacity-25 mb-4">
-                                            <span class="fw-900 text-primary"><i class="fas fa-check-circle me-2"></i> CHANGES ALLOWED</span>
+                                            <span class="fw-900 text-white"><i class="fas fa-check-circle me-2"></i> CHANGES ALLOWED</span>
                                         </div>
                                         <div class="small text-muted fw-700 px-5 mt-2">Subject to airline penalty and any difference in fare at the time of re-issuance.</div>
                                     </div>
                                 </div>
                             </div>
                             <style>
-                                .premium-tab { color: #8a99af; transition: 0.3s; border-bottom: 4px solid transparent; letter-spacing:0.5px; opacity: 0.8; }
+                                .premium-tab { color: #8a99af; transition: 0.3s; border-bottom: 4px solid transparent; letter-spacing:0.8px; opacity: 0.8; white-space: nowrap; font-size: 11.5px !important; }
                                 .premium-tab.active { color: #fff; border-bottom-color: #008cff; opacity: 1; }
                                 .premium-tab:hover:not(.active) { color: #fff; opacity: 1; }
                                 .last-child-no-margin:last-child { margin-bottom: 0 !important; }
@@ -2582,7 +2581,7 @@
                     });
 
                     window.switchDetailTab = function(tab) {
-                        document.querySelectorAll('.mmt-tab').forEach(t => t.classList.remove('active'));
+                        document.querySelectorAll('.premium-tab').forEach(t => t.classList.remove('active'));
                         document.querySelectorAll('.detail-content').forEach(c => c.classList.add('d-none'));
                         const targetTab = document.getElementById('tab-' + tab);
                         if (targetTab) targetTab.classList.add('active');
@@ -3187,9 +3186,15 @@
         rows.forEach((row, i) => {
             list.appendChild(row);
         });
+    window.visibleLimit = 10;
+
+    window.loadMoreFlights = function() {
+        window.visibleLimit += 10;
+        applyFilters(false); // Don't scroll when loading more
     };
 
-    window.applyFilters = function() {
+
+    window.applyFilters = function(shouldScroll = true) {
         const list = document.getElementById('resultsList');
         const rows = Array.from(list.getElementsByClassName('flight-row'));
         
@@ -3201,49 +3206,84 @@
         const refundableOnly = document.getElementById('pf3').checked;
         const maxPrice = parseFloat(document.querySelector('.custom-range').value);
 
+        let matchCount = 0;
         let visibleCount = 0;
 
         rows.forEach(row => {
-            let show = true;
+            let matches = true;
 
             // 1. Stops Filter
             if (selectedStops.length > 0) {
-                if (!selectedStops.includes(parseInt(row.dataset.stops))) show = false;
+                if (!selectedStops.includes(parseInt(row.dataset.stops))) matches = false;
             }
 
             // 2. Cabin Filter
-            if (show && selectedCabin.length > 0) {
-                if (!selectedCabin.includes(row.dataset.cabin)) show = false;
+            if (matches && selectedCabin.length > 0) {
+                if (!selectedCabin.includes(row.dataset.cabin)) matches = false;
             }
 
             // 3. Airline Filter
-            if (show && selectedAirlines.length > 0) {
-                if (!selectedAirlines.includes(row.dataset.airline)) show = false;
+            if (matches && selectedAirlines.length > 0) {
+                if (!selectedAirlines.includes(row.dataset.airline)) matches = false;
             }
 
             // 4. Morning Departure
-            if (show && morningOnly) {
+            if (matches && morningOnly) {
                 const depTime = parseInt(row.dataset.departureStamp);
                 const date = new Date(depTime * 1000);
                 const hour = date.getHours();
-                if (hour < 6 || hour >= 12) show = false;
+                if (hour < 6 || hour >= 12) matches = false;
             }
 
             // 5. Refundable
-            if (show && refundableOnly) {
-                if (row.dataset.refundable !== '1') show = false;
+            if (matches && refundableOnly) {
+                if (row.dataset.refundable !== '1') matches = false;
             }
 
             // 6. Price Range
-            if (show && parseFloat(row.dataset.price) > maxPrice) show = false;
+            if (matches && parseFloat(row.dataset.price) > maxPrice) matches = false;
 
-            row.style.display = show ? 'block' : 'none';
-            if (show) visibleCount++;
+            if (matches) {
+                matchCount++;
+                if (matchCount <= window.visibleLimit) {
+                    row.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            } else {
+                row.style.display = 'none';
+            }
         });
 
         // Update count display if needed
         const foundEl = document.querySelector('.results-bar h5');
-        if (foundEl) foundEl.innerText = `${visibleCount} Flights Found`;
+        if (foundEl) foundEl.innerText = `${matchCount} Flights Found`;
+
+        // Handle Load More Button
+        const loadMoreBox = document.getElementById('loadMoreContainer');
+        if (loadMoreBox) {
+            loadMoreBox.style.display = (matchCount > window.visibleLimit) ? 'block' : 'none';
+        }
+
+        // Use a small timeout to ensure layout has updated before scrolling
+        if (shouldScroll) {
+            setTimeout(() => {
+                const listEl = document.getElementById('resultsList');
+                if (listEl) {
+                    // Get current absolute position
+                    const rect = listEl.getBoundingClientRect();
+                    const absoluteTop = rect.top + window.pageYOffset;
+                    const targetY = Math.max(0, absoluteTop - 150);
+                    
+                    // Smooth scroll to results top
+                    window.scrollTo({
+                        top: targetY,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 300);
+        }
     };
 
     // Attach listener to price range
@@ -3373,7 +3413,7 @@
     setTimeout(() => {
         if(!document.getElementById('fareMonitorAlarmModal').classList.contains('show')){
             const modal = new bootstrap.Modal(document.getElementById('fareMonitorAlarmModal'));
-            modal.show();
+           // modal.show();
         }
     }, 12000);
 

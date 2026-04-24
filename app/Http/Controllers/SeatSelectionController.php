@@ -10,10 +10,65 @@ class SeatSelectionController extends Controller
     /**
      * Show the seat selection view with dynamic booking data.
      */
+    public static function normalizeFlight($raw): array
+    {
+        if (!is_array($raw)) return [];
+
+        $seg = $raw['itineraries'][0]['segments'][0] ?? null;
+        $lastSeg = null;
+        if (!empty($raw['itineraries'][0]['segments'])) {
+            $lastSeg = end($raw['itineraries'][0]['segments']);
+        }
+
+        return [
+            'airline'        => $raw['airline'] ?? ($raw['carrier'] ?? ($seg['carrierCode'] ?? 'N/A')),
+            'flight_number'  => $raw['flight_number'] ?? ($raw['number'] ?? ($seg ? ($seg['carrierCode'] . $seg['number']) : 'N/A')),
+            'dep_city'       => $raw['from'] ?? ($raw['departure_city'] ?? ($seg['departure']['iataCode'] ?? '???')),
+            'arr_city'       => $raw['to'] ?? ($raw['arrival_city'] ?? ($lastSeg['arrival']['iataCode'] ?? '???')),
+            'departure_at'   => $raw['departure_at'] ?? ($seg['departure']['at'] ?? null),
+            'arrival_at'     => $raw['arrival_at'] ?? ($lastSeg['arrival']['at'] ?? null),
+            'duration'       => $raw['duration'] ?? ($raw['itineraries'][0]['duration'] ?? null),
+            'price'          => $raw['price'] ?? ($raw['total_price'] ?? 0),
+        ];
+    }
+
     public function index(Request $request)
     {
         $reference = $request->input('reference');
-        $booking = null;
+        $mode      = $request->input('mode');
+        $booking   = null;
+
+        if ($mode === 'pending' && str_starts_with($reference ?? '', 'TEMP-')) {
+            $pendingData = session('pending_traveler_booking', []);
+
+            if (empty($pendingData)) {
+                return redirect()->route('flights.index')->with('error', 'Session expired. Please search again.');
+            }
+
+            $rawItem = $pendingData['item_data'];
+            if (is_string($rawItem)) $rawItem = json_decode($rawItem, true);
+
+            $normalizedFlight = self::normalizeFlight($rawItem ?? []);
+            $legs = [$normalizedFlight];
+
+            $travelers = $pendingData['travelers'] ?? [];
+
+            $fakeTotalAmount = $pendingData['total_amount'] ?? 0;
+
+            $fakeBooking = new \stdClass();
+            $fakeBooking->booking_reference = $reference;
+            $fakeBooking->total_amount      = $fakeTotalAmount;
+            $fakeBooking->api_booking_details = null;
+            $fakeBooking->items = collect([]);
+
+            return view('seat-selection', [
+                'booking'    => $fakeBooking,
+                'passengers' => $travelers,
+                'flight'     => $normalizedFlight,
+                'legs'       => $legs,
+                'reference'  => $reference,
+            ]);
+        }
 
         if ($reference) {
             $booking = Booking::with('items')->where('booking_reference', $reference)->first();
@@ -36,22 +91,19 @@ class SeatSelectionController extends Controller
         $legs = [];
         if ($booking->api_booking_details) {
             $apiData = json_decode($booking->api_booking_details, true);
-            $flight = $apiData['item_data'] ?? ($apiData['item'] ?? null);
-            
-            // Handle both single flight object and array of flights (split mode)
-            if (is_array($flight)) {
-                if (isset($flight[0]) && is_array($flight[0])) {
-                    $legs = $flight;
-                    $flight = $flight[0]; // Set primary flight for simple references
+            $rawFlight = $apiData['item_data'] ?? ($apiData['item'] ?? null);
+
+            if (is_array($rawFlight)) {
+                if (isset($rawFlight[0]) && is_array($rawFlight[0])) {
+                    $legs = array_map([self::class, 'normalizeFlight'], $rawFlight);
+                    $flight = $legs[0];
                 } else {
+                    $flight = self::normalizeFlight($rawFlight);
                     $legs = [$flight];
                 }
-            } else {
-                $legs = [$flight];
             }
         }
 
-        // Try to get passengers from booking_items first
         foreach ($booking->items as $item) {
             $details = json_decode($item->details, true);
             if (is_array($details)) {
@@ -59,9 +111,8 @@ class SeatSelectionController extends Controller
             }
         }
 
-        // Fallback: if no items, recover travelers from api_booking_details
         if (empty($passengers) && $booking->api_booking_details) {
-            $apiData = json_decode($booking->api_booking_details, true);
+            $apiData   = json_decode($booking->api_booking_details, true);
             $travelers = $apiData['travelers'] ?? [];
             foreach ($travelers as $traveler) {
                 if (is_array($traveler)) {
@@ -71,11 +122,11 @@ class SeatSelectionController extends Controller
         }
 
         return view('seat-selection', [
-            'booking' => $booking,
+            'booking'    => $booking,
             'passengers' => $passengers,
-            'flight' => $flight,
-            'legs' => $legs,
-            'reference' => $booking->booking_reference
+            'flight'     => $flight,
+            'legs'       => $legs,
+            'reference'  => $booking->booking_reference
         ]);
     }
 
@@ -85,7 +136,34 @@ class SeatSelectionController extends Controller
     public function customize(Request $request)
     {
         $reference = $request->input('reference');
-        $booking = null;
+        $booking   = null;
+
+        if (str_starts_with($reference ?? '', 'TEMP-')) {
+            $pendingData = session('pending_traveler_booking', []);
+
+            if (empty($pendingData)) {
+                return redirect()->route('flights.index')->with('error', 'Session expired. Please search again.');
+            }
+
+            $rawItem = $pendingData['item_data'];
+            if (is_string($rawItem)) $rawItem = json_decode($rawItem, true);
+
+            $normalizedFlight = self::normalizeFlight($rawItem ?? []);
+            $travelers        = $pendingData['travelers'] ?? [];
+
+            $fakeBooking = new \stdClass();
+            $fakeBooking->booking_reference  = $reference;
+            $fakeBooking->total_amount       = $pendingData['total_amount'] ?? 0;
+            $fakeBooking->api_booking_details = null;
+            $fakeBooking->items = collect([]);
+
+            return view('add-ons', [
+                'booking'    => $fakeBooking,
+                'passengers' => $travelers,
+                'flight'     => $normalizedFlight,
+                'reference'  => $reference,
+            ]);
+        }
 
         if ($reference) {
             $booking = Booking::with('items')->where('booking_reference', $reference)->first();
@@ -107,14 +185,13 @@ class SeatSelectionController extends Controller
         $flight = null;
         if ($booking->api_booking_details) {
             $apiData = json_decode($booking->api_booking_details, true);
-            $flight = $apiData['item_data'] ?? ($apiData['item'] ?? null);
-            // If multi-leg array, use first leg
-            if (is_array($flight) && isset($flight[0]) && is_array($flight[0])) {
-                $flight = $flight[0];
+            $rawFlight = $apiData['item_data'] ?? ($apiData['item'] ?? null);
+            if (is_array($rawFlight) && isset($rawFlight[0]) && is_array($rawFlight[0])) {
+                $rawFlight = $rawFlight[0];
             }
+            $flight = self::normalizeFlight($rawFlight ?? []);
         }
 
-        // Get passengers from booking_items
         foreach ($booking->items as $item) {
             $details = json_decode($item->details, true);
             if (is_array($details)) {
@@ -123,17 +200,16 @@ class SeatSelectionController extends Controller
         }
         $passengers = array_filter(array_map(fn($p) => is_array($p) && isset($p['first_name']) ? $p : null, $passengers));
 
-        // Fallback: recover from api_booking_details travelers
         if (empty($passengers) && $booking->api_booking_details) {
-            $apiData = json_decode($booking->api_booking_details, true);
+            $apiData    = json_decode($booking->api_booking_details, true);
             $passengers = array_filter($apiData['travelers'] ?? [], fn($t) => is_array($t));
         }
 
         return view('add-ons', [
-            'booking' => $booking,
+            'booking'    => $booking,
             'passengers' => array_values($passengers),
-            'flight' => $flight,
-            'reference' => $booking->booking_reference
+            'flight'     => $flight,
+            'reference'  => $booking->booking_reference
         ]);
     }
 }

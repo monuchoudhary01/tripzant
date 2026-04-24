@@ -394,8 +394,8 @@
                         <span class="fw-900 text-navy">GRAND TOTAL</span>
                         <h2 class="fw-900 text-primary mb-0" id="totalDisplay">₹0</h2>
                     </div>
-                    <button class="btn-checkout-pro" onclick="toConfirmation()">
-                        PROCEED & CONFIRM <i class="fas fa-arrow-right ms-2"></i>
+                    <button class="btn-checkout-pro" onclick="toPayment()">
+                        PAY & CONFIRM BOOKING <i class="fas fa-lock ms-2"></i>
                     </button>
                     <p class="text-center mt-3 text-muted x-small italic fw-bold">Transaction Secured by Tripzant Gateway</p>
                 </div>
@@ -598,16 +598,46 @@
         document.getElementById('totalDisplay').innerText = `₹${(baseFlightTotal + seatTotal + extraTotal).toLocaleString()}`;
     }
 
-    function toConfirmation() {
+    async function toPayment() {
         localStorage.setItem('selected_addons', JSON.stringify(state));
-        Swal.fire({
-            title: 'Booking Synchronized!',
-            text: 'Your ancillaries have been logged to the PNR.',
-            icon: 'success',
-            confirmButtonColor: '#005eb8'
-        }).then(() => {
-            window.location.href = '/booking-confirmation?reference={{ $reference }}';
-        });
+
+        const btn = document.querySelector('.btn-checkout-pro');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Connecting to Payment...';
+        btn.disabled = true;
+
+        try {
+            const totalText = document.getElementById('totalDisplay').innerText;
+            const totalAmount = parseFloat(totalText.replace(/[₹,\s]/g, '')) || 0;
+
+            if (totalAmount <= 0) {
+                throw new Error('Total amount could not be calculated. Please go back and try again.');
+            }
+
+            const resp = await fetch("{{ route('booking.initiate-payment') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': "{{ csrf_token() }}"
+                },
+                body: JSON.stringify({
+                    reference: "{{ $reference }}",
+                    total_amount: totalAmount,
+                    addons: state
+                })
+            });
+
+            const data = await resp.json();
+            if (data.success && data.redirect) {
+                window.location.href = data.redirect;
+            } else {
+                throw new Error(data.message || 'Payment could not be initiated.');
+            }
+        } catch(e) {
+            Swal.fire({ icon: 'error', title: 'Payment Error', text: e.message, confirmButtonColor: '#005eb8' });
+            btn.innerHTML = orig;
+            btn.disabled = false;
+        }
     }
 
     window.showFareRules = function(airline, flight) {
