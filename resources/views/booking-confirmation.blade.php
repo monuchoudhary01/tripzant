@@ -329,22 +329,29 @@
 
                 <div class="row g-4 pt-4 border-top">
                     <div class="col-md-6">
-                        <a href="javascript:window.print()" class="download-btn w-100 justify-content-center">
+                        <a href="{{ route('booking.pdf', ['reference' => $reference ?? ($booking->booking_reference ?? '')]) }}" class="download-btn w-100 justify-content-center">
                             <i class="fas fa-file-pdf"></i> DOWNLOAD E-TICKET (PDF)
                         </a>
                     </div>
+                    @if(config('services.whatsapp.access'))
                     <div class="col-md-6">
-                        @php
-                            $msgName = $flight['airline_name'] ?? ($flight['airline'] ?? 'Flight');
-                            $msgDep = $flight['departure_city'] ?? 'Origin';
-                            $msgArr = $flight['arrival_city'] ?? 'Dest';
-                            $msg = "Hey! My booking with Tripzant is confirmed. PNR: " . ($pnr ?? '---') . " for $msgName ($msgDep to $msgArr). Total: ₹" . number_format($booking->total_amount ?? 0);
-                            $waUrl = "https://wa.me/?text=" . urlencode($msg);
-                        @endphp
-                        <a href="{{ $waUrl }}" target="_blank" class="share-btn-wa w-100 justify-content-center">
-                            <i class="fab fa-whatsapp"></i> SHARE ON WHATSAPP
+                        <a href="{{ route('booking.whatsapp', ['reference' => $booking->booking_reference]) }}" class="share-btn-wa w-100 justify-content-center">
+                            <i class="fab fa-whatsapp"></i> SEND TICKET ON WHATSAPP
                         </a>
                     </div>
+                    @endif
+                </div>
+
+                @if(session('success'))
+                    <div class="alert alert-success mt-4 rounded-3 fw-bold x-small">
+                        <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
+                    </div>
+                @endif
+                @if(session('error'))
+                    <div class="alert alert-danger mt-4 rounded-3 fw-bold x-small">
+                        <i class="fas fa-exclamation-triangle me-2"></i> {{ session('error') }}
+                    </div>
+                @endif
                 </div>
             </div>
             

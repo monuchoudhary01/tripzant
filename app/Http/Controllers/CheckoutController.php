@@ -137,6 +137,17 @@ class CheckoutController extends Controller
             }
 
             $travelers = $pendingData['travelers'] ?? [];
+            $seats     = $request->input('seats', []);
+
+            // Assign seats to travelers from Leg 0 (if available)
+            if (!empty($seats) && isset($seats[0])) {
+                foreach ($travelers as $idx => &$traveler) {
+                    if (isset($seats[0][$idx]['seatId'])) {
+                        $traveler['seat'] = $seats[0][$idx]['seatId'];
+                    }
+                }
+            }
+
             $email     = $travelers[0]['email'] ?? (auth()->user()->email ?? null);
             $type      = $pendingData['type'] ?? 'flight';
 

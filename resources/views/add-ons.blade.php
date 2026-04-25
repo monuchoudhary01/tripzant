@@ -623,7 +623,8 @@
                 body: JSON.stringify({
                     reference: "{{ $reference }}",
                     total_amount: totalAmount,
-                    addons: state
+                    addons: state,
+                    seats: seatsMulti
                 })
             });
 

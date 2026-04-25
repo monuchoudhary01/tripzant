@@ -49,4 +49,10 @@ return [
         'secret' => env('STRIPE_SECRET'),
     ],
 
+    'whatsapp' => [
+        'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
+        'app_id' => env('WHATSAPP_APP_ID'),
+        'access' => env('WHATSAPP_ACCESS', false),
+    ],
+
 ];

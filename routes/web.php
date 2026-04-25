@@ -183,6 +183,8 @@ Route::post('/booking/initiate-payment', [App\Http\Controllers\CheckoutControlle
 Route::get('/seat-selection', [App\Http\Controllers\SeatSelectionController::class, 'index'])->name('seat.selection');
 Route::get('/add-ons', [App\Http\Controllers\SeatSelectionController::class, 'customize'])->name('add.ons');
 Route::get('/booking-confirmation', [App\Http\Controllers\BookingFinalizeController::class, 'show'])->name('booking.confirmation');
+Route::get('/booking-confirmation/pdf', [App\Http\Controllers\BookingFinalizeController::class, 'downloadPdf'])->name('booking.pdf');
+Route::get('/booking-confirmation/whatsapp', [App\Http\Controllers\BookingFinalizeController::class, 'sendWhatsappTicket'])->name('booking.whatsapp');
 
 Route::get('/payment', function () {
     return view('payment');
