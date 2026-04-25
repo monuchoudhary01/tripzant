@@ -1678,14 +1678,37 @@
                 openGroupBookingSidebar();
             } else {
                 Swal.fire({
-                    title: 'Itinerary Complete!',
-                    text: 'Redirecting to checkout...',
-                    icon: 'success',
+                    title: 'Processing Itinerary...',
+                    text: 'Preparing your booking...',
+                    icon: 'info',
                     showConfirmButton: false,
-                    timer: 1500
-                }).then(() => {
-                    const flightsData = selectedMCFlights.map(f => f.details);
-                    window.location.href = '/checkout?mode=split&flights=' + encodeURIComponent(JSON.stringify(flightsData));
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const flightsData = selectedMCFlights.map(f => f.details);
+                
+                fetch('/checkout/init-split', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ flights: JSON.stringify(flightsData) })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        Swal.fire('Error', data.message || 'Failed to initialize checkout', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error', 'An unexpected error occurred.', 'error');
                 });
             }
         }

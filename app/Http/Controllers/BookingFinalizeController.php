@@ -97,25 +97,29 @@ class BookingFinalizeController extends Controller
 
         $primaryPnr = $pnrs[0];
         
-        DB::transaction(function () use ($booking, $primaryPnr, $flight) {
-            DB::table('flight_bookings')->updateOrInsert(
-                ['booking_id' => $booking->id],
-                [
-                    'pnr' => $primaryPnr,
-                    'airline_pnr' => $primaryPnr, 
-                    'origin' => $flight['departure_city'],
-                    'destination' => $flight['arrival_city'],
-                    'departure_at' => $flight['departure_at'],
-                    'arrival_at' => $flight['arrival_at'],
-                    'airline_code' => $flight['airline_code'] ?? '??',
-                    'flight_number' => $flight['flight_number'] ?? '000',
-                    'cabin_class' => $flight['cabin'] ?? 'Economy',
-                    'itinerary_details' => json_encode($flight),
-                    'fare_details' => json_encode(['total' => $booking->total_amount]),
+        DB::transaction(function () use ($booking, $pnrs, $legs) {
+            // Delete existing to prevent duplicates if retried
+            DB::table('flight_bookings')->where('booking_id', $booking->id)->delete();
+
+            foreach ($legs as $idx => $legFlight) {
+                $pnr = $pnrs[$idx] ?? $pnrs[0];
+                DB::table('flight_bookings')->insert([
+                    'booking_id' => $booking->id,
+                    'pnr' => $pnr,
+                    'airline_pnr' => $pnr, 
+                    'origin' => $legFlight['departure_city'] ?? 'Unknown',
+                    'destination' => $legFlight['arrival_city'] ?? 'Unknown',
+                    'departure_at' => $legFlight['departure_at'] ?? now(),
+                    'arrival_at' => $legFlight['arrival_at'] ?? now(),
+                    'airline_code' => $legFlight['airline_code'] ?? '??',
+                    'flight_number' => $legFlight['flight_number'] ?? '000',
+                    'cabin_class' => $legFlight['cabin'] ?? 'Economy',
+                    'itinerary_details' => json_encode($legFlight),
+                    'fare_details' => json_encode(['total' => $booking->total_amount / count($legs)]),
                     'updated_at' => now(),
                     'created_at' => now(),
-                ]
-            );
+                ]);
+            }
 
             // Sync Passengers from booking_items
             DB::table('passengers')->where('booking_id', $booking->id)->delete();

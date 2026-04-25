@@ -20,7 +20,7 @@ class CheckoutController extends Controller
 
         $totalPrice = 0;
         if ($mode === 'split') {
-            $item = json_decode($request->input('flights'), true);
+            $item = session('split_flights', []);
             $type = 'flight';
             if (is_array($item)) {
                 $totalPrice = array_sum(array_column($item, 'price'));
@@ -67,6 +67,18 @@ class CheckoutController extends Controller
         }
 
         return view('checkout', compact('type', 'item', 'totalPrice'));
+    }
+
+    public function initSplit(Request $request)
+    {
+        $flightsData = $request->input('flights', '[]');
+        $flights = json_decode($flightsData, true);
+        if (!$flights || !is_array($flights)) {
+            return response()->json(['success' => false, 'message' => 'Invalid flight data']);
+        }
+        
+        session(['split_flights' => $flights]);
+        return response()->json(['success' => true, 'redirect' => route('checkout', ['mode' => 'split', 'type' => 'flight'])]);
     }
 
     public function saveTravelers(Request $request)

@@ -174,6 +174,7 @@ Route::prefix('esim')->name('esim.')->group(function () {
 
 // Checkout Flow
 Route::get('/checkout', [App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout');
+Route::post('/checkout/init-split', [App\Http\Controllers\CheckoutController::class, 'initSplit'])->name('checkout.init-split');
 Route::post('/checkout/save-travelers', [App\Http\Controllers\CheckoutController::class, 'saveTravelers'])->name('checkout.save-travelers');
 Route::post('/checkout/process', [App\Http\Controllers\CheckoutController::class, 'process'])->name('checkout.process');
 Route::get('/checkout/success', [App\Http\Controllers\CheckoutController::class, 'success'])->name('checkout.success');
