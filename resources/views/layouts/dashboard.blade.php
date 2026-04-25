@@ -180,6 +180,7 @@
             .dashboard-main { margin-left: 0; padding: 30px 20px; }
         }
     </style>
+    @yield('styles')
 </head>
 <body>
     <div class="dashboard-wrapper">

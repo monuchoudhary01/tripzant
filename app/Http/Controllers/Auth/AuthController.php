@@ -38,7 +38,8 @@ class AuthController extends Controller
             // PRIORITY: If redirect_to is passed explicitly (e.g. from AJAX modal), use it.
             $redirect_to = $request->input('redirect_to');
             $intended = session()->pull('url.intended');
-            $redirectUrl = $redirect_to ?: ($intended ?? $this->getRedirectUrl($user->role));
+            // FIX: Prioritize intended URL (like checkout) over the current page (which might be the home page where the modal is)
+            $redirectUrl = $intended ?: ($redirect_to ?: $this->getRedirectUrl($user->role));
 
             return response()->json(['success' => true, 'redirect' => $redirectUrl]);
         }
@@ -122,8 +123,9 @@ class AuthController extends Controller
             AuditLogService::log('Auth', 'Login', 'User logged in: ' . $user->name, null, ['role' => $user->role]);
 
             // Support both session intended and manual redirect_to
-                        $redirect_to = $request->input("redirect_to"); $intended = session()->pull("url.intended");
-            $redirectUrl = $redirect_to ?: ($intended ?? $this->getRedirectUrl($user->role));
+            $redirect_to = $request->input("redirect_to"); 
+            $intended = session()->pull("url.intended");
+            $redirectUrl = $intended ?: ($redirect_to ?: $this->getRedirectUrl($user->role));
 
             return response()->json(['success' => true, 'redirect' => $redirectUrl]);
         }
@@ -206,8 +208,9 @@ class AuthController extends Controller
             AuditLogService::log('Auth', 'OTP Login', 'User logged in via phone: ' . $user->phone, null, ['role' => $user->role]);
 
             // Support both session intended and manual redirect_to
-                        $redirect_to = $request->input("redirect_to"); $intended = session()->pull("url.intended");
-            $redirectUrl = $redirect_to ?: ($intended ?? $this->getRedirectUrl($user->role));
+            $redirect_to = $request->input("redirect_to"); 
+            $intended = session()->pull("url.intended");
+            $redirectUrl = $intended ?: ($redirect_to ?: $this->getRedirectUrl($user->role));
 
             return response()->json(['success' => true, 'redirect' => $redirectUrl]);
         }
@@ -244,7 +247,7 @@ class AuthController extends Controller
 
             $redirect_to = $request->input('redirect_to');
             $intended = session()->pull('url.intended');
-            $redirectUrl = $redirect_to ?: ($intended ?? $this->getRedirectUrl($user->role));
+            $redirectUrl = $intended ?: ($redirect_to ?: $this->getRedirectUrl($user->role));
 
             return response()->json(['success' => true, 'redirect' => $redirectUrl]);
         }
@@ -307,7 +310,7 @@ class AuthController extends Controller
 
             $redirect_to = $request->input('redirect_to');
             $intended = session()->pull('url.intended');
-            $redirectUrl = $redirect_to ?: ($intended ?? $this->getRedirectUrl($user->role));
+            $redirectUrl = $intended ?: ($redirect_to ?: $this->getRedirectUrl($user->role));
 
             return response()->json(['success' => true, 'redirect' => $redirectUrl]);
         }
