@@ -26,7 +26,7 @@ class StripeService
                         'product_data' => [
                             'name' => $params['item_name'],
                         ],
-                        'unit_amount' => $params['amount'] * 100, // Stripe uses cents/paise
+                        'unit_amount' => (int) round($params['amount'] * 100), // Stripe uses cents/paise
                     ],
                     'quantity' => 1,
                 ]],

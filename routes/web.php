@@ -88,6 +88,7 @@ Route::post('/hotels/search', [HotelController::class, 'search'])->name('hotels.
 Route::get('/hotels/details', [HotelController::class, 'details'])->name('hotel.details');
 Route::get('/hotels/checkout', [HotelController::class, 'checkout'])->middleware('auth')->name('hotel.checkout');
 Route::post('/hotels/book', [HotelController::class, 'book'])->middleware('auth')->name('hotel.book');
+Route::post('/hotels/coupon/apply', [HotelController::class, 'applyCoupon'])->middleware('auth')->name('hotel.coupon.apply');
 Route::get('/hotels/payment', [HotelController::class, 'showPaymentGateway'])->middleware('auth')->name('hotel.payment');
 Route::get('/hotels/payment/process', [HotelController::class, 'processPayment'])->middleware('auth')->name('hotel.payment.process');
 Route::get('/hotels/confirmation', [HotelController::class, 'showConfirmation'])->middleware('auth')->name('hotel.confirmation');

@@ -20,6 +20,11 @@
 @section('content')
 <div class="h-detail-bg py-4 pt-5">
     <div class="container">
+        {{-- MakeMyTrip Style Edit Search Bar --}}
+        <div class="mb-5 animate-in fade-in slide-in-from-top-4 duration-700">
+            <x-hotel-search-bar :params="$params" />
+        </div>
+
         <!-- Header Section -->
         <div class="d-flex flex-wrap justify-content-between align-items-start mb-4">
             <div>
@@ -181,6 +186,7 @@
                                                 <input type="hidden" name="children" value="{{ $params['children'] ?? 0 }}">
                                                 <input type="hidden" name="checkIn" value="{{ $params['checkIn'] }}">
                                                 <input type="hidden" name="checkOut" value="{{ $params['checkOut'] }}">
+                                                <input type="hidden" name="rooms" value="{{ $params['rooms'] ?? 1 }}">
                                                 <button type="submit" class="btn btn-primary w-100 rounded-pill fw-800">BOOK ROOM</button>
                                             </form>
                                         </div>
@@ -220,7 +226,7 @@
                                     @if(($params['children'] ?? 0) > 0)
                                         , {{ $params['children'] }} {{ $params['children'] > 1 ? 'Children' : 'Child' }}
                                     @endif
-                                    • 1 Room
+                                    • {{ $params['rooms'] ?? 1 }} {{ ($params['rooms'] ?? 1) > 1 ? 'Rooms' : 'Room' }}
                                 </div>
                             </div>
                             <div class="divider-dashed"></div>

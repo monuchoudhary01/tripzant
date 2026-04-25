@@ -236,6 +236,7 @@
         </div>
 
         <!-- Global State - Hidden Inputs -->
+        <input type="hidden" id="roomCount" value="1">
         <input type="hidden" id="adultCount" value="1">
         <input type="hidden" id="childCount" value="0">
         <input type="hidden" id="infantCount" value="0">
@@ -243,44 +244,59 @@
         <input type="hidden" id="cabinClass" value="Economy">
 
         <!-- Global Shared Dropdown -->
-        <div class="traveller-dropdown-misty d-none shadow-lg" id="travellerDropdown" style="position:absolute; top:200px; right:40px; z-index:9999; min-width:400px; background:#fff; border-radius:24px; padding:30px;" onclick="event.stopPropagation()">
-            <div class="picker-section">
-                <label class="picker-label">ADULTS (12y +)</label>
-                <p class="picker-subtitle">on the day of travel</p>
-                <div class="pill-selector adults-selector">
-                    @for($i=1; $i<=9; $i++) <div class="pill-item {{ $i==1 ? 'active' : '' }}" onclick="selectTraveller('adult', {{ $i }}, this)">{{ $i }}</div> @endfor
-                    <div class="pill-item" onclick="selectTraveller('adult', 10, this)">>9</div>
-                </div>
-            </div>
-
-            <div class="row g-3">
-                <div class="col-6">
-                    <div class="picker-section">
-                        <label class="picker-label">CHILDREN (2y - 12y)</label>
-                        <p class="picker-subtitle">on the day of travel</p>
-                        <div class="pill-selector children-selector">
-                            @for($i=0; $i<=6; $i++) <div class="pill-item {{ $i==0 ? 'active' : '' }}" onclick="selectTraveller('child', {{ $i }}, this)">{{ $i }}</div> @endfor
-                            <div class="pill-item" onclick="selectTraveller('child', 7, this)">>6</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="picker-section">
-                        <label class="picker-label">INFANTS (below 2y)</label>
-                        <p class="picker-subtitle">on the day of travel</p>
-                        <div class="pill-selector infants-selector">
-                            @for($i=0; $i<=6; $i++) <div class="pill-item {{ $i==0 ? 'active' : '' }}" onclick="selectTraveller('infant', {{ $i }}, this)">{{ $i }}</div> @endfor
-                            <div class="pill-item" onclick="selectTraveller('infant', 7, this)">>6</div>
-                        </div>
+        <div class="traveller-dropdown-misty d-none shadow-lg" id="travellerDropdown" style="position:absolute; top:200px; right:40px; z-index:9999; min-width:420px; background:#fff; border-radius:24px; padding:30px;" onclick="event.stopPropagation()">
+            
+            <!-- Room Section (Hotels Only) -->
+            <div class="picker-section hotel-only d-none mb-4" id="roomPickerSection">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="fw-800 text-navy fs-5">Room</div>
+                    <div class="counter-control">
+                        <button type="button" onclick="changeCount('room', -1)">-</button>
+                        <span id="roomCountDisplay">1</span>
+                        <button type="button" onclick="changeCount('room', 1)">+</button>
                     </div>
                 </div>
             </div>
 
-            <div class="picker-section border-top pt-3">
+            <!-- Adults Section -->
+            <div class="picker-section mb-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="fw-800 text-navy fs-5">Adults</div>
+                        <div class="small text-muted" style="font-size: 11px;">12y + on day of travel</div>
+                    </div>
+                    <div class="counter-control">
+                        <button type="button" onclick="changeCount('adult', -1)">-</button>
+                        <span id="adultCountDisplay">1</span>
+                        <button type="button" onclick="changeCount('adult', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Children Section -->
+            <div class="picker-section mb-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="fw-800 text-navy fs-5">Children</div>
+                        <div class="small text-muted" style="font-size: 11px;">0 - 17 Years Old</div>
+                    </div>
+                    <div class="counter-control">
+                        <button type="button" onclick="changeCount('child', -1)">-</button>
+                        <span id="childCountDisplay">0</span>
+                        <button type="button" onclick="changeCount('child', 1)">+</button>
+                    </div>
+                </div>
+                <div class="hotel-only d-none mt-2 p-2 rounded-3" style="background: #f8fafc; border-left: 3px solid #2563eb;">
+                    <p class="small text-muted mb-0" style="font-size: 11px; line-height: 1.4;">Please provide right number of children along with their right age for best options and prices.</p>
+                </div>
+            </div>
+
+            <!-- Travel Class (Flights Only) -->
+            <div class="picker-section border-top pt-4 flight-only" id="classPickerSection">
                 <label class="picker-label">CHOOSE TRAVEL CLASS</label>
                 <div class="class-pills-row mt-2">
                     <div class="class-pill active" onclick="selectClass('Economy', this)">Economy</div>
-                    <div class="class-pill" onclick="selectClass('Premium Economy', this)">Premium Economy</div>
+                    <div class="class-pill" onclick="selectClass('Premium Economy', this)">Premium</div>
                     <div class="class-pill" onclick="selectClass('Business', this)">Business</div>
                     <div class="class-pill" onclick="selectClass('First Class', this)">First Class</div>
                 </div>
@@ -351,11 +367,13 @@
                 </div>
                 <div class="misty-field-block traveller-picker-trigger" onclick="toggleTravellerPicker(event)">
                     <label><i class="fas fa-bed me-2 icon-dim"></i> ROOMS & GUESTS</label>
-                    <div class="m-val-group">
-                        <span class="v-big" id="hotelTravellerDisplay">2</span>
-                        <span class="v-mid" id="hotelTravellerText">Adults</span>
+                    <div class="m-val-group d-flex align-items-center">
+                        <span class="v-big" id="hotelRoomDisplayCount">1</span>
+                        <span class="v-mid ms-1">Rooms</span>
+                        <span class="v-big ms-3" id="hotelAdultDisplayCount">2</span>
+                        <span class="v-mid ms-1">Adults</span>
                     </div>
-                    <div class="m-sub">1 Room • Standard / Suite</div>
+                    <div class="m-sub" id="hotelSubText">1 Room • 2 Adults</div>
                 </div>
             </div>
 
@@ -725,6 +743,45 @@
 
     .border-top { border-color: #f1f5f9 !important; }
 
+    /* Counter Controls */
+    .counter-control {
+        display: flex;
+        align-items: center;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+    }
+    .counter-control button {
+        width: 38px;
+        height: 38px;
+        background: #fff;
+        border: none;
+        color: #2563eb;
+        font-size: 20px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .counter-control button:hover { background: #f1f5f9; }
+    .counter-control button:active { transform: scale(0.9); }
+    .counter-control span {
+        padding: 0 10px;
+        font-weight: 800;
+        font-size: 16px;
+        color: #1e293b;
+        border-left: 1px solid #e2e8f0;
+        border-right: 1px solid #e2e8f0;
+        min-width: 45px;
+        text-align: center;
+        line-height: 38px;
+    }
+    .text-navy { color: #1a1a2e; }
+    .fw-800 { font-weight: 800; }
+
     /* Multi City Restored Misty Styles */
     .misty-fields-grid-mc {
         display: block;
@@ -808,18 +865,33 @@ function switchSearch(type, el) {
     const specialFares = document.getElementById('flightSpecialFares');
     const hotelSpecials = document.getElementById('hotelSpecials');
     
+    const roomSection = document.getElementById('roomPickerSection');
+    const classSection = document.getElementById('classPickerSection');
+    const hotelOnlyTips = document.querySelectorAll('.hotel-only');
+    const flightOnlyTips = document.querySelectorAll('.flight-only');
+    
     if (type === 'flights') {
         flightModeSwitcher.classList.remove('d-none');
         faresSection.classList.remove('d-none');
         flightsTypeRow.classList.remove('d-none');
         specialFares?.classList.remove('d-none');
         hotelSpecials?.classList.add('d-none');
+        
+        roomSection?.classList.add('d-none');
+        classSection?.classList.remove('d-none');
+        hotelOnlyTips.forEach(el => el.classList.add('d-none'));
+        flightOnlyTips.forEach(el => el.classList.remove('d-none'));
     } else if (type === 'hotels') {
         flightModeSwitcher.classList.add('d-none');
         faresSection.classList.remove('d-none');
         flightsTypeRow.classList.add('d-none');
         specialFares?.classList.add('d-none');
         hotelSpecials?.classList.remove('d-none');
+        
+        roomSection?.classList.remove('d-none');
+        classSection?.classList.add('d-none');
+        hotelOnlyTips.forEach(el => el.classList.remove('d-none'));
+        flightOnlyTips.forEach(el => el.classList.add('d-none'));
     } else {
         flightModeSwitcher.classList.add('d-none');
         faresSection.classList.add('d-none');
@@ -883,15 +955,26 @@ function toggleTravellerPicker(event) {
     }
 }
 
-function selectTraveller(type, count, el) {
-    // Update Active Pill
-    el.parentNode.querySelectorAll('.pill-item').forEach(item => item.classList.remove('active'));
-    el.classList.add('active');
+function changeCount(type, delta) {
+    const input = document.getElementById(type + 'Count');
+    const display = document.getElementById(type + 'CountDisplay');
+    if (!input || !display) return;
 
-    // Update Hidden Input
-    document.getElementById(type + 'Count').value = count;
+    let val = parseInt(input.value) || 0;
+    val += delta;
 
-    // Update Main Counter
+    // Minimum constraints
+    if (type === 'room' && val < 1) val = 1;
+    if (type === 'adult' && val < 1) val = 1;
+    if (type === 'child' && val < 0) val = 0;
+    if (type === 'infant' && val < 0) val = 0;
+    
+    // Maximum constraints (example)
+    if (val > 12) val = 12;
+
+    input.value = val;
+    display.innerText = val;
+
     updateTotalPassengers();
 }
 
@@ -911,9 +994,10 @@ function selectClass(className, el) {
 }
 
 function updateTotalPassengers() {
-    const adults = parseInt(document.getElementById('adultCount').value);
-    const children = parseInt(document.getElementById('childCount').value);
-    const infants = parseInt(document.getElementById('infantCount').value);
+    const rooms = parseInt(document.getElementById('roomCount').value) || 1;
+    const adults = parseInt(document.getElementById('adultCount').value) || 1;
+    const children = parseInt(document.getElementById('childCount').value) || 0;
+    const infants = parseInt(document.getElementById('infantCount').value) || 0;
     
     const total = adults + children + infants;
     const travellers = adults + children;
@@ -934,12 +1018,19 @@ function updateTotalPassengers() {
     const mcDisplayText = document.querySelector('.traveler-mc-text');
     if (mcDisplayText) mcDisplayText.innerText = travellers > 1 ? 'Travellers' : 'Traveller';
 
-    // Hotel Display Update
-    const hDisplayCount = document.getElementById('hotelTravellerDisplay');
-    if (hDisplayCount) hDisplayCount.innerText = travellers;
+    // Hotel Display Update (Enhanced for Screenshot Match)
+    const hRoomCount = document.getElementById('hotelRoomDisplayCount');
+    if (hRoomCount) hRoomCount.innerText = rooms;
 
-    const hDisplayText = document.getElementById('hotelTravellerText');
-    if (hDisplayText) hDisplayText.innerText = travellers > 1 ? 'Travellers' : 'Adults';
+    const hAdultCount = document.getElementById('hotelAdultDisplayCount');
+    if (hAdultCount) hAdultCount.innerText = adults;
+
+    const hSubText = document.getElementById('hotelSubText');
+    if (hSubText) {
+        let txt = `${rooms} ${rooms > 1 ? 'Rooms' : 'Room'} • ${adults} ${adults > 1 ? 'Adults' : 'Adult'}`;
+        if (children > 0) txt += `, ${children} ${children > 1 ? 'Children' : 'Child'}`;
+        hSubText.innerText = txt;
+    }
 }
 
 // Close dropdown clicking outside
@@ -1065,6 +1156,9 @@ document.addEventListener('click', (e) => {
             setupAutocomplete('flightOriginInput', 'flightOriginResults', 'flightOriginSub');
             setupAutocomplete('flightDestinationInput', 'flightDestinationResults', 'flightDestinationSub');
             setupAutocomplete('hotelDestinationInput', 'hotelDestinationResults', 'hotelDestinationSub');
+
+            // Initialize display
+            updateTotalPassengers();
 
             // --- Trip Type Switcher ---
             const tripTypeRadios = document.querySelectorAll('input[name="tripType"]');
@@ -1246,28 +1340,15 @@ document.addEventListener('click', (e) => {
                             return;
                         }
 
-                        // Create hidden form for dynamic POST submission
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        form.action = '/hotels/search'; // New Unified Route
-                        const params = {
-                            _token: '{{ csrf_token() }}',
-                            city_code: cityCode,
-                            checkin: checkIn,
-                            checkout: checkOut,
-                            adults: document.getElementById('adultCount').value || 2
-                        };
+                        const url = new URL(window.location.origin + '/hotels');
+                        url.searchParams.append('city_code', cityCode);
+                        url.searchParams.append('checkin', checkIn);
+                        url.searchParams.append('checkout', checkOut);
+                        url.searchParams.append('rooms', document.getElementById('roomCount').value || 1);
+                        url.searchParams.append('adults', document.getElementById('adultCount').value || 2);
+                        url.searchParams.append('children', document.getElementById('childCount').value || 0);
 
-                        for (const key in params) {
-                            const input = document.createElement('input');
-                            input.type = 'hidden';
-                            input.name = key;
-                            input.value = params[key];
-                            form.appendChild(input);
-                        }
-
-                        document.body.appendChild(form);
-                        form.submit();
+                        window.location.href = url.toString();
                         return;
                     }
 
