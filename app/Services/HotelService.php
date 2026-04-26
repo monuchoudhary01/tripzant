@@ -45,6 +45,12 @@ class HotelService
         $checkIn = $params['checkIn'] ?? date('Y-m-d', strtotime('+7 days'));
         $checkOut = $params['checkOut'] ?? date('Y-m-d', strtotime('+8 days'));
 
+        $paxes = [];
+        $childCount = (int)($params['children'] ?? 0);
+        for ($i = 0; $i < $childCount; $i++) {
+            $paxes[] = ['type' => 'CH', 'age' => 8];
+        }
+
         $payload = [
             'stay' => [
                 'checkIn' => $checkIn,
@@ -52,9 +58,10 @@ class HotelService
             ],
             'occupancies' => [
                 [
-                    'rooms' => 1,
-                    'adults' => $params['adults'] ?? 2,
-                    'children' => 0
+                    'rooms' => (int)($params['rooms'] ?? 1),
+                    'adults' => (int)($params['adults'] ?? 2),
+                    'children' => $childCount,
+                    'paxes' => $paxes
                 ]
             ],
             'destination' => [
@@ -83,9 +90,7 @@ class HotelService
 
             if ($response->failed()) {
                 Log::error('HotelBeds Search Error', ['res' => $response->json()]);
-                // Fallback to Mocks if API fails
-                $mockData = $this->getMockHotels($destinationCode);
-                return ['hotels' => ['hotels' => $mockData], 'is_mock' => true, 'msg' => 'HotelBeds API Error'];
+                return ['hotels' => ['hotels' => []], 'is_mock' => false, 'error' => true, 'message' => 'HotelBeds API Error'];
             }
 
             $data = $response->json();
@@ -136,12 +141,24 @@ class HotelService
     /**
      * Get Detailed information including Content (Images, Desc) and Availability (Rates)
      */
-    public function getDetails($hotelCode, $checkIn, $checkOut, $adults = 2)
+    public function getDetails($hotelCode, $checkIn, $checkOut, $adults = 2, $children = 0, $rooms = 1)
     {
+        $paxes = [];
+        for ($i = 0; $i < (int)$children; $i++) {
+            $paxes[] = ['type' => 'CH', 'age' => 8];
+        }
+
         // 1. Fetch Availability (Rates)
         $availPayload = [
             'stay' => ['checkIn' => $checkIn, 'checkOut' => $checkOut],
-            'occupancies' => [['rooms' => 1, 'adults' => (int) $adults, 'children' => 0]],
+            'occupancies' => [
+                [
+                    'rooms' => (int) $rooms, 
+                    'adults' => (int) $adults, 
+                    'children' => (int) $children,
+                    'paxes' => $paxes
+                ]
+            ],
             'hotels' => ['hotel' => [(int) $hotelCode]]
         ];
 
@@ -151,7 +168,6 @@ class HotelService
                 ->post("{$this->baseUrl}/hotels", $availPayload);
 
             // Get Content (Images, Facilities, etc.)
-            // Endpoint: /hotel-content-api/3.0/hotels/{code}/details
             $contentUrl = str_replace('hotel-api/1.0', 'hotel-content-api/3.0', $this->baseUrl) . "/hotels/{$hotelCode}/details?language=ENG";
             $contentResponse = Http::withHeaders($this->getHeaders())->get($contentUrl);
 
@@ -228,8 +244,13 @@ class HotelService
     public function checkRate($rateKey)
     {
         try {
+            $payload = [
+                'rooms' => [
+                    ['rateKey' => $rateKey]
+                ]
+            ];
             $response = Http::withHeaders($this->getHeaders())
-                ->get("{$this->baseUrl}/checkrates/" . $rateKey);
+                ->post("{$this->baseUrl}/checkrates", $payload);
 
             if ($response->failed()) {
                 return ['error' => true, 'message' => 'Rate expired.'];
@@ -330,41 +351,5 @@ class HotelService
             \Log::error('HotelBeds Book Exception: ' . $e->getMessage());
             return ['error' => true, 'message' => $e->getMessage()];
         }
-    }
-
-    private function getMockHotels($cityCode)
-    {
-        $hotels = [];
-        $names = ['Grand Royal Hotel', 'City Plaza', 'Ocean View Resort', 'The Majestic', 'Budget Inn', 'Skyline Suites'];
-        
-        for ($i = 0; $i < 10; $i++) {
-            $name = $names[array_rand($names)] . ' ' . ($i + 1);
-            $net = rand(5000, 25000);
-            $markupPct = (float) config('tripzant.markups.b2c', 10);
-            $sell = round($net * (1 + $markupPct / 100), 2);
-
-            $hotels[] = [
-                'code' => 'MOCK-' . $cityCode . '-' . $i,
-                'name' => $name,
-                'main_image' => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?fit=crop&w=800&q=80',
-                'facilities' => ['WIFI', 'PARKING', 'POOL'],
-                'rooms' => [
-                    [
-                        'name' => 'Deluxe Room',
-                        'rates' => [
-                            [
-                                'rateKey' => 'MOCK-RATE-' . $i,
-                                'net' => $net,
-                                'sellingRate' => $sell,
-                                'currency' => 'INR',
-                                'boardName' => 'Breakfast Included',
-                                'hotelCode' => 'MOCK-' . $cityCode . '-' . $i
-                            ]
-                        ]
-                    ]
-                ]
-            ];
-        }
-        return $hotels;
     }
 }

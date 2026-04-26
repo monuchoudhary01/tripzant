@@ -19,16 +19,40 @@ class HotelController extends Controller
         $this->walletService = $walletService;
     }
 
+    public function applyCoupon(Request $request)
+    {
+        $code = $request->input('code');
+        $coupon = \App\Models\Coupon::where('code', $code)
+            ->where('is_active', true)
+            ->where(function($q) {
+                $q->whereNull('expiry_date')->orWhere('expiry_date', '>=', date('Y-m-d'));
+            })->first();
+
+        if (!$coupon) {
+            return response()->json(['success' => false, 'message' => 'Invalid or expired coupon code.']);
+        }
+
+        return response()->json([
+            'success'         => true,
+            'message'         => 'Coupon applied successfully!',
+            'discount_amount' => $coupon->discount_amount,
+            'discount_type'   => $coupon->discount_type,
+            'code'            => $coupon->code
+        ]);
+    }
+
     /**
      * Show the main Hotel Search Engine / Default Listings
      */
     public function index(Request $request)
     {
         $params = [
-            'checkIn'         => $request->checkIn ?? date('Y-m-d', strtotime('+7 days')),
-            'checkOut'        => $request->checkOut ?? date('Y-m-d', strtotime('+8 days')),
+            'checkIn'         => $request->checkin ?? ($request->checkIn ?? date('Y-m-d', strtotime('+7 days'))),
+            'checkOut'        => $request->checkout ?? ($request->checkOut ?? date('Y-m-d', strtotime('+8 days'))),
             'destinationCode' => $request->city_code ?? 'DXB',
             'adults'          => $request->adults ?? 2,
+            'children'        => $request->children ?? 0,
+            'rooms'           => $request->rooms ?? 1,
         ];
 
         $results = $this->hotelService->search($params);
@@ -43,21 +67,7 @@ class HotelController extends Controller
 
     public function search(Request $request)
     {
-        $params = [
-            'checkIn'         => $request->checkin ?? ($request->checkIn ?? date('Y-m-d', strtotime('+7 days'))),
-            'checkOut'        => $request->checkout ?? ($request->checkOut ?? date('Y-m-d', strtotime('+8 days'))),
-            'destinationCode' => $request->city_code ?? 'DXB',
-            'adults'          => $request->adults ?? 2,
-        ];
-
-        $results = $this->hotelService->search($params);
-        $hotels  = $results['hotels']['hotels'] ?? [];
-        $error   = $results['error'] ?? null;
-        $message = $results['message'] ?? null;
-
-        AuditLogService::log('Hotel', 'Search', "Hotel search in {$params['destinationCode']}", $params);
-
-        return view('hotel.results', compact('hotels', 'params', 'error', 'message'));
+        return redirect()->route('hotels.index', $request->all());
     }
 
     /**
@@ -71,7 +81,9 @@ class HotelController extends Controller
         $adults    = $request->input('adults', 2);
         $children  = $request->input('children', 0);
 
-        $data = $this->hotelService->getDetails($hotelCode, $checkIn, $checkOut, $adults);
+        $rooms     = $request->input('rooms', 1);
+
+        $data = $this->hotelService->getDetails($hotelCode, $checkIn, $checkOut, $adults, $children, $rooms);
 
         AuditLogService::log('Hotel', 'Details', "Viewed hotel: {$hotelCode} for {$adults} adults, {$children} children");
 
@@ -82,7 +94,8 @@ class HotelController extends Controller
                 'checkIn'  => $checkIn, 
                 'checkOut' => $checkOut,
                 'adults'   => $adults,
-                'children' => $children
+                'children' => $children,
+                'rooms'    => $request->input('rooms', 1)
             ],
         ]);
     }
@@ -134,9 +147,16 @@ class HotelController extends Controller
             'checkIn'  => $checkIn,
             'checkOut' => $checkOut,
             'adults'   => $request->input('adults', 2),
+            'children' => $request->input('children', 0),
+            'rooms'    => $request->input('rooms', 1),
         ];
 
-        return view('hotel.checkout', compact('booking', 'rate', 'params'));
+        $coupons = \App\Models\Coupon::where('is_active', true)
+            ->where(function($q) {
+                $q->whereNull('expiry_date')->orWhere('expiry_date', '>=', date('Y-m-d'));
+            })->get();
+
+        return view('hotel.checkout', compact('booking', 'rate', 'params', 'coupons'));
     }
 
     /**
@@ -154,8 +174,11 @@ class HotelController extends Controller
 
         $user      = Auth::user();
         $rateKey   = $request->input('rate_key');
-        $totalFare = (float) $request->input('total_fare');
+        $totalFare = (float) $request->input('final_total', $request->input('total_fare'));
+        $discount  = (float) $request->input('discount', 0);
         $adults    = (int) $request->input('adults', 1);
+        $children  = (int) $request->input('children', 0);
+        $rooms     = (int) $request->input('rooms', 1);
 
         $paymentMethod = $request->input('payment_method', 'online');
 
@@ -204,9 +227,18 @@ class HotelController extends Controller
         $paxes = [];
         for ($i = 0; $i < $adults; $i++) {
             $paxes[] = [
-                'name'    => $request->input("pax_name.{$i}", $request->input('pax_name.0')),
-                'surname' => $request->input("pax_surname.{$i}", $request->input('pax_surname.0')),
+                'name'    => $request->input("pax_name.{$i}", "Adult {$i}"),
+                'surname' => $request->input("pax_surname.{$i}", ""),
                 'type'    => 'AD',
+            ];
+        }
+        for ($j = 0; $j < $children; $j++) {
+            $idx = $adults + $j;
+            $paxes[] = [
+                'name'    => $request->input("pax_name.{$idx}", "Child {$j}"),
+                'surname' => $request->input("pax_surname.{$idx}", ""),
+                'type'    => 'CH',
+                'age'     => 8,
             ];
         }
 
@@ -264,8 +296,8 @@ class HotelController extends Controller
                 'hotel_name'          => $request->input('hotel_name'),
                 'check_in'            => $request->input('checkIn'),
                 'check_out'           => $request->input('checkOut'),
-                'rooms'               => 1,
-                'guests'              => $adults,
+                'rooms'               => (int)($request->input('rooms', 1)),
+                'guests'              => (int)($request->input('adults', 1)) + (int)($request->input('children', 0)),
                 'room_type'           => $request->input('room_name'),
                 'confirmation_number' => $bookingResult['booking']['hotelReference'] ?? null,
                 'hotel_details'       => json_encode($bookingResult['booking']['hotel'] ?? []),
@@ -275,8 +307,8 @@ class HotelController extends Controller
             foreach ($paxes as $p) {
                 \App\Models\Passenger::create([
                     'booking_id' => $bookingRecord->id,
-                    'type'       => 'adult',
-                    'title'      => 'Mr',
+                    'type'       => ($p['type'] ?? 'AD') == 'AD' ? 'adult' : 'child',
+                    'title'      => ($p['type'] ?? 'AD') == 'AD' ? 'Mr' : 'Mstr',
                     'first_name' => $p['name'],
                     'last_name'  => $p['surname'],
                 ]);
@@ -359,16 +391,27 @@ class HotelController extends Controller
         }
 
         $user      = Auth::user();
-        $totalFare = (float) $params['total_fare'];
+        $totalFare = (float) ($params['final_total'] ?? $params['total_fare']);
         $adults    = (int) ($params['adults'] ?? 1);
+        $children  = (int) ($params['children'] ?? 0);
+        $rooms     = (int) ($params['rooms'] ?? 1);
 
         // 1. Build pax list
         $paxes = [];
         for ($i = 0; $i < $adults; $i++) {
             $paxes[] = [
-                'name'    => $params["pax_name"][$i] ?? $params["pax_name"][0],
-                'surname' => $params["pax_surname"][$i] ?? $params["pax_surname"][0],
+                'name'    => $params["pax_name"][$i] ?? "Adult {$i}",
+                'surname' => $params["pax_surname"][$i] ?? "",
                 'type'    => 'AD',
+            ];
+        }
+        for ($j = 0; $j < $children; $j++) {
+            $idx = $adults + $j;
+            $paxes[] = [
+                'name'    => $params["pax_name"][$idx] ?? "Child {$j}",
+                'surname' => $params["pax_surname"][$idx] ?? "",
+                'type'    => 'CH',
+                'age'     => 8,
             ];
         }
 
@@ -410,6 +453,8 @@ class HotelController extends Controller
                     'room_name'  => $params['room_name'],
                     'check_in'   => $params['checkIn'],
                     'check_out'  => $params['checkOut'],
+                    'rooms'      => $params['rooms'] ?? 1,
+                    'children'   => $params['children'] ?? 0,
                     'is_mock'    => $isMock,
                     'paxes'      => $paxes,
                 ]),
@@ -424,8 +469,8 @@ class HotelController extends Controller
                 'hotel_name'          => $params['hotel_name'],
                 'check_in'            => $params['checkIn'],
                 'check_out'           => $params['checkOut'],
-                'rooms'               => 1,
-                'guests'              => $adults,
+                'rooms'               => $rooms,
+                'guests'              => $adults + $children,
                 'room_type'           => $params['room_name'],
                 'confirmation_number' => $bookingResult['booking']['hotelReference'] ?? null,
                 'hotel_details'       => json_encode($bookingResult['booking']['hotel'] ?? []),
@@ -435,8 +480,8 @@ class HotelController extends Controller
             foreach ($paxes as $p) {
                 \App\Models\Passenger::create([
                     'booking_id' => $bookingRecord->id,
-                    'type'       => 'adult',
-                    'title'      => 'Mr',
+                    'type'       => ($p['type'] ?? 'AD') == 'AD' ? 'adult' : 'child',
+                    'title'      => ($p['type'] ?? 'AD') == 'AD' ? 'Mr' : 'Mstr',
                     'first_name' => $p['name'],
                     'last_name'  => $p['surname'],
                 ]);
