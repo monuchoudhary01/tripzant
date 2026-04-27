@@ -53,6 +53,7 @@ class FlightController extends Controller
 
         $allFlightsSorted = [];
         $allRawData = [];
+        $allDictionaries = [];
         $isRoundTrip = ($tripType === 'round' || !empty($returnDate)) && !$multiCity;
 
         if ($multiCity) {
@@ -74,9 +75,17 @@ class FlightController extends Controller
                     
                     $res = $this->hybridFlightService->search($legParams);
                     $flights = $res['data'] ?? [];
+                    
+                    // Aggregate raw data and dictionaries
+                    if (isset($res['raw_data'])) $allRawData = array_merge($allRawData, $res['raw_data']);
+                    if (isset($res['dictionaries'])) {
+                        foreach ($res['dictionaries'] as $key => $values) {
+                            $allDictionaries[$key] = array_merge($allDictionaries[$key] ?? [], $values);
+                        }
+                    }
+
                     foreach($flights as $f) { 
                         $f->segment_index = $idx; 
-                        if($f->source === 'amadeus') $allRawData[] = $f->raw_data;
                     }
                     
                     $allFlightsSorted = array_merge($allFlightsSorted, array_map(fn($f) => $f->toArray(), $flights));
@@ -97,9 +106,16 @@ class FlightController extends Controller
             $onwardFlights = $searchRes['data'] ?? [];
             $metadata = $searchRes['meta'] ?? [];
 
+            // Aggregate raw data and dictionaries
+            if (isset($searchRes['raw_data'])) $allRawData = array_merge($allRawData, $searchRes['raw_data']);
+            if (isset($searchRes['dictionaries'])) {
+                foreach ($searchRes['dictionaries'] as $key => $values) {
+                    $allDictionaries[$key] = array_merge($allDictionaries[$key] ?? [], $values);
+                }
+            }
+
             foreach ($onwardFlights as $of) {
                 $of->segment_index = 0;
-                if ($of->source === 'amadeus') $allRawData[] = $of->raw_data;
             }
 
             $allFlightsSorted = array_merge($allFlightsSorted, array_map(fn($f) => $f->toArray(), $onwardFlights));
@@ -113,12 +129,20 @@ class FlightController extends Controller
                 
                 $returnRes = $this->hybridFlightService->search($returnParams);
                 $returnFlights = $returnRes['data'] ?? [];
+                
+                // Aggregate raw data and dictionaries
+                if (isset($returnRes['raw_data'])) $allRawData = array_merge($allRawData, $returnRes['raw_data']);
+                if (isset($returnRes['dictionaries'])) {
+                    foreach ($returnRes['dictionaries'] as $key => $values) {
+                        $allDictionaries[$key] = array_merge($allDictionaries[$key] ?? [], $values);
+                    }
+                }
+
                 if (isset($returnRes['meta'])) {
-                    $metadata = array_merge($metadata, $returnRes['meta']);
+                    $metadata = array_merge_recursive($metadata, $returnRes['meta']);
                 }
                 foreach($returnFlights as $rf) { 
                     $rf->segment_index = 1; 
-                    if($rf->source === 'amadeus') $allRawData[] = $rf->raw_data;
                 }
                 $allFlightsSorted = array_merge($allFlightsSorted, array_map(fn($f) => $f->toArray(), $returnFlights));
             }
@@ -194,6 +218,17 @@ class FlightController extends Controller
 
         AuditLogService::log('Flight', 'Search', "Flight search from {$origin} to {$destination}", $params);
 
+        // Final Aggregate Cache - Ensures all legs are available for details/checkout
+        $finalResponse = [
+            'success' => true,
+            'data' => $allFlightsSorted,
+            'raw_data' => $allRawData,
+            'dictionaries' => $allDictionaries,
+            'meta' => $metadata ?? []
+        ];
+        $cacheKey = 'flight_search_' . session()->getId();
+        \Illuminate\Support\Facades\Cache::put($cacheKey, $finalResponse, now()->addMinutes(30));
+
         return $view;
     }
 
@@ -232,10 +267,13 @@ class FlightController extends Controller
 
     public function book(Request $request)
     {
-        $rawFlights = \Illuminate\Support\Facades\Cache::get('raw_flight_results', []);
+        $id = $request->input('id');
+        $cacheKey = 'flight_search_' . session()->getId();
+        $cachedResults = \Illuminate\Support\Facades\Cache::get($cacheKey) ?: \Illuminate\Support\Facades\Cache::get('flight_search_full', []);
+        $rawFlights = $cachedResults['raw_data'] ?? [];
+        
         $flightOffer = null;
         foreach ($rawFlights as $raw) {
-            // Support both object and array access for raw data
             $rawId = is_object($raw) ? ($raw->id ?? null) : ($raw['id'] ?? null);
             if ($rawId == $id) {
                 $flightOffer = is_object($raw) ? (array)$raw : $raw;

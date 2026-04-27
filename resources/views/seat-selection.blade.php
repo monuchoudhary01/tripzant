@@ -316,23 +316,25 @@
     }
 
     function renderLegSwitcher() {
-        const switcherContainer = document.createElement('div');
-        switcherContainer.className = 'd-flex gap-3 mb-5 p-2 bg-white rounded-pill shadow-sm border overflow-hidden w-fit mx-auto';
-        switcherContainer.style.width = 'fit-content';
-        
         if (legs.length <= 1) return; // Don't show switcher if only one leg
 
+        const switcherContainer = document.createElement('div');
+        switcherContainer.id = 'legSwitcher';
+        switcherContainer.className = 'd-flex gap-2 mb-4 p-2 bg-white rounded-4 shadow-sm border overflow-auto w-100 justify-content-center';
+        
         switcherContainer.innerHTML = legs.map((leg, idx) => `
-            <button class="btn rounded-pill px-4 py-2 fw-800 transition-all ${idx === currentLegIndex ? 'btn-primary shadow-sm' : 'btn-light text-muted'}" 
-                    style="font-size: 13px; letter-spacing: 0.5px; min-width: 160px;"
+            <button class="btn rounded-3 px-3 py-2 fw-800 transition-all ${idx === currentLegIndex ? 'btn-primary' : 'btn-light text-muted'}" 
+                    style="font-size: 12px; min-width: 140px; white-space: nowrap;"
                     onclick="switchLeg(${idx})">
-                <i class="fas ${idx === 0 ? 'fa-plane-departure' : 'fa-plane-arrival'} me-2"></i>
+                <div class="x-small opacity-75 mb-1">FLIGHT ${idx+1}</div>
+                <i class="fas fa-plane me-1"></i>
                 ${leg.dep_city} → ${leg.arr_city}
             </button>
         `).join('');
 
-        const headerSection = document.querySelector('.amadeus-wrapper > .row.align-items-center.mb-5');
-        headerSection.after(switcherContainer);
+        // Prepend to the wrapper so it's always at the top
+        const wrapper = document.querySelector('.amadeus-wrapper');
+        if (wrapper) wrapper.prepend(switcherContainer);
     }
 
     function updateFlightHeader() {
@@ -349,11 +351,12 @@
         currentPassengerIndex = 0; // Reset pax focus on leg change? Or keep same? Let's reset for clarity.
         
         // Update Switcher UI
-        const buttons = document.querySelectorAll('.amadeus-wrapper > div:nth-child(2) button');
+        const buttons = document.querySelectorAll('#legSwitcher button');
         buttons.forEach((btn, idx) => {
             if (idx === currentLegIndex) {
                 btn.classList.replace('btn-light', 'btn-primary');
-                btn.classList.replace('text-muted', 'shadow-sm');
+                btn.classList.add('shadow-sm');
+                btn.classList.remove('text-muted');
             } else {
                 btn.classList.replace('btn-primary', 'btn-light');
                 btn.classList.remove('shadow-sm');
@@ -516,10 +519,10 @@
         document.getElementById('finalPriceText').innerText = `₹${total.toLocaleString()}`;
 
         const btn = document.getElementById('proceedBtn');
-        const totalNeeded = passengers.length * legs.length;
-        btn.disabled = (totalAssignedAllLegs !== totalNeeded);
+        // Allow proceeding even if not all seats selected (MakeMyTrip style)
+        btn.disabled = false; 
         
-        if (totalAssignedAllLegs === totalNeeded) {
+        if (totalAssignedAllLegs > 0) {
             btn.classList.add('animate__animated', 'animate__pulse', 'animate__infinite');
         } else {
             btn.classList.remove('animate__animated', 'animate__pulse', 'animate__infinite');

@@ -141,7 +141,7 @@
             <div class="d-flex align-items-center gap-4">
                 <div class="d-flex align-items-center gap-2">
                     <img src="https://img.icons8.com/color/48/airplane-take-off.png" height="25">
-                    <span class="fw-900 text-navy">{{ $flight['departure_city'] ?? 'DEL' }} ✈️ {{ $flight['arrival_city'] ?? 'BOM' }}</span>
+                    <span class="fw-900 text-navy">{{ $flight['dep_city'] ?? ($flight['departure_city'] ?? 'DEL') }} ✈️ {{ $flight['arr_city'] ?? ($flight['arrival_city'] ?? 'BOM') }}</span>
                 </div>
                 <div style="width: 1px; height: 20px; background: #ddd;"></div>
                 <div class="small fw-bold text-muted"><i class="far fa-calendar me-1"></i> {{ isset($flight['departure_at']) ? date('M d', strtotime($flight['departure_at'])) : 'Upcoming' }} — {{ $flight['cabin'] ?? 'Economy' }}</div>

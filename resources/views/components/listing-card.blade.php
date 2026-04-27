@@ -22,7 +22,9 @@
      data-refundable="{{ $isRefundable ? '1' : '0' }}"
      data-cabin="{{ strtoupper($f['cabin'] ?? 'ECONOMY') }}"
      data-source="{{ $source }}"
-     data-seats="{{ $f['seats'] ?? 9 }}">
+     data-seats="{{ $f['seats'] ?? 9 }}"
+     data-dep-city="{{ $depCity }}"
+     data-arr-city="{{ $arrCity }}">
      
     @if($isBest)
         <div class="position-absolute top-0 start-0 m-0 translate-middle-y" style="z-index: 5; left: 30px !important;">
@@ -91,7 +93,7 @@
                     <div class="row align-items-center text-center">
                         <div class="col-4">
                             <div class="fw-900 text-navy dep-time" style="font-size:24px; line-height:1;">{{ $depTime }}</div>
-                            <div class="text-muted fw-800 uppercase mt-1" style="font-size:11px;">{{ $depCity }} <span class="opacity-50">({{ $terminal }})</span></div>
+                            <div class="text-muted fw-800 uppercase mt-1 dep-city" style="font-size:11px;">{{ $depCity }} <span class="opacity-50">({{ $terminal }})</span></div>
                         </div>
                         <div class="col-4 position-relative px-0">
                             <div class="text-muted fw-800 uppercase mb-2" style="font-size:10px; letter-spacing:0.5px;">{{ $duration }}</div>
@@ -111,7 +113,7 @@
                         </div>
                         <div class="col-4">
                             <div class="fw-900 text-navy arr-time" style="font-size:24px; line-height:1;">{{ $arrTime }}</div>
-                            <div class="text-muted fw-800 uppercase mt-1" style="font-size:11px;">{{ $arrCity }}</div>
+                            <div class="text-muted fw-800 uppercase mt-1 arr-city" style="font-size:11px;">{{ $arrCity }}</div>
                         </div>
                     </div>
                 </div>

@@ -1460,9 +1460,9 @@
                     airline: airline,
                     flight_number: el.querySelector('.text-muted.fw-700.uppercase') ? el.querySelector('.text-muted.fw-700.uppercase').innerText : '000',
                     dep_time: depTime,
-                    dep_city: el.getAttribute('data-leg') === 'onward' ? '{{ $origin }}' : '{{ $destination }}',
+                    dep_city: el.getAttribute('data-dep-city') || '???',
                     arr_time: arrTime,
-                    arr_city: el.getAttribute('data-leg') === 'onward' ? '{{ $destination }}' : '{{ $origin }}',
+                    arr_city: el.getAttribute('data-arr-city') || '???',
                     price: price,
                     duration: el.getAttribute('data-duration') || '0h 0m',
                     date: el.getAttribute('data-date') || (index == 0 ? '{{ $travelDate }}' : '{{ $returnDate }}')

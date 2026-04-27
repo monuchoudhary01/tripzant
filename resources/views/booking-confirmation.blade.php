@@ -145,10 +145,12 @@
         </div>
         <h1 class="fw-900 mb-2">Booking Confirmed!</h1>
         <p class="opacity-75 fs-5">
-            @if(count($legs) > 1)
-                Your round-trip journey from {{ $flight['departure_city'] }} to {{ $legs[count($legs)-1]['arrival_city'] ?? $legs[1]['arrival_city'] ?? '???' }} is ready.
+            @if(count($legs) > 2)
+                Your multi-city journey starting from {{ $flight['departure_city'] ?? '???' }} is confirmed.
+            @elseif(count($legs) == 2)
+                Your round-trip journey from {{ $flight['departure_city'] ?? '???' }} to {{ $legs[1]['arrival_city'] ?? '???' }} is ready.
             @else
-                Your journey from {{ $flight['departure_city'] }} to {{ $flight['arrival_city'] }} is ready.
+                Your one-way flight from {{ $flight['departure_city'] ?? '???' }} to {{ $flight['arrival_city'] ?? '???' }} is ready.
             @endif
         </p>
     </div>
@@ -179,7 +181,13 @@
                 <div class="row g-5 align-items-center {{ $idx < count($legs) - 1 ? 'mb-4 border-bottom pb-4' : 'mb-5' }}">
                     <div class="col-md-4">
                         <div class="pnr-box">
-                            <div class="x-small fw-900 text-muted uppercase mb-2">{{ $idx === 0 ? 'Airline PNR' : 'Return PNR' }}</div>
+                            <div class="x-small fw-900 text-muted uppercase mb-2">
+                                @if(count($legs) > 2)
+                                    SEGMENT {{ $idx + 1 }} PNR
+                                @else
+                                    {{ $idx === 0 ? 'Airline PNR' : 'Return PNR' }}
+                                @endif
+                            </div>
                             <div class="pnr-code">{{ $pnrs[$idx] ?? $pnr ?? '------' }}</div>
                         </div>
                     </div>
@@ -268,46 +276,28 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @php
-                                    // Collect travelers — each BookingItem is now a single traveler (flat array)
-                                    $travelers = [];
-                                    foreach ($booking->items as $bItem) {
-                                        $d = json_decode($bItem->details, true);
-                                        if (!is_array($d)) continue;
-                                        // Flat format: {first_name, last_name, ...}
-                                        if (isset($d['first_name'])) {
-                                            $travelers[] = $d;
-                                        } else {
-                                            // Legacy nested format
-                                            foreach ($d as $t) {
-                                                if (is_array($t) && isset($t['first_name'])) $travelers[] = $t;
-                                            }
-                                        }
-                                    }
-
-                                    // Fallback from api_booking_details
-                                    if (empty($travelers) && $booking->api_booking_details) {
-                                        $apiD = json_decode($booking->api_booking_details, true);
-                                        foreach ($apiD['travelers'] ?? [] as $t) {
-                                            if (is_array($t) && isset($t['first_name'])) $travelers[] = $t;
-                                        }
-                                    }
-                                @endphp
-
-                                @forelse($travelers as $tIdx => $p)
+                                @forelse($dbPassengers ?? [] as $tIdx => $p)
                                 <tr>
                                     <td><span class="fw-900 text-muted">{{ $tIdx + 1 }}</span></td>
                                     <td>
-                                        <div class="fw-900">{{ $p['first_name'] ?? 'Guest' }} {{ $p['last_name'] ?? '' }}</div>
-                                        <div class="x-small text-muted fw-bold">{{ $p['title'] ?? 'Mr' }} · Adult</div>
+                                        <div class="fw-900">{{ $p->first_name ?? 'Guest' }} {{ $p->last_name ?? '' }}</div>
+                                        <div class="x-small text-muted fw-bold">{{ $p->title ?? 'Mr' }} · Adult</div>
                                     </td>
                                     <td>
-                                        <div class="x-small fw-bold">{{ $p['email'] ?? '—' }}</div>
-                                        <div class="x-small text-muted">{{ $p['mobile'] ?? '' }}</div>
+                                        <div class="x-small fw-bold">{{ $p->email ?? $booking->user->email ?? '—' }}</div>
                                     </td>
                                     <td>
-                                        <div class="fw-900 text-primary seat-cell" data-pax="{{ $tIdx }}">
-                                            {{ $p['seat'] ?? 'Auto' }}
+                                        <div class="fw-900 text-primary">
+                                            @if($p->seat_number)
+                                                @php 
+                                                    $seatParts = explode(' | ', $p->seat_number);
+                                                @endphp
+                                                @foreach($seatParts as $sp)
+                                                    <span class="badge bg-primary text-white me-1 px-2 py-1 rounded-3" style="font-size: 10px;">{{ $sp }}</span>
+                                                @endforeach
+                                            @else
+                                                <span class="text-muted">Auto</span>
+                                            @endif
                                         </div>
                                     </td>
                                     <td class="text-end">
@@ -373,17 +363,6 @@
             spread: 70,
             origin: { y: 0.6 },
             colors: ['#005eb8', '#003366', '#10b981']
-        });
-
-        // Patch seats from localStorage using data-pax attribute
-        const seatsMulti = JSON.parse(localStorage.getItem('selected_seats_multi') || '{}');
-        document.querySelectorAll('.seat-cell').forEach(cell => {
-            const pIdx = parseInt(cell.getAttribute('data-pax'));
-            const seatData = seatsMulti[0]?.[pIdx];
-            if (seatData?.seatId) {
-                cell.innerText = seatData.seatId;
-                cell.classList.add('badge', 'bg-primary', 'text-white', 'px-2', 'py-1', 'rounded-3');
-            }
         });
 
         // Clear stale localStorage data

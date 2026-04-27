@@ -773,16 +773,16 @@
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="text-center">
-                            <div class="fw-900 text-navy fs-5">${f.departure_city || f.from || '---'}</div>
-                            <div class="small text-muted fw-bold">${f.departure_at ? new Date(f.departure_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</div>
+                            <div class="fw-900 text-navy fs-5">${f.dep_city || f.departure_city || f.from || '---'}</div>
+                            <div class="small text-muted fw-bold">${f.dep_time || (f.departure_at ? new Date(f.departure_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '')}</div>
                         </div>
                         <div class="flex-grow-1 px-3 position-relative text-center">
                             <div class="border-top w-100 position-absolute top-50 start-0 opacity-10"></div>
                             <i class="fas fa-plane text-navy opacity-20 position-relative bg-light px-2" style="z-index: 1;"></i>
                         </div>
                         <div class="text-center">
-                            <div class="fw-900 text-navy fs-5">${f.arrival_city || f.to || '---'}</div>
-                            <div class="small text-muted fw-bold">${f.arrival_at ? new Date(f.arrival_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</div>
+                            <div class="fw-900 text-navy fs-5">${f.arr_city || f.arrival_city || f.to || '---'}</div>
+                            <div class="small text-muted fw-bold">${f.arr_time || (f.arrival_at ? new Date(f.arrival_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '')}</div>
                         </div>
                     </div>
                 </div>
