@@ -137,15 +137,20 @@ class CheckoutController extends Controller
             }
 
             $travelers = $pendingData['travelers'] ?? [];
-            $seats     = $request->input('seats', []);
+            $seats     = $request->input('seats', []); // This is selectionsByLeg {0: {paxIdx: {seatId, price}}, 1: ...}
 
-            // Assign seats to travelers from Leg 0 (if available)
-            if (!empty($seats) && isset($seats[0])) {
-                foreach ($travelers as $idx => &$traveler) {
-                    if (isset($seats[0][$idx]['seatId'])) {
-                        $traveler['seat'] = $seats[0][$idx]['seatId'];
+            // Assign seats to travelers for ALL legs
+            foreach ($travelers as $idx => &$traveler) {
+                $paxSeats = [];
+                foreach ($seats as $legIdx => $legSeats) {
+                    if (isset($legSeats[$idx]['seatId'])) {
+                        $paxSeats[$legIdx] = $legSeats[$idx]['seatId'];
                     }
                 }
+                // Store all seats as an array in the traveler object
+                $traveler['all_seats'] = $paxSeats;
+                // Keep 'seat' as legacy for the first leg
+                $traveler['seat'] = $paxSeats[0] ?? null;
             }
 
             $email     = $travelers[0]['email'] ?? (auth()->user()->email ?? null);
@@ -156,6 +161,7 @@ class CheckoutController extends Controller
                 'total_amount' => $totalAmount,
                 'travelers'    => $travelers,
                 'addons'       => $addons,
+                'seats_by_leg' => $seats, // Save the full structure too
                 'item_data'    => $pendingData['item_data'] ?? null,
                 'reference'    => $reference,
             ]]);
