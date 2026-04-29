@@ -172,13 +172,19 @@ class BookingFinalizeController extends Controller
 
         $paxList = \DB::table('passengers')->where('booking_id', $booking->id)->get();
 
+        // Extract travelers (with email & mobile) from api_booking_details
+        $apiDetails = json_decode($booking->api_booking_details, true);
+        $apiTravelers = $apiDetails['travelers'] ?? [];
+
         return view('booking-confirmation', [
             'booking' => $booking,
             'pnr' => $pnrs[0] ?? 'N/A',
             'pnrs' => $pnrs,
             'flight' => $flight,
             'legs' => $legs,
-            'dbPassengers' => $paxList
+            'dbPassengers' => $paxList,
+            'apiTravelers' => $apiTravelers,
+            'reference' => $booking->booking_reference,
         ]);
     }
 
@@ -211,10 +217,17 @@ class BookingFinalizeController extends Controller
 
         foreach ($legs as &$leg) {
             $baseDate = $leg['date'] ?? now()->format('Y-m-d');
+            
             $depTimeRaw = $leg['departure_at'] ?? ($leg['dep_time'] ?? '10:00');
+            // Remove Z to prevent timezone shifting, so backend matches frontend display exactly
+            $depTimeRaw = str_replace('Z', '', strtoupper(trim($depTimeRaw)));
             $leg['departure_at'] = (strlen($depTimeRaw) === 5) ? $baseDate . ' ' . $depTimeRaw . ':00' : date('Y-m-d H:i:s', strtotime($depTimeRaw));
+            
             $arrTimeRaw = $leg['arrival_at'] ?? ($leg['arr_time'] ?? '12:00');
+            // Remove Z to prevent timezone shifting
+            $arrTimeRaw = str_replace('Z', '', strtoupper(trim($arrTimeRaw)));
             $leg['arrival_at'] = (strlen($arrTimeRaw) === 5) ? $baseDate . ' ' . $arrTimeRaw . ':00' : (strtotime($arrTimeRaw) ? date('Y-m-d H:i:s', strtotime($arrTimeRaw)) : date('Y-m-d H:i:s', strtotime($leg['departure_at'] . ' + 2 hours')));
+            
             $leg['departure_city'] = $leg['departure_city'] ?? ($leg['dep_city'] ?? 'Unknown');
             $leg['arrival_city'] = $leg['arrival_city'] ?? ($leg['arr_city'] ?? 'Unknown');
             $leg['airline_name'] = $leg['airline_name'] ?? ($leg['airline'] ?? 'Airline');

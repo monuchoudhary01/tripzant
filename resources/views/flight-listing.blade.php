@@ -108,61 +108,138 @@
     <div class="mmt-header-wrapper" style="background:#001d3d; position: sticky; top: 70px; z-index: 999; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
         <div class="container-fluid px-lg-5 py-3">
             <div class="d-flex align-items-center justify-content-between mb-3 px-2">
-                <div class="breadcrumb-custom x-small fw-700 opacity-50 text-white">
-                    <a href="/" class="text-white text-decoration-none">Home</a> / 
-                    <a href="/flights" class="text-white text-decoration-none">Flights</a> / 
-                    <span class="opacity-100 fw-900">{{ $origin }} → {{ $destination }}</span>
+                <div class="d-flex align-items-center gap-3">
+                    <label class="misty-radio-listing">
+                        <input type="radio" name="tripType" value="oneway" {{ (!$isRoundTrip && !$isMultiCity) ? 'checked' : '' }} onchange="updateSearchUIMode(this.value)">
+                        One Way
+                    </label>
+                    <label class="misty-radio-listing">
+                        <input type="radio" name="tripType" value="roundtrip" {{ $isRoundTrip ? 'checked' : '' }} onchange="updateSearchUIMode(this.value)">
+                        Round Trip
+                    </label>
+                    <label class="misty-radio-listing">
+                        <input type="radio" name="tripType" value="multicity" {{ $isMultiCity ? 'checked' : '' }} onchange="updateSearchUIMode(this.value)">
+                        Multi City
+                    </label>
                 </div>
-                <div class="d-flex align-items-center gap-4 text-white">
-                    <div class="d-flex flex-column align-items-end">
-                        <span class="fw-900 fs-5" style="letter-spacing: -0.5px;">{{ $origin }} → {{ $destination }}</span>
-                        <span class="x-small fw-800 opacity-50">{{ \Carbon\Carbon::parse($travelDate)->format('D, d M Y') }} | {{ $adults }} Traveler</span>
-                    </div>
+                <div class="d-flex align-items-center gap-3">
+                    <button class="m-mode-btn {{ !request('max_budget') ? 'active' : '' }}" onclick="switchFlightMode('date', this)">
+                        <i class="fas fa-calendar-alt"></i> Search by dates
+                    </button>
+                    <button class="m-mode-btn {{ request('max_budget') ? 'active' : '' }}" onclick="switchFlightMode('budget', this)">
+                        <i class="fas fa-money-bill-wave"></i> Search by budget
+                    </button>
                 </div>
             </div>
+
+
 
             <!-- Permanent MMT Horizontal Search Bar -->
             <div id="modifySearchPanel" class="bg-white rounded-3 shadow-lg p-0 border-0" style="width: 100%; position: relative; overflow: visible;">
                 <div class="d-flex align-items-stretch flex-nowrap" style="min-height: 80px;">
-                    <!-- Trip Type column -->
-                    <div class="search-col border-end px-3 py-2 d-flex flex-column justify-content-center flex-shrink-0" style="width: 115px; background: #f2f2f2; border-top-left-radius: 8px;">
-                        <label class="x-small fw-800 text-muted uppercase d-block mb-1" style="font-size:9px; letter-spacing:0.5px;">TRIP TYPE</label>
-                        <select id="mmtTripType" class="fw-900 border-0 bg-transparent p-0 shadow-none w-100 fs-6 cursor-pointer text-navy" style="outline: none;">
-                            <option value="oneway" {{ !$isRoundTrip ? 'selected' : '' }}>One Way</option>
-                            <option value="roundtrip" {{ $isRoundTrip ? 'selected' : '' }}>Round Trip</option>
-                        </select>
-                    </div>
+                    <!-- STANDARD FIELDS (One Way / Round Trip) -->
+                    <div id="mmtStandardFields" class="d-flex flex-grow-1 align-items-stretch {{ $isMultiCity ? 'd-none' : '' }}">
+                        <!-- From column -->
+                        <div class="search-col border-end px-4 py-2 position-relative d-flex flex-column justify-content-center flex-grow-1" style="min-width: 250px;">
+                            <label class="x-small fw-800 text-muted uppercase d-block mb-1" style="font-size:9px; letter-spacing:0.5px;">FROM</label>
+                            <input type="text" id="mmtOrigin" class="fw-900 border-0 bg-transparent p-0 shadow-none w-100 fs-4 text-navy autocomplete-input" value="{{ $originCity ?? $origin }}" data-code="{{ $origin }}" autocomplete="off" onfocus="this.select()" style="outline: none;">
+                            <div id="mmtOriginResults" class="autocomplete-results d-none shadow-2xl border rounded-3 overflow-hidden bg-white" style="position: absolute; top: 100%; left: 0; width: 450px; z-index: 10000; margin-top: 5px;"></div>
+                        </div>
 
-                    <!-- From column -->
-                    <div class="search-col border-end px-4 py-2 position-relative d-flex flex-column justify-content-center flex-grow-1" style="min-width: 250px;">
-                        <label class="x-small fw-800 text-muted uppercase d-block mb-1" style="font-size:9px; letter-spacing:0.5px;">FROM</label>
-                        <input type="text" id="mmtOrigin" class="fw-900 border-0 bg-transparent p-0 shadow-none w-100 fs-4 text-navy autocomplete-input" value="{{ $originCity ?? $origin }}" data-code="{{ $origin }}" autocomplete="off" onfocus="this.select()" style="outline: none;">
-                        <div id="mmtOriginResults" class="autocomplete-results d-none shadow-2xl border rounded-3 overflow-hidden bg-white" style="position: absolute; top: 100%; left: 0; width: 450px; z-index: 10000; margin-top: 5px;"></div>
-                    </div>
+                        <div class="d-flex align-items-center px-1" style="pointer-events: none;">
+                            <div class="swap-circle shadow-sm hvr-rotate" onclick="swapMmtLocations()" style="width:34px; height:34px; background:#fff; border:1px solid #ddd; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; margin:0 -17px; position:relative; z-index:50; pointer-events: auto;">
+                                <i class="fas fa-right-left text-primary" style="font-size:12px;"></i>
+                            </div>
+                        </div>
 
-                    <div class="d-flex align-items-center px-1" style="pointer-events: none;">
-                        <div class="swap-circle shadow-sm hvr-rotate" onclick="swapMmtLocations()" style="width:34px; height:34px; background:#fff; border:1px solid #ddd; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; margin:0 -17px; position:relative; z-index:50; pointer-events: auto;">
-                            <i class="fas fa-right-left text-primary" style="font-size:12px;"></i>
+                        <!-- To column -->
+                        <div class="search-col border-end px-4 py-2 position-relative d-flex flex-column justify-content-center flex-grow-1" style="min-width: 250px;">
+                            <label class="x-small fw-800 text-muted uppercase d-block mb-1" style="font-size:9px; letter-spacing:0.5px;">TO</label>
+                            <input type="text" id="mmtDestination" class="fw-900 border-0 bg-transparent p-0 shadow-none w-100 fs-4 text-navy autocomplete-input" value="{{ $destinationCity ?? $destination }}" data-code="{{ $destination }}" autocomplete="off" onfocus="this.select()" style="outline: none;">
+                            <div id="mmtDestinationResults" class="autocomplete-results d-none shadow-2xl border rounded-3 overflow-hidden bg-white" style="position: absolute; top: 100%; left: 0; width: 450px; z-index: 10000; margin-top: 5px;"></div>
+                        </div>
+
+                        <!-- Depart column -->
+                        <div class="search-col border-end px-3 py-2 d-flex flex-column justify-content-center flex-shrink-0" style="width: 180px;">
+                            <label class="x-small fw-800 text-muted uppercase d-block mb-1" style="font-size:9px; letter-spacing:0.5px;">DEPART</label>
+                            <input type="text" id="mmtDeparture" class="fw-900 border-0 bg-transparent p-0 shadow-none w-100 text-navy cursor-pointer" value="{{ \Carbon\Carbon::parse($travelDate)->format('D, d M Y') }}" readonly style="outline: none; font-size: 15px;">
+                        </div>
+
+                        <!-- Return column -->
+                        <div class="search-col border-end px-3 py-2 d-flex flex-column justify-content-center flex-shrink-0" id="mmtReturnCol" style="width: 180px; {{ !$isRoundTrip ? 'opacity:0.3;' : '' }}">
+                            <label class="x-small fw-800 text-muted uppercase d-block mb-1" style="font-size:9px; letter-spacing:0.5px;">RETURN</label>
+                            <input type="text" id="mmtReturn" class="fw-900 border-0 bg-transparent p-0 shadow-none w-100 text-navy cursor-pointer" value="{{ $returnDate ? \Carbon\Carbon::parse($returnDate)->format('D, d M Y') : 'Select Date' }}" readonly {{ !$isRoundTrip ? 'disabled' : '' }} style="outline: none; font-size: 15px;">
                         </div>
                     </div>
 
-                    <!-- To column -->
-                    <div class="search-col border-end px-4 py-2 position-relative d-flex flex-column justify-content-center flex-grow-1" style="min-width: 250px;">
-                        <label class="x-small fw-800 text-muted uppercase d-block mb-1" style="font-size:9px; letter-spacing:0.5px;">TO</label>
-                        <input type="text" id="mmtDestination" class="fw-900 border-0 bg-transparent p-0 shadow-none w-100 fs-4 text-navy autocomplete-input" value="{{ $destinationCity ?? $destination }}" data-code="{{ $destination }}" autocomplete="off" onfocus="this.select()" style="outline: none;">
-                        <div id="mmtDestinationResults" class="autocomplete-results d-none shadow-2xl border rounded-3 overflow-hidden bg-white" style="position: absolute; top: 100%; left: 0; width: 450px; z-index: 10000; margin-top: 5px;"></div>
-                    </div>
-
-                    <!-- Depart column -->
-                    <div class="search-col border-end px-3 py-2 d-flex flex-column justify-content-center flex-shrink-0" style="width: 180px;">
-                        <label class="x-small fw-800 text-muted uppercase d-block mb-1" style="font-size:9px; letter-spacing:0.5px;">DEPART</label>
-                        <input type="text" id="mmtDeparture" class="fw-900 border-0 bg-transparent p-0 shadow-none w-100 text-navy cursor-pointer" value="{{ \Carbon\Carbon::parse($travelDate)->format('D, d M Y') }}" readonly style="outline: none; font-size: 15px;">
-                    </div>
-
-                    <!-- Return column -->
-                    <div class="search-col border-end px-3 py-2 d-flex flex-column justify-content-center flex-shrink-0" id="mmtReturnCol" style="width: 180px; {{ !$isRoundTrip ? 'opacity:0.3;' : '' }}">
-                        <label class="x-small fw-800 text-muted uppercase d-block mb-1" style="font-size:9px; letter-spacing:0.5px;">RETURN</label>
-                        <input type="text" id="mmtReturn" class="fw-900 border-0 bg-transparent p-0 shadow-none w-100 text-navy cursor-pointer" value="{{ $returnDate ? \Carbon\Carbon::parse($returnDate)->format('D, d M Y') : 'Select Date' }}" readonly {{ !$isRoundTrip ? 'disabled' : '' }} style="outline: none; font-size: 15px;">
+                    <!-- MULTI CITY FIELDS -->
+                    <div id="mmtMultiCityFields" class="flex-grow-1 {{ !$isMultiCity ? 'd-none' : 'd-flex' }} flex-column p-2" style="overflow: visible;">
+                        <div id="mmtMultiCityRows" class="w-100">
+                            @if($isMultiCity)
+                                @for($i = 0; $i < max(2, $numSegments); $i++)
+                                    @php
+                                        $oCode = $multiCityOrigins[$i] ?? '';
+                                        $dCode = $multiCityDestinations[$i] ?? '';
+                                        $date = $multiCityDates[$i] ?? '';
+                                    @endphp
+                                    <div class="mmt-mc-row d-flex gap-2 mb-2 align-items-center">
+                                        <div class="flex-grow-1 position-relative bg-light rounded-pill px-3 py-2 border d-flex align-items-center">
+                                            <i class="fas fa-plane-departure text-primary opacity-50 me-2" style="font-size: 12px;"></i>
+                                            <input type="text" class="form-control form-control-sm border-0 bg-transparent mmt-mc-origin autocomplete-input fw-bold shadow-none p-0 text-navy" placeholder="From" value="{{ $oCode }}" data-code="{{ $oCode }}" style="font-size: 14px; outline: none;">
+                                            <div class="autocomplete-results d-none shadow-lg border rounded-3 bg-white" style="position: absolute; top: 100%; left: 0; width: 300px; z-index: 10000;"></div>
+                                        </div>
+                                        <div class="flex-grow-1 position-relative bg-light rounded-pill px-3 py-2 border d-flex align-items-center">
+                                            <i class="fas fa-plane-arrival text-primary opacity-50 me-2" style="font-size: 12px;"></i>
+                                            <input type="text" class="form-control form-control-sm border-0 bg-transparent mmt-mc-destination autocomplete-input fw-bold shadow-none p-0 text-navy" placeholder="To" value="{{ $dCode }}" data-code="{{ $dCode }}" style="font-size: 14px; outline: none;">
+                                            <div class="autocomplete-results d-none shadow-lg border rounded-3 bg-white" style="position: absolute; top: 100%; left: 0; width: 300px; z-index: 10000;"></div>
+                                        </div>
+                                        <div class="position-relative bg-light rounded-pill px-3 py-2 border d-flex align-items-center" style="width: 160px;">
+                                            <i class="fas fa-calendar-alt text-primary opacity-50 me-2" style="font-size: 12px;"></i>
+                                            <input type="text" class="form-control form-control-sm border-0 bg-transparent mmt-mc-date cursor-pointer fw-bold shadow-none p-0 text-navy" placeholder="Date" value="{{ $date ? \Carbon\Carbon::parse($date)->format('D, d M Y') : '' }}" readonly style="font-size: 14px; outline: none;">
+                                        </div>
+                                        <button type="button" class="btn btn-link text-danger p-0 ms-1 remove-mc-btn {{ $numSegments <= 2 ? 'd-none' : '' }}" onclick="removeMmtCityRow(this)"><i class="fas fa-times-circle fs-5"></i></button>
+                                    </div>
+                                @endfor
+                            @else
+                                <div class="mmt-mc-row d-flex gap-2 mb-2 align-items-center">
+                                    <div class="flex-grow-1 position-relative bg-light rounded-pill px-3 py-2 border d-flex align-items-center">
+                                        <i class="fas fa-plane-departure text-primary opacity-50 me-2" style="font-size: 12px;"></i>
+                                        <input type="text" class="form-control form-control-sm border-0 bg-transparent mmt-mc-origin autocomplete-input fw-bold shadow-none p-0 text-navy" placeholder="From" value="{{ $originCity ?? $origin }}" data-code="{{ $origin }}" style="font-size: 14px; outline: none;">
+                                        <div class="autocomplete-results d-none shadow-lg border rounded-3 bg-white" style="position: absolute; top: 100%; left: 0; width: 300px; z-index: 10000;"></div>
+                                    </div>
+                                    <div class="flex-grow-1 position-relative bg-light rounded-pill px-3 py-2 border d-flex align-items-center">
+                                        <i class="fas fa-plane-arrival text-primary opacity-50 me-2" style="font-size: 12px;"></i>
+                                        <input type="text" class="form-control form-control-sm border-0 bg-transparent mmt-mc-destination autocomplete-input fw-bold shadow-none p-0 text-navy" placeholder="To" value="{{ $destinationCity ?? $destination }}" data-code="{{ $destination }}" style="font-size: 14px; outline: none;">
+                                        <div class="autocomplete-results d-none shadow-lg border rounded-3 bg-white" style="position: absolute; top: 100%; left: 0; width: 300px; z-index: 10000;"></div>
+                                    </div>
+                                    <div class="position-relative bg-light rounded-pill px-3 py-2 border d-flex align-items-center" style="width: 160px;">
+                                        <i class="fas fa-calendar-alt text-primary opacity-50 me-2" style="font-size: 12px;"></i>
+                                        <input type="text" class="form-control form-control-sm border-0 bg-transparent mmt-mc-date cursor-pointer fw-bold shadow-none p-0 text-navy" placeholder="Date" value="{{ \Carbon\Carbon::parse($travelDate)->format('D, d M Y') }}" readonly style="font-size: 14px; outline: none;">
+                                    </div>
+                                    <button type="button" class="btn btn-link text-danger p-0 ms-1 remove-mc-btn d-none" onclick="removeMmtCityRow(this)"><i class="fas fa-times-circle fs-5"></i></button>
+                                </div>
+                                <div class="mmt-mc-row d-flex gap-2 mb-2 align-items-center">
+                                    <div class="flex-grow-1 position-relative bg-light rounded-pill px-3 py-2 border d-flex align-items-center">
+                                        <i class="fas fa-plane-departure text-primary opacity-50 me-2" style="font-size: 12px;"></i>
+                                        <input type="text" class="form-control form-control-sm border-0 bg-transparent mmt-mc-origin autocomplete-input fw-bold shadow-none p-0 text-navy" placeholder="From" value="" data-code="" style="font-size: 14px; outline: none;">
+                                        <div class="autocomplete-results d-none shadow-lg border rounded-3 bg-white" style="position: absolute; top: 100%; left: 0; width: 300px; z-index: 10000;"></div>
+                                    </div>
+                                    <div class="flex-grow-1 position-relative bg-light rounded-pill px-3 py-2 border d-flex align-items-center">
+                                        <i class="fas fa-plane-arrival text-primary opacity-50 me-2" style="font-size: 12px;"></i>
+                                        <input type="text" class="form-control form-control-sm border-0 bg-transparent mmt-mc-destination autocomplete-input fw-bold shadow-none p-0 text-navy" placeholder="To" value="" data-code="" style="font-size: 14px; outline: none;">
+                                        <div class="autocomplete-results d-none shadow-lg border rounded-3 bg-white" style="position: absolute; top: 100%; left: 0; width: 300px; z-index: 10000;"></div>
+                                    </div>
+                                    <div class="position-relative bg-light rounded-pill px-3 py-2 border d-flex align-items-center" style="width: 160px;">
+                                        <i class="fas fa-calendar-alt text-primary opacity-50 me-2" style="font-size: 12px;"></i>
+                                        <input type="text" class="form-control form-control-sm border-0 bg-transparent mmt-mc-date cursor-pointer fw-bold shadow-none p-0 text-navy" placeholder="Date" readonly style="font-size: 14px; outline: none;">
+                                    </div>
+                                    <button type="button" class="btn btn-link text-danger p-0 ms-1 remove-mc-btn d-none" onclick="removeMmtCityRow(this)"><i class="fas fa-times-circle fs-5"></i></button>
+                                </div>
+                            @endif
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-link btn-sm p-0 fw-bold text-primary text-decoration-none" onclick="addMmtCityRow()">+ ADD CITY</button>
+                        </div>
                     </div>
 
                     <!-- Traveler column -->
@@ -173,21 +250,32 @@
                         </div>
                     </div>
 
+                   
+
                     <!-- Search Button -->
                     <div class="ms-auto d-flex align-items-center px-4" style="background: #fff; border-top-right-radius: 8px;">
-                        <button class="btn btn-primary rounded-pill px-5 fw-900 py-3 fs-5 shadow-lg hvr-grow" onclick="executeMmtSearch()" style="background: linear-gradient(135deg, #008cff 0%, #0056ff 100%); border:none; height: 55px; min-width: 160px;">
+                        <button class="btn btn-primary rounded-pill px-5 fw-900 py-3 shadow-lg hvr-grow" onclick="executeMmtSearch()" style="background: linear-gradient(135deg, #008cff 0%, #0056ff 100%); border:none; height: 55px; min-width: 160px;">
                             SEARCH
                         </button>
                     </div>
                 </div>
 
                 <!-- SINGLE Fare row -->
-                <div class="d-flex align-items-center px-4 border-top gap-4" style="background: #fbfbfb; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; height: 45px;">
+                <div class="d-flex align-items-center px-4 border-top gap-4" style="background: #fbfbfb; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; min-height: 45px; padding: 5px 0;">
                     <div class="x-small fw-800 text-muted text-uppercase" style="font-size: 10px; letter-spacing: 0.5px; min-width: 140px;">Select a Special Fare:</div>
                     <div class="d-flex align-items-center gap-5">
-                        <label class="mmt-fare-chip"><input type="radio" name="fare" checked><span>Regular Fares</span></label>
-                        <label class="mmt-fare-chip"><input type="radio" name="fare"><span>Student Fares</span></label>
-                        <label class="mmt-fare-chip"><input type="radio" name="fare"><span>Senior Citizen Fares</span></label>
+                        <label class="mmt-fare-chip"><input type="radio" name="fare" value="regular" {{ ($fareType ?? 'regular') == 'regular' ? 'checked' : '' }} onchange="executeMmtSearch()"><span>Regular Fares</span></label>
+                        <label class="mmt-fare-chip"><input type="radio" name="fare" value="student" {{ ($fareType ?? '') == 'student' ? 'checked' : '' }} onchange="executeMmtSearch()"><span>Student Fares</span></label>
+                        <label class="mmt-fare-chip"><input type="radio" name="fare" value="senior" {{ ($fareType ?? '') == 'senior' ? 'checked' : '' }} onchange="executeMmtSearch()"><span>Senior Citizen Fares</span></label>
+                    </div>
+
+                    <!-- Budget Input Integrated Here -->
+                    <div class="ms-auto d-flex align-items-center gap-3 {{ !request('max_budget') ? 'd-none' : '' }} animate__animated animate__fadeIn" id="budgetModifierRow" style="padding-right: 10px;">
+                        <span class="fw-900 text-muted uppercase" style="font-size: 9px; letter-spacing: 1px;">MAX BUDGET:</span>
+                        <div class="d-flex align-items-center gap-1 bg-white px-3 py-1 rounded-pill border shadow-sm">
+                            <span class="fw-900 text-primary" style="font-size: 14px;">₹</span>
+                            <input type="number" id="globalMaxBudget" class="border-0 fw-900 text-navy p-0" value="{{ request('max_budget', 20000) }}" step="500" style="outline: none; width: 80px; font-size: 15px; background: transparent;">
+                        </div>
                     </div>
                 </div>
 
@@ -214,7 +302,7 @@
                         </div>
                     </div>
                     <div class="d-flex justify-content-end pt-2">
-                        <button class="btn btn-primary rounded-pill px-5 fw-800 py-2" onclick="document.getElementById('mmtTravelerDropdown').classList.add('d-none')">APPLY</button>
+                        <button class="btn btn-primary rounded-pill px-5 fw-800 py-2" onclick="document.getElementById('mmtTravelerDropdown').classList.add('d-none'); executeMmtSearch();">APPLY</button>
                     </div>
                 </div>
             </div>
@@ -504,9 +592,9 @@
                     <div class="filter-group-v4">
                         <span class="filter-group-label">Price Range</span>
                         <div class="px-2">
-                            <input type="range" class="form-range custom-range" min="{{ $minPrice }}" max="{{ $maxPrice }}" step="500" value="{{ $maxPrice }}">
+                            <input type="range" class="form-range custom-range" min="{{ $minPrice }}" max="{{ max($maxPrice, $initialMaxBudget ?? 0) }}" step="500" value="{{ $initialMaxBudget ?? $maxPrice }}">
                             <div class="d-flex justify-content-between TS-2" style="font-size:11px;color:var(--gray-300);font-weight:700;">
-                                <span>{{ $currency }} {{ number_format($minPrice) }}</span><span>{{ $currency }} {{ number_format($maxPrice) }}</span>
+                                <span>{{ $currency }} {{ number_format($minPrice) }}</span><span>{{ $currency }} {{ number_format($initialMaxBudget ?? $maxPrice) }}</span>
                             </div>
                         </div>
                     </div>
@@ -841,9 +929,20 @@
                     <div class="results-list" id="resultsList" style="min-height: 500px; scroll-margin-top: 100px;">
                         @if($error_message)
                             <div class="col-12 text-center py-5">
-                                <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning opacity-75"></i>
-                                <h5 class="fw-800 text-navy">API Connection Issue</h5>
-                                <p class="text-muted small px-5">{{ $error_message }}</p>
+                                @if($isBudgetError ?? false)
+                                    <div class="bg-white p-4 rounded-4 shadow-sm border mx-auto" style="max-width: 500px;">
+                                        <i class="fas fa-wallet fa-3x mb-3 text-primary opacity-50"></i>
+                                        <h5 class="fw-800 text-navy">Budget Constraint</h5>
+                                        <p class="text-muted small mb-4">{{ $error_message }}</p>
+                                        <button class="btn btn-outline-primary rounded-pill px-4 fw-800" onclick="switchFlightMode('date', document.querySelector('.m-mode-btn'))">
+                                            VIEW ALL FLIGHTS
+                                        </button>
+                                    </div>
+                                @else
+                                    <i class="fas fa-search fa-3x mb-3 text-muted opacity-25"></i>
+                                    <h5 class="fw-800 text-navy">No Flights Found</h5>
+                                    <p class="text-muted small px-5">{{ $error_message }}</p>
+                                @endif
                                 <hr class="mx-auto my-4 opacity-10" style="width:200px;">
                                 <p class="small fw-700 text-primary cursor-pointer" onclick="location.reload()"><i class="fas fa-sync-alt me-1"></i> TRY SEARCH AGAIN</p>
                             </div>
@@ -1238,6 +1337,58 @@
         border-radius: 50%;
         line-height: 1;
     }
+
+    /* Multi-City Specific UI */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    .mmt-mc-row { animation: fadeInDown 0.3s ease-out; }
+    .remove-mc-btn { transition: all 0.2s ease; cursor: pointer; color: #64748b; }
+    .remove-mc-btn:hover { color: #dc3545 !important; transform: scale(1.2); }
+    
+    .autocomplete-results { max-height: 350px; overflow-y: auto; box-shadow: 0 15px 45px rgba(0,0,0,0.15) !important; z-index: 100000 !important; }
+    .mmt-ac-item { padding: 12px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid #f1f5f9; }
+    .mmt-ac-item:hover { background: #f0f7ff; }
+    .mmt-ac-box { background: #eef2f6; color: #1e40af; font-weight: 900; padding: 4px 8px; border-radius: 4px; font-size: 11px; min-width: 45px; text-align: center; }
+    .mmt-ac-city { color: #001d3d; font-weight: 800; font-size: 14px; }
+    .mmt-ac-airport { color: #64748b; font-size: 11px; }
+
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate__fadeInDown { animation: fadeInDown 0.4s ease-out; }
+
+    /* Tab-Style Navigation Overrides */
+    .misty-radio-listing, .m-mode-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 13px;
+        color: rgba(255,255,255,0.7);
+        padding: 8px 20px;
+        border-radius: 50px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: transparent;
+        border: none !important;
+        white-space: nowrap;
+    }
+    .misty-radio-listing:hover, .m-mode-btn:hover { 
+        color: #fff; 
+        background: rgba(255,255,255,0.05);
+    }
+    .misty-radio-listing input { display: none; }
+    
+    .misty-radio-listing:has(input:checked), .m-mode-btn.active {
+        background: #fff !important;
+        color: #0056ff !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transform: none !important;
+    }
+    .m-mode-btn.active i { color: #0056ff; opacity: 1; }
+    .misty-radio-listing .m-radio-dot { display: none; }
 </style>
 @endsection
 
@@ -1247,6 +1398,7 @@
     const isRoundTrip = {{ $isRoundTrip ? 'true' : 'false' }};
     const isMultiCity = {{ $isMultiCity ? 'true' : 'false' }};
     const isGroupBooking = {{ $isGroupBooking ? 'true' : 'false' }};
+    let currentFlightMode = '{{ request('max_budget') ? 'budget' : 'date' }}';
     const mcNumSegments = isMultiCity ? {{ $numSegments ?? 0 }} : (isRoundTrip ? 2 : 0);
     const totalTravelers = {{ $adults + $children }};
     let splitCart = JSON.parse(localStorage.getItem('splitCart')) || [];
@@ -2719,11 +2871,11 @@
         initMmtAutocomplete();
         initMmtDates();
         
-        // Sync return date column based on initial trip type
+        // Sync UI based on initial trip type
         const tripEl = document.getElementById('mmtTripType');
         if (tripEl) {
-            updateReturnDateVisibility(tripEl.value);
-            tripEl.addEventListener('change', (e) => updateReturnDateVisibility(e.target.value));
+            updateSearchUIMode(tripEl.value);
+            tripEl.addEventListener('change', (e) => updateSearchUIMode(e.target.value));
         }
 
         // Focus input on search-col click
@@ -2742,18 +2894,50 @@
         });
     });
 
-    function updateReturnDateVisibility(value) {
-        const col = document.getElementById('mmtReturnCol');
-        const input = document.getElementById('mmtReturn');
-        if (!col || !input) return;
-        if (value === 'roundtrip') {
-            col.style.opacity = '1';
-            input.disabled = false;
-            col.style.cursor = 'pointer';
+    function updateSearchUIMode(value) {
+        const standard = document.getElementById('mmtStandardFields');
+        const multi = document.getElementById('mmtMultiCityFields');
+        const returnCol = document.getElementById('mmtReturnCol');
+        const returnInput = document.getElementById('mmtReturn');
+
+        if (value === 'multicity') {
+            if (standard) standard.classList.add('d-none');
+            if (multi) {
+                multi.classList.remove('d-none');
+                multi.classList.add('d-flex');
+                initMmtMultiCityDates();
+                initMmtMultiCityAutocomplete();
+            }
         } else {
-            col.style.opacity = '0.3';
-            input.disabled = true;
-            col.style.cursor = 'default';
+            if (standard) standard.classList.remove('d-none');
+            if (multi) {
+                multi.classList.add('d-none');
+                multi.classList.remove('d-flex');
+            }
+            if (returnCol && returnInput) {
+                if (value === 'roundtrip') {
+                    returnCol.style.opacity = '1';
+                    returnInput.disabled = false;
+                    returnCol.style.cursor = 'pointer';
+                } else {
+                    returnCol.style.opacity = '0.3';
+                    returnInput.disabled = true;
+                    returnCol.style.cursor = 'default';
+                }
+            }
+        }
+    }
+
+    window.switchFlightMode = function(mode, el) {
+        currentFlightMode = mode;
+        document.querySelectorAll('.m-mode-btn').forEach(btn => btn.classList.remove('active'));
+        el.classList.add('active');
+
+        const budgetRow = document.getElementById('budgetModifierRow');
+        if (mode === 'budget') {
+            budgetRow.classList.remove('d-none');
+        } else {
+            budgetRow.classList.add('d-none');
         }
     }
 
@@ -2796,40 +2980,57 @@
         ['mmtOrigin', 'mmtDestination'].forEach(id => {
             const input = document.getElementById(id);
             if (!input) return;
-            const results = document.getElementById(id + 'Results');
+            setupMmtAutocomplete(input);
+        });
+    }
+
+    function initMmtMultiCityAutocomplete() {
+        document.querySelectorAll('.mmt-mc-origin, .mmt-mc-destination').forEach(input => {
+            if (!input.dataset.acInit) {
+                setupMmtAutocomplete(input);
+                input.dataset.acInit = 'true';
+            }
+        });
+    }
+
+    function setupMmtAutocomplete(input) {
+        const results = input.nextElementSibling;
+        if (!results || !results.classList.contains('autocomplete-results')) return;
+
+        input.addEventListener('input', async function() {
+            const term = this.value.trim();
+            if (term.length < 2) { results.classList.add('d-none'); return; }
             
-            input.addEventListener('input', async function() {
-                const term = this.value.trim();
-                console.log(`Searching for: ${term}`);
-                if (term.length < 2) { results.classList.add('d-none'); return; }
+            try {
+                const response = await fetch(`https://autocomplete.travelpayouts.com/places2?locale=en&types[]=city&types[]=airport&term=${term}`);
+                const data = await response.json();
                 
-                try {
-                    const response = await fetch(`https://autocomplete.travelpayouts.com/places2?locale=en&types[]=city&types[]=airport&term=${term}`);
-                    if (!response.ok) throw new Error("API Failure");
-                    const data = await response.json();
-                    
-                    if (data && data.length > 0) {
-                        results.innerHTML = data.slice(0, 8).map(place => {
-                            return `
-                                <div class="mmt-ac-item" onclick="selectMmtItem('${id}', '${place.code}', '${place.name}')">
-                                    <div class="mmt-ac-box">${place.code}</div>
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <div class="mmt-ac-city text-truncate">${place.name}, ${place.country_name || ''}</div>
-                                        <div class="mmt-ac-airport text-truncate small opacity-75">${place.main_airport_name || place.name}</div>
-                                    </div>
+                if (data && data.length > 0) {
+                    results.innerHTML = data.slice(0, 8).map(place => {
+                        return `
+                            <div class="mmt-ac-item" onclick="selectMmtItemDirect(this, '${place.code}', '${place.name}')">
+                                <div class="mmt-ac-box">${place.code}</div>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <div class="mmt-ac-city text-truncate">${place.name}, ${place.country_name || ''}</div>
+                                    <div class="mmt-ac-airport text-truncate small opacity-75">${place.main_airport_name || place.name}</div>
                                 </div>
-                            `;
-                        }).join('');
-                        results.classList.remove('d-none');
-                    } else {
-                        results.classList.add('d-none');
-                    }
-                } catch (err) { 
-                    console.error("Autocomplete AJAX Error:", err); 
+                            </div>
+                        `;
+                    }).join('');
+                    results.classList.remove('d-none');
+                } else {
                     results.classList.add('d-none');
                 }
-            });
+            } catch (err) { results.classList.add('d-none'); }
         });
+    }
+
+    window.selectMmtItemDirect = function(el, code, cityName) {
+        const results = el.closest('.autocomplete-results');
+        const input = results.previousElementSibling;
+        input.value = `${cityName} (${code})`;
+        input.dataset.code = code;
+        results.classList.add('d-none');
     }
 
     window.toggleModifySearch = function() {
@@ -2870,59 +3071,158 @@
     }
 
     function executeMmtSearch() {
-        const oInput = document.getElementById('mmtOrigin');
-        const dInput = document.getElementById('mmtDestination');
+        const trip = document.querySelector('input[name="tripType"]:checked').value;
+        const url = new URL(window.location.origin + '/flights');
         
-        const oRaw = oInput.value;
-        const dRaw = dInput.value;
-        
-        // Extract code from dataset OR regex OR first 3 chars
-        const o = oInput.dataset.code || oRaw.match(/\((.*?)\)/)?.[1] || oRaw.trim().toUpperCase().substring(0,3);
-        const d = dInput.dataset.code || dRaw.match(/\((.*?)\)/)?.[1] || dRaw.trim().toUpperCase().substring(0,3);
-        
-        const depPicker = document.getElementById('mmtDeparture')?._flatpickr;
-        const retPicker = document.getElementById('mmtReturn')?._flatpickr;
-        const depDate = depPicker ? depPicker.selectedDates[0] : null;
-        const retDate = retPicker ? retPicker.selectedDates[0] : null;
-        const trip = document.getElementById('mmtTripType').value;
-
-        if (!o || !d || !depDate) {
-            Swal.fire({ title: 'Missing Information', text: 'Origin, destination and departure date are required.', icon: 'warning' });
-            return;
-        }
-
-        if (trip === 'roundtrip' && retDate && retDate < depDate) {
-            Swal.fire({ title: 'Invalid Date', text: 'Return date cannot be before departure date.', icon: 'warning' });
-            return;
-        }
-
         const formatDate = (date) => {
+            if (!date) return '';
             let dt = new Date(date), month = '' + (dt.getMonth() + 1), day = '' + dt.getDate(), year = dt.getFullYear();
             if (month.length < 2) month = '0' + month;
             if (day.length < 2) day = '0' + day;
             return [year, month, day].join('-');
         };
 
-        const url = new URL(window.location.origin + '/flights');
-        url.searchParams.set('origin', o.toUpperCase().substring(0,3));
-        url.searchParams.set('destination', d.toUpperCase().substring(0,3));
-        url.searchParams.set('departure_date', formatDate(depDate));
+        if (trip === 'multicity') {
+            url.searchParams.set('multi_city', '1');
+            const rows = document.querySelectorAll('.mmt-mc-row');
+            let hasError = false;
+            
+            rows.forEach(row => {
+                const oInput = row.querySelector('.mmt-mc-origin');
+                const dInput = row.querySelector('.mmt-mc-destination');
+                const dateInput = row.querySelector('.mmt-mc-date');
+                
+                const o = oInput.dataset.code || oInput.value.match(/\((.*?)\)/)?.[1] || oInput.value.trim().toUpperCase().substring(0,3);
+                const d = dInput.dataset.code || dInput.value.match(/\((.*?)\)/)?.[1] || dInput.value.trim().toUpperCase().substring(0,3);
+                const date = dateInput._flatpickr ? dateInput._flatpickr.selectedDates[0] : null;
+
+                if (!o || !d || !date || o.length < 3 || d.length < 3) {
+                    hasError = true;
+                } else {
+                    url.searchParams.append('origin[]', o.toUpperCase().substring(0,3));
+                    url.searchParams.append('destination[]', d.toUpperCase().substring(0,3));
+                    url.searchParams.append('departure_date[]', formatDate(date));
+                }
+            });
+
+            if (hasError) {
+                Swal.fire({ title: 'Missing Information', text: 'All city and date fields are required for multi-city search.', icon: 'warning' });
+                return;
+            }
+        } else {
+            const oInput = document.getElementById('mmtOrigin');
+            const dInput = document.getElementById('mmtDestination');
+            const oRaw = oInput.value;
+            const dRaw = dInput.value;
+            
+            const o = oInput.dataset.code || oRaw.match(/\((.*?)\)/)?.[1] || oRaw.trim().toUpperCase().substring(0,3);
+            const d = dInput.dataset.code || dRaw.match(/\((.*?)\)/)?.[1] || dRaw.trim().toUpperCase().substring(0,3);
+            
+            const depPicker = document.getElementById('mmtDeparture')?._flatpickr;
+            const retPicker = document.getElementById('mmtReturn')?._flatpickr;
+            const depDate = depPicker ? depPicker.selectedDates[0] : null;
+            const retDate = retPicker ? retPicker.selectedDates[0] : null;
+
+            if (!o || !d || !depDate || o.length < 3 || d.length < 3) {
+                Swal.fire({ title: 'Missing Information', text: 'Origin, destination and departure date are required.', icon: 'warning' });
+                return;
+            }
+
+            if (trip === 'roundtrip' && retDate && retDate < depDate) {
+                Swal.fire({ title: 'Invalid Date', text: 'Return date cannot be before departure date.', icon: 'warning' });
+                return;
+            }
+
+            url.searchParams.set('origin', o.toUpperCase().substring(0,3));
+            url.searchParams.set('destination', d.toUpperCase().substring(0,3));
+            url.searchParams.set('departure_date', formatDate(depDate));
+            
+            if (trip === 'roundtrip' && retDate) {
+                url.searchParams.set('return_date', formatDate(retDate));
+                url.searchParams.set('trip', 'round');
+            }
+        }
         
-        if (trip === 'roundtrip' && retDate) {
-            url.searchParams.set('return_date', formatDate(retDate));
-            url.searchParams.set('trip', 'round');
+        if (currentFlightMode === 'budget') {
+            const maxBudget = document.getElementById('globalMaxBudget').value;
+            url.searchParams.set('max_budget', maxBudget);
+        }
+        
+        const fareType = document.querySelector('input[name="fare"]:checked')?.value || 'regular';
+        if (fareType !== 'regular') {
+            url.searchParams.set('fare_type', fareType);
         }
         
         url.searchParams.set('adults', mmtAdults);
         url.searchParams.set('cabin_class', mmtClass);
 
-        Swal.fire({ 
-            title: 'Searching...', 
-            allowOutsideClick: false, 
-            didOpen: () => Swal.showLoading() 
-        });
-        
+        Swal.fire({ title: 'Searching...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         window.location.href = url.toString();
+    }
+
+    window.addMmtCityRow = function() {
+        const container = document.getElementById('mmtMultiCityRows');
+        const rows = container.querySelectorAll('.mmt-mc-row');
+        if (rows.length >= 6) return;
+        
+        const lastRow = rows[rows.length - 1];
+        const lastTo = lastRow.querySelector('.mmt-mc-destination').value;
+        const lastToCode = lastRow.querySelector('.mmt-mc-destination').dataset.code || '';
+        
+        const newRow = document.createElement('div');
+        newRow.className = 'mmt-mc-row d-flex gap-2 mb-2 align-items-center animate__animated animate__fadeInDown';
+        newRow.innerHTML = `
+            <div class="flex-grow-1 position-relative bg-light rounded-pill px-3 py-2 border d-flex align-items-center">
+                <i class="fas fa-plane-departure text-primary opacity-50 me-2" style="font-size: 12px;"></i>
+                <input type="text" class="form-control form-control-sm border-0 bg-transparent mmt-mc-origin autocomplete-input fw-bold shadow-none p-0 text-navy" placeholder="From" value="${lastTo}" data-code="${lastToCode}" style="font-size: 14px; outline: none;">
+                <div class="autocomplete-results d-none shadow-lg border rounded-3 bg-white" style="position: absolute; top: 100%; left: 0; width: 300px; z-index: 10000;"></div>
+            </div>
+            <div class="flex-grow-1 position-relative bg-light rounded-pill px-3 py-2 border d-flex align-items-center">
+                <i class="fas fa-plane-arrival text-primary opacity-50 me-2" style="font-size: 12px;"></i>
+                <input type="text" class="form-control form-control-sm border-0 bg-transparent mmt-mc-destination autocomplete-input fw-bold shadow-none p-0 text-navy" placeholder="To" value="" data-code="" style="font-size: 14px; outline: none;">
+                <div class="autocomplete-results d-none shadow-lg border rounded-3 bg-white" style="position: absolute; top: 100%; left: 0; width: 300px; z-index: 10000;"></div>
+            </div>
+            <div class="position-relative bg-light rounded-pill px-3 py-2 border d-flex align-items-center" style="width: 160px;">
+                <i class="fas fa-calendar-alt text-primary opacity-50 me-2" style="font-size: 12px;"></i>
+                <input type="text" class="form-control form-control-sm border-0 bg-transparent mmt-mc-date cursor-pointer fw-bold shadow-none p-0 text-navy" placeholder="Date" readonly style="font-size: 14px; outline: none;">
+            </div>
+            <button type="button" class="btn btn-link text-danger p-0 ms-1 remove-mc-btn" onclick="removeMmtCityRow(this)"><i class="fas fa-times-circle fs-5"></i></button>
+        `;
+        container.appendChild(newRow);
+        
+        initMmtMultiCityDates();
+        initMmtMultiCityAutocomplete();
+        updateMmtRemoveButtons();
+    };
+
+    window.removeMmtCityRow = function(btn) {
+        btn.closest('.mmt-mc-row').remove();
+        updateMmtRemoveButtons();
+    };
+
+    function updateMmtRemoveButtons() {
+        const rows = document.querySelectorAll('.mmt-mc-row');
+        rows.forEach(row => {
+            const btn = row.querySelector('.remove-mc-btn');
+            if (btn) {
+                if (rows.length <= 2) btn.classList.add('d-none');
+                else btn.classList.remove('d-none');
+            }
+        });
+    }
+
+    function initMmtMultiCityDates() {
+        if (typeof flatpickr === 'undefined') return;
+        document.querySelectorAll('.mmt-mc-date').forEach(el => {
+            if (!el._flatpickr) {
+                flatpickr(el, {
+                    dateFormat: "D, d M Y", 
+                    minDate: "today", 
+                    theme: "dark",
+                    disableMobile: "true"
+                });
+            }
+        });
     }
 
     function swapMmtLocations() {
@@ -3323,6 +3623,13 @@
     document.getElementById('pf2').addEventListener('change', applyFilters);
     document.getElementById('pf3').addEventListener('change', applyFilters);
     document.querySelectorAll('[data-airline-filter]').forEach(cb => cb.addEventListener('change', applyFilters));
+
+    // Initial Budget Filter Application
+    window.addEventListener('DOMContentLoaded', () => {
+        @if(isset($initialMaxBudget))
+            applyFilters();
+        @endif
+    });
 </script>
 
 <style>

@@ -22,6 +22,7 @@ class FlightController extends Controller
     {
         $multiCity = $request->input('multi_city') == '1';
         $tripType = $request->input('trip', 'oneway');
+        $maxBudget = $request->input('max_budget');
         
         if ($multiCity) {
             $origins = $request->input('origin', []);
@@ -40,6 +41,16 @@ class FlightController extends Controller
             $returnDate = $request->input('return_date');
         }
         
+        $cabinInput = $request->input('cabin_class', 'ECONOMY');
+        $cabinMap = [
+            'Economy' => 'ECONOMY',
+            'Premium Economy' => 'PREMIUM_ECONOMY',
+            'Premium' => 'PREMIUM_ECONOMY',
+            'Business' => 'BUSINESS',
+            'First' => 'FIRST'
+        ];
+        $cabinCode = $cabinMap[$cabinInput] ?? strtoupper(str_replace(' ', '_', $cabinInput));
+
         $params = [
             'origin' => $origin,
             'destination' => $destination,
@@ -48,7 +59,7 @@ class FlightController extends Controller
             'adults' => $request->input('adults', 1),
             'children' => $request->input('children', 0),
             'infants' => $request->input('infants', 0),
-            'cabin_class' => $request->input('cabin_class', 'ECONOMY'),
+            'cabin_class' => $cabinCode,
         ];
 
         $allFlightsSorted = [];
@@ -148,12 +159,41 @@ class FlightController extends Controller
             }
         }
 
+        $totalBeforeBudget = count($allFlightsSorted);
+        // Apply Max Budget Filter if present (Strict filtering for "Search by Budget" flow)
+        if ($maxBudget) {
+            $allFlightsSorted = array_filter($allFlightsSorted, function($f) use ($maxBudget) {
+                return ($f['price'] ?? 0) <= $maxBudget;
+            });
+            $allFlightsSorted = array_values($allFlightsSorted);
+        }
+
+        $fareType = $request->input('fare_type', 'regular');
+        if (!empty($allFlightsSorted) && in_array($fareType, ['student', 'senior'])) {
+            $discount = ($fareType === 'student') ? 0.05 : 0.08;
+            foreach ($allFlightsSorted as &$f) {
+                $f['original_price'] = $f['price'];
+                $f['price'] = $f['price'] * (1 - $discount);
+                $f['fare_type_applied'] = $fareType;
+            }
+            usort($allFlightsSorted, function($a, $b) {
+                return $a['price'] <=> $b['price'];
+            });
+        }
+
         // --- Cleaned: Mock Data Fallback Removed ---
         if (empty($allFlightsSorted)) {
             $currency = 'INR';
-            $errorMessage = "No real-time flights found for this route currently.";
+            if ($totalBeforeBudget > 0 && $maxBudget) {
+                $errorMessage = "We found " . $totalBeforeBudget . " flights, but none were within your budget of ₹" . number_format($maxBudget) . ".";
+                $isBudgetError = true;
+            } else {
+                $errorMessage = "No real-time flights found for this route currently.";
+                $isBudgetError = false;
+            }
         } else {
             $currency = $allFlightsSorted[0]['currency'] ?? 'INR';
+            $isBudgetError = false;
         }
 
         $prices = array_column($allFlightsSorted, 'price');
@@ -206,6 +246,8 @@ class FlightController extends Controller
             'travelDate' => $departureDate,
             'returnDate' => $returnDate,
             'error_message' => $errorMessage ?? null,
+            'isBudgetError' => $isBudgetError ?? false,
+            'fareType' => $fareType,
             'adults' => $params['adults'],
             'children' => $params['children'],
             'infants' => $params['infants'],
@@ -213,7 +255,8 @@ class FlightController extends Controller
             'origin' => $origin,
             'destination' => $destination,
             'isGroupBooking' => ($params['adults'] + $params['children'] >= 10),
-            'totalPassengers' => $params['adults'] + $params['children']
+            'totalPassengers' => $params['adults'] + $params['children'],
+            'initialMaxBudget' => $maxBudget
         ]);
 
         AuditLogService::log('Flight', 'Search', "Flight search from {$origin} to {$destination}", $params);

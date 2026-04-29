@@ -235,8 +235,8 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(functi
     Route::get('/', [DashboardController::class, 'index'])->name('index');
     Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
     Route::post('/profile/update', [DashboardController::class, 'updateProfile'])->name('profile.update');
-    Route::get('/track/{ref}', [CargoDashboardController::class, 'tracking'])->name('dashboard.tracking');
-    Route::get('/verify/{tracking_id}', [CargoDashboardController::class, 'verifyShipment'])->name('dashboard.verify');
+    Route::get('/track/{ref}', [\App\Http\Controllers\User\CargoDashboardController::class, 'tracking'])->name('dashboard.tracking');
+    Route::get('/verify/{tracking_id}', [\App\Http\Controllers\User\CargoDashboardController::class, 'verifyShipment'])->name('dashboard.verify');
     Route::get('/bookings', [DashboardController::class, 'bookings'])->name('bookings');
     Route::get('/wishlist', [DashboardController::class, 'wishlist'])->name('wishlist');
     Route::get('/searches', [DashboardController::class, 'searches'])->name('searches');
@@ -896,4 +896,14 @@ Route::prefix('admin/affiliates')->name('admin.affiliates.')->middleware(['auth'
     Route::post('/{id}/approve', [AffiliateController::class, 'adminApprove'])->name('approve');
     Route::get('/withdrawals', [AffiliateController::class, 'adminWithdrawals'])->name('withdrawals');
     Route::post('/withdrawals/{id}/pay', [AffiliateController::class, 'adminMarkPaid'])->name('pay');
+});
+
+// ==========================================
+// DEV TOOLS (local/development only)
+// ==========================================
+use App\Http\Controllers\Dev\SmtpTestController;
+
+Route::prefix('dev')->name('dev.')->group(function () {
+    Route::get('/smtp-test',       [SmtpTestController::class, 'show'])->name('smtp.test');
+    Route::post('/smtp-test/send', [SmtpTestController::class, 'send'])->name('smtp.send');
 });
