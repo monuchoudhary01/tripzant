@@ -95,12 +95,14 @@ class TravelPayoutsFlightService
         if (empty($flights)) {
             if (isset($resMatrix['data'])) {
                 foreach (array_slice($resMatrix['data'], 0, 5) as $f) {
-                    $flights[] = $this->formatFlight($f, $origin, $destination, $f['depart_date'] ?? $date);
+                    // Force the requested date instead of matrix date
+                    $flights[] = $this->formatFlight($f, $origin, $destination, $date);
                 }
             }
             if (isset($resCalendar['data'])) {
                 foreach (array_slice($resCalendar['data'], 0, 5) as $f_date => $f) {
-                    $flights[] = $this->formatCalendarFlight($f, $origin, $destination, $f_date);
+                    // Force the requested date instead of calendar date
+                    $flights[] = $this->formatCalendarFlight($f, $origin, $destination, $date);
                 }
             }
         }

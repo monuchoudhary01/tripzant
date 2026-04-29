@@ -59,6 +59,8 @@
             </a>
         </div>
 
+       
+
 <style>
     .misty-search-glass-card {
         position: relative;
@@ -70,6 +72,8 @@
         overflow: visible !important;
     }
     .misty-fields-grid {
+        display: flex;
+        gap: 12px;
         overflow: visible !important;
     }
     .misty-field-block {
@@ -115,10 +119,29 @@
                     <input type="radio" name="tripType" value="multicity">
                     <span class="m-radio-dot"></span>
                     Multi City
-                </label>
+                    </label>
             </div>
             <div class="ms-auto misty-badge-pro">
                 <i class="fas fa-info-circle me-1"></i> Best Price Guaranteed
+            </div>
+        </div>
+
+         <!-- Unified Budget Modifier (Visible only in Budget Mode) -->
+        <div class="misty-budget-row d-none animate__animated animate__fadeInDown mb-4" id="budgetModifierRow">
+            <div class="d-flex align-items-center justify-content-left">
+                <div class="misty-budget-card-unified">
+                    <div class="">
+                        <div class="budget-label-group">
+                            <i class="fas fa-wallet me-2 text-primary"></i>
+                            <span class="fw-900 text-navy uppercase" style="font-size: 11px; letter-spacing: 1px;">MAX BUDGET (PER PERSON)</span>
+                        </div>
+                        <div class="budget-input-box d-flex align-items-center gap-2">
+                            <span class="fs-4 fw-900 text-primary">₹</span>
+                            <input type="number" id="globalMaxBudget" class="m-budget-unified-input" value="20000" step="500">
+                        </div>
+                        
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -307,43 +330,8 @@
             </div>
         </div>
 
-            <!-- Flights (BUDGET MODE) -->
-            <div class="misty-fields-grid d-none" id="flightsBudgetFields">
-                <div class="misty-field-block" style="flex:1.2;">
-                    <label><i class="fas fa-plane-departure me-2 icon-dim"></i> TRAVEL FROM</label>
-                    <div class="m-val">Colombo</div>
-                    <div class="m-sub">CMB, Bandaranaike Intl Airport</div>
-                </div>
-                <div class="misty-field-block" style="flex:1.2;">
-                    <label><i class="fas fa-plane-arrival me-2 icon-dim"></i> TRAVEL TO</label>
-                    <div class="m-val">Dubai</div>
-                    <div class="m-sub">DXB, Dubai Intl Airport</div>
-                </div>
-                <div class="misty-field-block">
-                    <label><i class="fas fa-calendar-alt me-2 icon-dim"></i> DATE RANGE</label>
-                    <div class="m-val-group">
-                        <span class="v-big">1</span>
-                        <span class="v-mid">Jun - Aug'26</span>
-                    </div>
-                    <div class="m-sub">Flexible Months</div>
-                </div>
-                <div class="misty-field-block">
-                    <label><i class="fas fa-credit-card me-2 icon-dim"></i> MAX BUDGET</label>
-                    <div class="budget-val">
-                        <div class="budget-icon"><i class="fas fa-wallet"></i></div>
-                        <span>$1,200</span>
-                    </div>
-                    <div class="m-sub">Total Trip Budget</div>
-                </div>
-                <div class="misty-field-block">
-                    <label>PASSENGERS</label>
-                    <div class="m-val-group">
-                        <span class="v-big">2</span>
-                        <span class="v-mid">Adults</span>
-                    </div>
-                    <div class="m-sub">Economy</div>
-                </div>
             </div>
+        </div>
 
             <!-- Hotels -->
             <div class="misty-fields-grid d-none" id="hotelsFields">
@@ -613,6 +601,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        flex: 1;
     }
     .misty-field-block:hover, .misty-field-block:focus-within {
         background: rgba(var(--primary-rgb), 0.04);
@@ -821,9 +810,102 @@
         box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
         transition: all 0.3s;
     }
-    .remove-city-btn:hover {
-        transform: scale(1.1) rotate(90deg);
-        background: #dc2626 !important;
+    .misty-radio {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        font-weight: 800;
+        font-size: 13px;
+        color: #1a1a2e;
+        padding: 6px 14px;
+        border-radius: 50px;
+        transition: all 0.2s;
+        background: rgba(0,0,0,0.02);
+    }
+    .misty-radio:hover { background: rgba(0,0,0,0.05); }
+    .misty-radio input { display: none; }
+    .m-radio-dot {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #cbd5e1;
+        border-radius: 50%;
+        position: relative;
+        transition: all 0.2s;
+    }
+    .misty-radio input:checked + .m-radio-dot { border-color: var(--primary); }
+    .misty-radio input:checked + .m-radio-dot::after {
+        content: ''; width: 8px; height: 8px; background: var(--primary);
+        border-radius: 50%; position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .misty-swap-btn {
+        width: 40px; height: 40px; background: #fff; border: 2px solid #eee;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; z-index: 10; margin: 0 -20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s; color: var(--primary);
+    }
+    .misty-swap-btn:hover { transform: rotate(180deg) scale(1.1); border-color: var(--primary); color: var(--primary); }
+    .misty-swap-btn.disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+    .misty-budget-card-unified {
+        background: #fff;
+        border: 2px solid var(--primary);
+        padding: 4px 12px;
+        border-radius: 0;
+        box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.1);
+        display: inline-flex;
+        align-items: center;
+    }
+    .m-budget-unified-input {
+        border: none;
+        background: transparent;
+        font-size: 16px;
+        font-weight: 900;
+        color: #1a1a2e;
+        width: 80px;
+        outline: none;
+        text-align: center;
+    }
+.misty-fields-grid {
+   border: 0px solid #e1efff;
+}
+    /* Small Radio Styles */
+    .misty-radio-small {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        font-weight: 800;
+        font-size: 10px;
+        color: #1a1a2e;
+        padding: 4px 10px;
+        border-radius: 50px;
+        transition: all 0.2s;
+        background: rgba(0,0,0,0.03);
+        border: 1px solid rgba(0,0,0,0.05);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .misty-radio-small:hover { background: rgba(0,0,0,0.08); }
+    .misty-radio-small input { display: none; }
+    .m-radio-dot-small {
+        width: 10px;
+        height: 10px;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 50%;
+        position: relative;
+        transition: all 0.2s;
+    }
+    .misty-radio-small input:checked + .m-radio-dot-small { 
+        border-color: var(--primary); 
+        background: var(--primary); 
+    }
+    .misty-radio-small:has(input:checked) { 
+        background: var(--primary); 
+        color: #fff !important;
+        border-color: var(--primary);
+        box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.2);
     }
 </style>
 
@@ -909,9 +991,17 @@ function switchSearch(type, el) {
         
         // If switching to flight, default to 'date' mode fields
         if (type === 'flights') {
-            const activeMode = document.querySelector('.m-mode-btn.active').innerText.toLowerCase();
-            if (activeMode.includes('budget')) {
-                document.getElementById('flightsBudgetFields').classList.remove('d-none');
+            const modeRadio = document.querySelector('input[name="flightMode"]:checked');
+            const isBudget = modeRadio ? (modeRadio.value === 'budget') : false;
+            
+            if (isBudget) {
+                // If there's a dedicated budget grid, show it, else use default flights grid
+                const budgetGrid = document.getElementById('flightsBudgetFields');
+                if (budgetGrid) {
+                    budgetGrid.classList.remove('d-none');
+                } else {
+                    document.getElementById('flightsFields').classList.remove('d-none');
+                }
             } else {
                 document.getElementById('flightsFields').classList.remove('d-none');
             }
@@ -929,21 +1019,12 @@ function switchFlightMode(mode, el) {
     document.querySelectorAll('.m-mode-btn').forEach(btn => btn.classList.remove('active'));
     el.classList.add('active');
 
-    const fieldsContainer = document.getElementById('searchFields');
-    fieldsContainer.style.opacity = '0';
-    
-    setTimeout(() => {
-        document.getElementById('flightsFields').classList.add('d-none');
-        document.getElementById('flightsBudgetFields').classList.add('d-none');
-
-        if (mode === 'date') {
-            document.getElementById('flightsFields').classList.remove('d-none');
-        } else {
-            document.getElementById('flightsBudgetFields').classList.remove('d-none');
-        }
-        
-        fieldsContainer.style.opacity = '1';
-    }, 300);
+    const budgetRow = document.getElementById('budgetModifierRow');
+    if (mode === 'budget') {
+        budgetRow.classList.remove('d-none');
+    } else {
+        budgetRow.classList.add('d-none');
+    }
 }
 
 // Traveller Picker Logic
@@ -991,6 +1072,10 @@ function selectClass(className, el) {
     // Multi-City Display
     const mcDisplay = document.querySelector('.traveler-mc-class');
     if (mcDisplay) mcDisplay.innerText = className;
+
+    // Budget Mode Update
+    const budgetTripClassDisplay = document.getElementById('budgetTripClass');
+    if (budgetTripClassDisplay) budgetTripClassDisplay.innerText = className;
 }
 
 function updateTotalPassengers() {
@@ -1010,6 +1095,10 @@ function updateTotalPassengers() {
 
     const displayText = document.getElementById('travellerDisplayText');
     if (displayText) displayText.innerText = travellers > 1 ? 'Travellers' : 'Traveller';
+    
+    // Budget Mode Update
+    const budgetDisplayCount = document.getElementById('budgetTravellerCount');
+    if (budgetDisplayCount) budgetDisplayCount.innerText = travellers;
     
     // Multi-City Update
     const mcDisplayCount = document.querySelector('.traveler-mc-count');
@@ -1070,6 +1159,7 @@ document.addEventListener('click', (e) => {
             
             flatpickr("#flightDate", fpConfig);
             flatpickr("#flightReturnDate", fpConfig);
+            flatpickr("#flightBudgetDate", fpConfig);
             flatpickr("#hotelCheckIn", fpConfig);
             flatpickr("#hotelCheckOut", fpConfig);
 
@@ -1155,6 +1245,8 @@ document.addEventListener('click', (e) => {
 
             setupAutocomplete('flightOriginInput', 'flightOriginResults', 'flightOriginSub');
             setupAutocomplete('flightDestinationInput', 'flightDestinationResults', 'flightDestinationSub');
+            setupAutocomplete('flightBudgetOriginInput', 'flightBudgetOriginResults', 'flightBudgetOriginSub');
+            setupAutocomplete('flightBudgetDestinationInput', 'flightBudgetDestinationResults', 'flightBudgetDestinationSub');
             setupAutocomplete('hotelDestinationInput', 'hotelDestinationResults', 'hotelDestinationSub');
 
             // Initialize display
@@ -1204,6 +1296,23 @@ document.addEventListener('click', (e) => {
                     }
                 });
             });
+
+            window.swapBudgetLocations = () => {
+                const fromInput = document.getElementById('flightBudgetOriginInput');
+                const toInput = document.getElementById('flightBudgetDestinationInput');
+                const fromSub = document.getElementById('flightBudgetOriginSub');
+                const toSub = document.getElementById('flightBudgetDestinationSub');
+
+                if (fromInput && toInput) {
+                    const tempVal = fromInput.value;
+                    fromInput.value = toInput.value;
+                    toInput.value = tempVal;
+
+                    const tempSub = fromSub.innerText;
+                    fromSub.innerText = toSub.innerText;
+                    toSub.innerText = tempSub;
+                }
+            };
 
             // --- Multi City Logic ---
             window.addCityRow = () => {
@@ -1360,12 +1469,20 @@ document.addEventListener('click', (e) => {
                         const cabinClass = document.getElementById('cabinClass').value;
                         
                         const tripType = document.querySelector('input[name="tripType"]:checked').value;
+                        const modeRadio = document.querySelector('input[name="flightMode"]:checked');
+                        const isBudgetMode = modeRadio ? (modeRadio.value === 'budget') : false;
+                        
                         const url = new URL(window.location.origin + '/flights');
                         
                         url.searchParams.append('adults', adults);
                         url.searchParams.append('children', children);
                         url.searchParams.append('infants', infants);
                         url.searchParams.append('cabin_class', cabinClass);
+
+                        if (isBudgetMode) {
+                            const maxBudget = document.getElementById('globalMaxBudget').value;
+                            url.searchParams.append('max_budget', maxBudget);
+                        }
 
                         // Trigger Group Booking Notice for > 9 passengers
                         if (totalPassengers > 9) {

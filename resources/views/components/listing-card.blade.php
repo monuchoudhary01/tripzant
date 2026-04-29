@@ -121,6 +121,15 @@
                 <!-- Pricing & CTA -->
                 <div class="col-lg-2 text-end border-start px-4">
                     <div class="mb-3">
+                        @if(isset($f['fare_type_applied']))
+                            <div class="mb-1 text-end">
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 mb-1" style="font-size: 8px;">
+                                    <i class="fas {{ $f['fare_type_applied'] == 'student' ? 'fa-user-graduate' : 'fa-user-clock' }} me-1"></i>
+                                    {{ strtoupper($f['fare_type_applied']) }} FARE
+                                </span>
+                                <div class="text-muted text-decoration-line-through me-1" style="font-size: 11px;">{{ $currency }} {{ number_format($f['original_price'] ?? 0) }}</div>
+                            </div>
+                        @endif
                         <span class="fw-900 text-navy" style="font-size:22px;">{{ $currency }} {{ $price }}</span>
                         <span class="text-muted fw-800" style="font-size:10px; display:block; margin-top:-5px;">per adult</span>
                         

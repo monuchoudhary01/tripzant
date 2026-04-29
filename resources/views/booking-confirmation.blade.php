@@ -136,6 +136,12 @@
 @endsection
 
 @section('content')
+<?php
+    // Safety defaults — prevents undefined variable errors if controller omits these
+    $apiTravelers = $apiTravelers ?? [];
+    $reference    = $reference ?? ($booking->booking_reference ?? '');
+    $dbPassengers = $dbPassengers ?? collect();
+?>
 <div class="confirmation-hero text-center">
     <div class="container">
         <div class="mb-4">
@@ -196,7 +202,7 @@
                             <div class="text-start">
                                 <h3 class="fw-900 mb-0">{{ $legDepCity }}</h3>
                                 <div class="small fw-bold text-muted">{{ date('H:i', strtotime($legDepTime)) }}</div>
-                                <div class="x-small text-muted">{{ date('D, M d', strtotime($legDepTime)) }}</div>
+                                <div class="x-small text-muted">{{ date('D, d M Y', strtotime($legDepTime)) }}</div>
                             </div>
                             
                             <div class="flex-grow-1 px-4 text-center position-relative">
@@ -207,7 +213,7 @@
                             <div class="text-end">
                                 <h3 class="fw-900 mb-0">{{ $legArrCity }}</h3>
                                 <div class="small fw-bold text-muted">{{ date('H:i', strtotime($legArrTime)) }}</div>
-                                <div class="x-small text-muted">{{ date('D, M d', strtotime($legArrTime)) }}</div>
+                                <div class="x-small text-muted">{{ date('D, d M Y', strtotime($legArrTime)) }}</div>
                             </div>
                         </div>
                     </div>
@@ -284,7 +290,15 @@
                                         <div class="x-small text-muted fw-bold">{{ $p->title ?? 'Mr' }} · Adult</div>
                                     </td>
                                     <td>
-                                        <div class="x-small fw-bold">{{ $p->email ?? $booking->user->email ?? '—' }}</div>
+                                        @php
+                                            $contact = $apiTravelers[$tIdx] ?? null;
+                                            $contactEmail  = $contact['email']  ?? ($booking->user->email ?? '—');
+                                            $contactMobile = $contact['mobile'] ?? '—';
+                                        @endphp
+                                        <div class="x-small fw-bold">{{ $contactEmail }}</div>
+                                        <div class="x-small text-muted fw-bold">
+                                            <i class="fas fa-phone fa-xs me-1 text-primary"></i>{{ $contactMobile }}
+                                        </div>
                                     </td>
                                     <td>
                                         <div class="fw-900 text-primary">

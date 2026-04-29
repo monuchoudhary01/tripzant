@@ -519,10 +519,13 @@
         document.getElementById('finalPriceText').innerText = `₹${total.toLocaleString()}`;
 
         const btn = document.getElementById('proceedBtn');
-        // Allow proceeding even if not all seats selected (MakeMyTrip style)
-        btn.disabled = false; 
+        // Button only enables when ALL passengers have a seat on ALL legs
+        const totalRequired = passengers.length * legs.length;
+        const allAssigned = (totalAssignedAllLegs === totalRequired);
         
-        if (totalAssignedAllLegs > 0) {
+        btn.disabled = !allAssigned;
+        
+        if (allAssigned) {
             btn.classList.add('animate__animated', 'animate__pulse', 'animate__infinite');
         } else {
             btn.classList.remove('animate__animated', 'animate__pulse', 'animate__infinite');
@@ -530,6 +533,24 @@
     }
 
     function saveSeatsAndProceed() {
+        // Re-validate before proceeding
+        const totalRequired = passengers.length * legs.length;
+        let totalAssigned = 0;
+        legs.forEach((leg, legIdx) => {
+            totalAssigned += Object.values(selectionsByLeg[legIdx] || {}).length;
+        });
+        if (totalAssigned < totalRequired) {
+            const remaining = totalRequired - totalAssigned;
+            Swal.fire({
+                title: 'Seat Selection Incomplete',
+                html: `<p class="mb-1">Please select a seat for <b>${remaining}</b> more traveler(s).</p>
+                       <p class="text-muted small mb-0">Click on any available seat in the map.</p>`,
+                icon: 'warning',
+                confirmButtonColor: '#005eb8',
+                confirmButtonText: 'Select Seats'
+            });
+            return;
+        }
         localStorage.setItem('selected_seats_multi', JSON.stringify(selectionsByLeg));
         
         // Log SSR seat assignments (safely guard against null legs)
