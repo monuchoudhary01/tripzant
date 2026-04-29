@@ -24,19 +24,27 @@ class EventLandingController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:20',
-            'next_visit_sri_lanka' => 'nullable|string|max:255',
-            'next_holiday_destination' => 'nullable|string|max:255',
-            'wants_tour_builder' => 'sometimes|boolean'
         ]);
+
+        $types = ['A', 'B', 'C', 'N', 'X', 'Y', 'Z'];
+        $colors = ['Red', 'Blue', 'Green', 'Gold', 'Silver'];
+
+        do {
+            $type = $types[array_rand($types)];
+            $number = rand(1000, 9999);
+            $color = $colors[array_rand($colors)];
+            $raffleCode = $type . '-' . $number . '-' . $color;
+        } while (EventLead::where('raffle_code', $raffleCode)->exists());
 
         $lead = EventLead::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'],
-            'next_visit_sri_lanka' => $validated['next_visit_sri_lanka'],
-            'next_holiday_destination' => $validated['next_holiday_destination'],
-            'wants_tour_builder' => $request->has('wants_tour_builder'),
-            'event_name' => 'Melbourne Sri Lankan New Year 2026'
+            'raffle_alphabetic' => $type,
+            'raffle_number' => (string) $number,
+            'raffle_colour' => $color,
+            'raffle_code' => $raffleCode,
+            'event_name' => 'Symphony in the Stratosphere 2026'
         ]);
 
         return back()->with('success', 'Thank you! We will get in touch soon. Your journey with Tripzant starts here!');

@@ -15,7 +15,11 @@ class EventLead extends Model
         'next_holiday_destination',
         'wants_tour_builder',
         'event_name',
-        'additional_notes'
+        'additional_notes',
+        'raffle_alphabetic',
+        'raffle_number',
+        'raffle_colour',
+        'raffle_code'
     ];
     use HasFactory;
 }

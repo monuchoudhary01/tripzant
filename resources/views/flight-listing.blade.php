@@ -781,14 +781,14 @@
                     <!-- Slice Pay Banner (Listing Page) -->
                     <div class="alert mt-0 mb-4 p-3 rounded-4 d-flex align-items-center justify-content-between border-0 shadow-sm" style="background-color: #f7fbff; border-radius: 12px; cursor: pointer; border: 1px solid rgba(86,168,255,0.2) !important;">
                         <div>
-                            <div class="fw-bold mb-1" style="font-size: 15px; color: #1a202c; letter-spacing: -0.2px;">
-                                <span class="badge" style="background-color: #e2e8f0; color: #1e293b; padding: 4px 8px; font-weight: 800; font-size: 13px; margin-right: 6px;">Slice Pay</span>
+                            <div class="fw-bold mb-1 d-flex align-items-center gap-2" style="font-size: 15px; color: #1a202c; letter-spacing: -0.2px;">
+                                <img src="/img/slice-logo.svg" alt="Slice Logo" style="height: 24px; object-fit: contain;">
                                 <span style="font-size: 15px; font-weight: 700;">Pay in 12 instalments</span>
                             </div>
                             <div class="text-muted" style="font-size: 13px; font-weight: 600;">Lock in today's price. No fees.</div>
                         </div>
                         <div class="ms-auto flex-shrink-0">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Slice_logo.svg/1200px-Slice_logo.svg.png" alt="Slice Logo" style="height: 30px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+                            <img src="/img/slice-logo.svg" alt="Slice Logo" style="height: 30px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
                         </div>
                     </div>
                     <div class="results-bar d-flex align-items-center justify-content-between px-4 py-3 rounded-4 mb-4" style="background: #fff; border: 1.5px solid #f1f5f9; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">

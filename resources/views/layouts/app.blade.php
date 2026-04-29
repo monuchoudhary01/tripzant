@@ -377,15 +377,24 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg text-center p-4" style="border-radius: 30px; background: linear-gradient(135deg, #ffffff 0%, #fef9c3 100%);">
                 <div class="modal-header border-0 pb-0 justify-content-center">
-                    <h4 class="fw-900 text-navy mb-0">Melbourn New Year Event</h4>
+                    <h4 class="fw-900 text-navy mb-0">Symphony in the Stratosphere</h4>
                 </div>
                 <div class="modal-body py-4">
-                    <p class="text-muted fw-bold mb-4">Scan the flyer below or click it to enter the lucky draw!</p>
-                    
-                    <div class="qr-container bg-white p-2 rounded-4 shadow-sm d-inline-block mb-4 border border-warning" style="cursor: pointer;" onclick="window.location.href='{{ route('event.melbourne') }}'">
-                        <!-- User's Professional Flyer Image -->
-                        <img src="/img/image.png" alt="Event Flyer" class="img-fluid rounded-3 shadow">
-                        <div class="mt-2 text-primary small fw-bold"><i class="fas fa-mouse-pointer me-1"></i> Click Flyer to Visit Page</div>
+                    <!-- Very Large QR Code in Middle -->
+                    <div class="qr-code-section mb-5 text-center">
+                        <div class="bg-white p-4 rounded-5 shadow-lg d-inline-block border border-3 border-navy animate__animated animate__zoomIn">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data={{ urlencode(route('event.melbourne')) }}" alt="QR Code" width="300" class="img-fluid">
+                            <div class="mt-3 text-navy fw-900 fs-3">SCAN TO WIN</div>
+                            <p class="text-muted mb-0 fw-bold fs-6">Scan to enter the Lucky Draw!</p>
+                        </div>
+                    </div>
+
+                    <div class="flyer-section animate__animated animate__fadeInUp">
+                        <p class="text-muted fw-bold mb-3 small text-uppercase letter-spacing-1">Event Flyer</p>
+                        <div class="flyer-container bg-white p-2 rounded-4 shadow-sm d-inline-block border border-warning" style="cursor: pointer; max-width: 280px;" onclick="window.location.href='{{ route('event.melbourne') }}'">
+                            <img src="/img/image.jpeg?v={{ time() }}" alt="Event Flyer" class="img-fluid rounded-3 shadow">
+                            <div class="mt-2 text-primary x-small fw-bold"><i class="fas fa-mouse-pointer me-1"></i> Click to Open Form</div>
+                        </div>
                     </div>
 
                     <div class="mt-3">
@@ -666,12 +675,36 @@
                             
                             <div class="d-flex align-items-center gap-3 justify-content-md-end">
                                 <span style="color:rgba(255,255,255,.4); font-size:12px; font-weight: 700;">WE ACCEPT:</span>
-                                <div class="payment-icons-footer d-flex align-items-center gap-2">
-                                    <img src="https://img.icons8.com/color/48/visa.png" width="36" alt="Visa">
-                                    <img src="https://img.icons8.com/color/48/mastercard.png" width="36" alt="Mastercard">
-                                    <img src="https://img.icons8.com/color/48/paypal.png" width="36" alt="PayPal"> <!-- Fixed PayPal URL -->
-                                    <img src="https://img.icons8.com/color/48/stripe.png" width="36" alt="Stripe"> <!-- Added Stripe -->
-                                    <img src="https://img.icons8.com/color/48/rupay.png" width="36" alt="RuPay">
+                                <div class="payment-icons-footer d-flex align-items-center gap-2 flex-wrap">
+                                    <style>
+                                        .pay-badge {
+                                            background: #fff;
+                                            border-radius: 4px;
+                                            height: 26px;
+                                            padding: 0 8px;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                            font-weight: 900;
+                                            font-size: 11px;
+                                            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                                            letter-spacing: 0.5px;
+                                        }
+                                    </style>
+                                    <!-- Slice Logo First -->
+                                    <div class="pay-badge" style="padding: 0 6px;">
+                                        <img src="/img/slice-logo.svg" style="height: 16px; object-fit: contain;" alt="Slice">
+                                    </div>
+                                    <!-- UPI -->
+                                    <div class="pay-badge fst-italic" style="color: #ea580c;">
+                                        <span style="color: #047857;">U</span>PI
+                                    </div>
+                                    <!-- COM BANK -->
+                                    <div class="pay-badge" style="color: #0f172a;">COM BANK</div>
+                                    <!-- MINT BANK -->
+                                    <div class="pay-badge" style="color: #10b981;">MINT BANK</div>
+                                    <!-- RAZOR PAY -->
+                                    <div class="pay-badge" style="color: #0284c7;">RAZORPAY</div>
                                 </div>
                             </div>
                         </div>

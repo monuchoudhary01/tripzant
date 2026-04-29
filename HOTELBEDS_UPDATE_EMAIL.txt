@@ -1,0 +1,17 @@
+Subject: Update on Hotelbeds API Integration Status
+
+Hi Hotelbeds Team,
+
+Hope you are doing well.
+
+I would like to provide a quick update regarding our integration progress. We are currently implementing the APIs using the Test API keys provided in our developer portal. 
+
+The integration is progressing very smoothly, and we are successfully fetching live inventory, rates, and content dynamically directly from your test environment endpoints (/hotel-api/1.0 and /hotel-content-api/3.0). 
+
+We anticipate completing the entire test integration and booking flow within the next 1 to 2 days. Once our testing is complete and verified on our end, we will reach out to you for the final review so we can move toward Production.
+
+Thank you for your ongoing support.
+
+Best regards,
+[Your Name]
+EasiTrip Team

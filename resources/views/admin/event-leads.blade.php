@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-900 text-navy mb-0">Event Leads</h2>
-            <p class="text-muted small mb-0">Tracking visitors from the Melbourne Sri Lankan New Year Festival 2026</p>
+            <p class="text-muted small mb-0">Tracking visitors from the Symphony in the Stratosphere Event 2026</p>
         </div>
         <div class="bg-primary-light text-primary px-4 py-2 rounded-pill fw-bold">
             Total Leads: {{ count($leads) }}
@@ -23,9 +23,7 @@
                             <th class="ps-4 py-3 text-muted small fw-bold">DATE</th>
                             <th class="py-3 text-muted small fw-bold">NAME</th>
                             <th class="py-3 text-muted small fw-bold">EMAIL / PHONE</th>
-                            <th class="py-3 text-muted small fw-bold">NEXT VISIT (SL)</th>
-                            <th class="py-3 text-muted small fw-bold">NEXT HOLIDAY</th>
-                            <th class="py-3 text-muted small fw-bold">TOUR BUILDER</th>
+                            <th class="py-3 text-muted small fw-bold">RAFFLE CODE</th>
                             <th class="py-3 text-muted small fw-bold text-end pe-4">ACTIONS</th>
                         </tr>
                     </thead>
@@ -41,13 +39,11 @@
                                 <div class="fw-bold small">{{ $lead->email }}</div>
                                 <div class="text-muted x-small">{{ $lead->phone ?? 'No Phone' }}</div>
                             </td>
-                            <td><span class="badge bg-orange-light text-orange">{{ $lead->next_visit_sri_lanka }}</span></td>
-                            <td class="small fw-bold">{{ $lead->next_holiday_destination }}</td>
                             <td>
-                                @if($lead->wants_tour_builder)
-                                    <span class="badge bg-success rounded-pill fw-bold"><i class="fas fa-check me-1"></i> YES</span>
+                                @if($lead->raffle_code)
+                                    <span class="badge bg-primary fs-6">{{ $lead->raffle_code }}</span>
                                 @else
-                                    <span class="text-muted small">No</span>
+                                    <span class="text-muted small">Not generated</span>
                                 @endif
                             </td>
                             <td class="text-end pe-4">

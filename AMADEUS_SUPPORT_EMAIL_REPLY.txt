@@ -1,0 +1,76 @@
+Subject: RE: Technical Support Needed: SOAP Authentication Issue (InvalidSecurityToken) on Node D2 - WSAP 1ASIWIBEESI
+
+Hi Amadeus Support,
+
+Thank you for confirming the correct User ID (WSESIIBE). We have updated our configuration but are still experiencing the exact same issue. Here are the requested details from our latest test:
+
+1. JsessionID / SessionID & Timestamp
+- Exact GMT Timestamp: 2026-04-28T03:07:02Z
+- JsessionID / SessionID: We are not receiving a SessionId or JSESSIONID in the HTTP response headers or the SOAP body. Because the request is being rejected at the security gateway (SI:muxdmz-1) with an InvalidSecurityToken fault, no session is established on the Amadeus servers. The only HTTP headers returned to us are Content-Type and Content-Length.
+
+2. Environment:
+This error is currently happening in the Test environment (Targeting: https://noded2.test.webservices.amadeus.com/1ASIWIBEESI). We have not attempted Production yet as we are completely blocked by this authentication error in Test.
+
+3. Steps to Reproduce / Raw Request and Response
+We are making a standard SOAP 4.0 request to the D2 Test Node using WSESIIBE as the wsse:Username.
+
+--- EXACT SOAP REQUEST ---
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsa="http://www.w3.org/2005/08/addressing">
+    <soapenv:Header>
+        <wsa:MessageID>urn:uuid:37cc73da-86cb-401f-84e4-dd3e320962b7</wsa:MessageID>
+        <wsa:Action>http://webservices.amadeus.com/FMPTBQ_24_6_1A</wsa:Action>
+        <wsa:To>https://noded2.test.webservices.amadeus.com/1ASIWIBEESI</wsa:To>
+        <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+            <wsse:UsernameToken>
+                <wsse:Username>WSESIIBE</wsse:Username>
+                <wsse:Password>********</wsse:Password>
+            </wsse:UsernameToken>
+        </wsse:Security>
+    </soapenv:Header>
+    <soapenv:Body>
+        <Fare_MasterPricerTravelBoardSearch xmlns="http://xml.amadeus.com/FMPTBQ_24_6_1A">
+            <numberOfUnit>
+                <unitNumberDetail>
+                    <numberOfUnits>1</numberOfUnits>
+                    <typeOfUnit>PX</typeOfUnit>
+                </unitNumberDetail>
+            </numberOfUnit>
+            <paxReference>
+                <ptc>ADT</ptc>
+                <traveller>
+                    <ref>1</ref>
+                </traveller>
+            </paxReference>
+        </Fare_MasterPricerTravelBoardSearch>
+    </soapenv:Body>
+</soapenv:Envelope>
+
+
+--- EXACT SOAP RESPONSE ---
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsa="http://www.w3.org/2005/08/addressing" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+    <soap:Header>
+        <wsa:To>http://www.w3.org/2005/08/addressing/anonymous</wsa:To>
+        <wsa:From>
+            <wsa:Address>https://noded2.test.webservices.amadeus.com/1ASIWIBEESI</wsa:Address>
+        </wsa:From>
+        <wsa:Action>http://webservices.amadeus.com/FMPTBQ_24_6_1A</wsa:Action>
+        <wsa:MessageID>urn:uuid:e229235a-3f4f-ce74-712b-89b72739b40a</wsa:MessageID>
+        <wsa:RelatesTo RelationshipType="http://www.w3.org/2005/08/addressing/reply">urn:uuid:332a6ff8-e83c-495e-8955-a965a0335ecf</wsa:RelatesTo>
+    </soap:Header>
+    <soap:Body>
+        <soap:Fault>
+            <faultcode>wsse:InvalidSecurityToken</faultcode>
+            <faultstring>An invalid security token was provided</faultstring>
+            <faultactor>SI:muxdmz-1</faultactor>
+        </soap:Fault>
+    </soap:Body>
+</soap:Envelope>
+
+
+Could you please check the logs on SI:muxdmz-1 for this specific MessageID or GMT timestamp to trace why the token is considered invalid? Also, is it possible that this WSESIIBE user and password have not been fully linked/authorized to the Test environment for our WSAP (1ASIWIBEESI) yet? 
+
+Looking forward to your guidance.
+
+Best regards,
+[Your Name/Team]

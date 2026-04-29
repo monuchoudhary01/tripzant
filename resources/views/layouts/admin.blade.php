@@ -288,7 +288,7 @@
 
                 <span class="admin-nav-label">Event Management</span>
                 <a href="{{ route('admin.event-leads.index') }}" class="admin-nav-link {{ request()->is('admin/event-leads*') ? 'active' : '' }}">
-                    <i class="fas fa-users-viewfinder"></i> Participent Leads
+                    <i class="fas fa-users-viewfinder"></i> Participant Details
                 </a>
 
                 <span class="admin-nav-label">Configuration</span>

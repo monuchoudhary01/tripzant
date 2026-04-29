@@ -52,12 +52,26 @@
                 <button class="m-mode-btn" onclick="switchFlightMode('budget', this)">
                     <i class="fas fa-money-bill-wave"></i> Search by budget
                 </button>
+                <!-- Slice Pay Info -->
+                <div class="d-flex align-items-center ms-2 bg-light rounded-pill px-3 py-1 border border-primary border-opacity-25" style="height: 38px;">
+                    <img src="/img/slice-logo.svg" alt="Slice" style="height: 20px; object-fit: contain; margin-right: 8px;">
+                    <span class="text-navy fw-800" style="font-size: 11px;">Pay in 12 installments</span>
+                    <i class="fas fa-info-circle ms-2 text-primary cursor-pointer" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="bottom" title="<div class='text-start p-1'><ul class='ps-3 mb-0' style='font-size:12px; line-height:1.6;'><li class='mb-2 fw-bold text-white'>Lock in today’s prices for just a small deposit</li><li class='mb-2'>Pay off the remaining amount before you depart so you can travel guilt free!</li><li>No late fees and no credit checks means Slice Pay is easily available to all!</li></ul></div>" style="font-size: 14px;"></i>
+                </div>
             </div>
             
             <a href="/explore-map" class="map-view-toggle-btn hvr-grow">
                 <i class="fas fa-map-location-dot"></i> EXPLORE ON MAP
             </a>
         </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            });
+        </script>
 
 <style>
     .misty-search-glass-card {

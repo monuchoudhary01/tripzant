@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 30" width="100" height="30">
+  <!-- Blue text "slice" -->
+  <text x="5" y="24" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="900" font-size="28" fill="#3ea5f5">slice</text>
+  <!-- Diagonal slice line cutting through -->
+  <line x1="0" y1="28" x2="100" y2="4" stroke="#ffffff" stroke-width="2" />
+  <line x1="0" y1="28" x2="100" y2="4" stroke="#f7fbff" stroke-width="2" />
+</svg>

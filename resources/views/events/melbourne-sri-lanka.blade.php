@@ -11,13 +11,19 @@
             <div class="festive-logo mb-4 animate__animated animate__fadeInDown">
                 <img src="/img/logo.svg" alt="Tripzant" style="height: 60px; filter: brightness(0) invert(1);">
             </div>
-            <h1 class="festive-title mb-2 animate__animated animate__zoomIn">Celebrate <span class="highlight-gold">Aluth Avurudu</span> in Melbourne</h1>
-            <p class="festive-subtitle mb-4">Connecting 40,000+ Sri Lankans through the spirit of New Year</p>
+            <h1 class="festive-title mb-2 animate__animated animate__zoomIn">Symphony in the <span class="highlight-gold">Stratosphere</span></h1>
+            <p class="festive-subtitle mb-4">An exclusive evening of prestige, nostalgia, and world-class music with Anjalee</p>
             
             <div class="event-meta-info d-flex justify-content-center gap-4 mb-5 flex-wrap">
-                <div class="meta-item"><i class="fas fa-calendar-alt me-2"></i> April 2026</div>
-                <div class="meta-item"><i class="fas fa-map-marker-alt me-2"></i> Melbourne, Australia</div>
-                <div class="meta-item"><i class="fas fa-users me-2"></i> 40,000+ Attendees</div>
+                <div class="meta-item"><i class="fas fa-calendar-alt me-2"></i> 09 May 2026</div>
+                <div class="meta-item"><i class="fas fa-map-marker-alt me-2"></i> Springvale City Hall, VIC</div>
+                <div class="meta-item"><i class="fas fa-clock me-2"></i> 6:30 PM Onwards</div>
+            </div>
+
+            <div class="flyer-preview mb-5 animate__animated animate__fadeInUp">
+                <div class="bg-white p-2 rounded-4 shadow-lg d-inline-block border border-warning" style="max-width: 350px;">
+                    <img src="/img/image.jpeg?v={{ time() }}" alt="Symphony in the Stratosphere" class="img-fluid rounded-3">
+                </div>
             </div>
 
             <div class="animate__animated animate__pulse animate__infinite">
@@ -48,62 +54,33 @@
                     <div class="glass-card p-5 animate__animated animate__fadeInUp">
                         <div class="text-center mb-5">
                             <h2 class="section-title text-navy">Join the <span class="highlight-orange">Tripzant</span> Community</h2>
-                            <p class="text-muted">Tell us about your next dream trip and unlock exclusive travel rewards!</p>
+                            <p class="text-muted">Fill in your details and enter the grand raffle draw!</p>
                         </div>
 
                         <form action="{{ route('event.melbourne.submit') }}" method="POST" class="event-form">
                             @csrf
                             <div class="row g-4">
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold">Full Name</label>
-                                    <input type="text" name="name" class="form-control premium-input" placeholder="Enter your name" required>
+                                    <label class="form-label fw-bold">Client Name</label>
+                                    <input type="text" name="name" class="form-control premium-input" placeholder="Enter your full name" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Email Address</label>
                                     <input type="email" name="email" class="form-control premium-input" placeholder="name@example.com" required>
                                 </div>
                                 <div class="col-md-12">
-                                    <label class="form-label fw-bold">Phone Number (Optional)</label>
-                                    <input type="text" name="phone" class="form-control premium-input" placeholder="+61 XXX XXX XXX">
+                                    <label class="form-label fw-bold">Whatsapp Number</label>
+                                    <input type="text" name="phone" class="form-control premium-input" placeholder="+61 XXX XXX XXX" required>
                                 </div>
                                 
+                                <!-- Raffle Draw Section -->
                                 <div class="col-md-12">
-                                    <div class="question-box p-4 rounded-4 bg-light mb-4 border border-warning-subtle">
-                                        <h5 class="fw-bold mb-3"><i class="fas fa-plane-departure text-orange me-2"></i> When are you planning to visit Sri Lanka next?</h5>
-                                        <div class="row g-3">
-                                            @php $options = ['Within 3 months', 'Within 6 months', 'Next Year', 'Just Browsing']; @endphp
-                                            @foreach($options as $opt)
-                                            <div class="col-md-6">
-                                                <div class="form-check custom-radio">
-                                                    <input class="form-check-input" type="radio" name="next_visit_sri_lanka" id="visit_{{ Str::slug($opt) }}" value="{{ $opt }}">
-                                                    <label class="form-check-label" for="visit_{{ Str::slug($opt) }}">{{ $opt }}</label>
-                                                </div>
-                                            </div>
-                                            @endforeach
-                                        </div>
+                                    <div class="raffle-box p-4 rounded-4 bg-navy text-white mb-4 shadow-lg border border-warning text-center" style="background: linear-gradient(135deg, #002f55 0%, #001f3a 100%);">
+                                        <h5 class="fw-bold mb-2 text-warning"><i class="fas fa-ticket-alt me-2"></i> Grand Raffle Draw Entry</h5>
+                                        <p class="small opacity-75 mb-0">Your unique Golden Ticket code will be automatically generated upon submission!</p>
                                     </div>
                                 </div>
 
-                                <div class="col-md-12">
-                                    <div class="question-box p-4 rounded-4 bg-light mb-4 border border-primary-subtle">
-                                        <h5 class="fw-bold mb-3"><i class="fas fa-map-marked-alt text-primary me-2"></i> Where would be your next holiday destination?</h5>
-                                        <input type="text" name="next_holiday_destination" class="form-control premium-input border-0 shadow-sm" placeholder="e.g. Ella, Bali, Maldives, Europe...">
-                                    </div>
-                                </div>
-
-                                <div class="col-md-12">
-                                    <div class="tour-builder-teaser p-4 rounded-4 text-white d-flex align-items-center gap-4 flex-wrap mb-4 shadow" style="background: linear-gradient(135deg, #0b3d61 0%, #001f3f 100%);">
-                                        <div class="icon-wrap fs-1"><i class="fas fa-magic"></i></div>
-                                        <div class="flex-grow-1">
-                                            <h5 class="fw-bold mb-1">Create Your Custom Journey</h5>
-                                            <p class="small mb-0 opacity-75">Access our AI-powered Tour Builder to design a personalized Sri Lankan experience.</p>
-                                        </div>
-                                        <div class="form-check form-switch fs-4">
-                                            <input class="form-check-input" type="checkbox" name="wants_tour_builder" value="1" id="tourBuilderAccess">
-                                            <label class="form-check-label text-white small" for="tourBuilderAccess"></label>
-                                        </div>
-                                    </div>
-                                </div>
 
                                 <div class="col-12 mt-4 text-center">
                                     <button type="submit" class="btn btn-orange-lg px-5 py-3 rounded-pill fw-bold shadow-lg w-100">
