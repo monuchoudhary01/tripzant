@@ -852,9 +852,9 @@ Route::prefix('local-provider')->name('provider.')->group(function () {
     Route::get('/search-providers', [App\Http\Controllers\LocalServiceProviderController::class, 'searchProviders'])->name('search-providers');
 });
 
-// Melbourne Sri Lankan New Year Event 2026
-Route::get('/melbourne-event', [App\Http\Controllers\EventLandingController::class, 'showMelbourneEvent'])->name('event.melbourne');
-Route::post('/melbourne-event/submit', [App\Http\Controllers\EventLandingController::class, 'storeLead'])->name('event.melbourne.submit');
+// Event Landing Page
+Route::get('/event', [App\Http\Controllers\EventLandingController::class, 'showMelbourneEvent'])->name('event');
+Route::post('/event/submit', [App\Http\Controllers\EventLandingController::class, 'storeLead'])->name('event.submit');
 
 // Coming Soon Page
 Route::get('/coming-soon', function () {

@@ -57,30 +57,35 @@
                             <p class="text-muted">Fill in your details and enter the grand raffle draw!</p>
                         </div>
 
-                        <form action="{{ route('event.melbourne.submit') }}" method="POST" class="event-form">
+                        <form action="{{ route('event.submit') }}" method="POST" class="event-form">
                             @csrf
                             <div class="row g-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Client Name</label>
-                                    <input type="text" name="name" class="form-control premium-input" placeholder="Enter your full name" required>
+                                    <input type="text" name="name" class="form-control premium-input" placeholder="Enter your full name" value="{{ old('name') }}" required>
+                                    @error('name') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Email Address</label>
-                                    <input type="email" name="email" class="form-control premium-input" placeholder="name@example.com" required>
+                                    <input type="email" name="email" class="form-control premium-input" placeholder="name@example.com" value="{{ old('email') }}" required>
+                                    @error('email') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                 </div>
                                 <div class="col-md-12">
                                     <label class="form-label fw-bold">Whatsapp Number</label>
-                                    <input type="text" name="phone" class="form-control premium-input" placeholder="+61 XXX XXX XXX" required>
+                                    <input type="text" name="phone" class="form-control premium-input" placeholder="+61 XXX XXX XXX" value="{{ old('phone') }}" required>
+                                    @error('phone') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                 </div>
                                 
                                 <!-- Raffle Draw Section -->
-                                <div class="col-md-12">
-                                    <div class="raffle-box p-4 rounded-4 bg-navy text-white mb-4 shadow-lg border border-warning text-center" style="background: linear-gradient(135deg, #002f55 0%, #001f3a 100%);">
-                                        <h5 class="fw-bold mb-2 text-warning"><i class="fas fa-ticket-alt me-2"></i> Grand Raffle Draw Entry</h5>
-                                        <p class="small opacity-75 mb-0">Your unique Golden Ticket code will be automatically generated upon submission!</p>
-                                    </div>
+                                <div class="col-md-12 mt-4">
+                                    <h5 class="fw-bold mb-3 text-navy border-bottom pb-2"><i class="fas fa-ticket-alt text-warning me-2"></i> Raffle Draw Details</h5>
                                 </div>
-
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold">Raffle Draw Code</label>
+                                    <input type="text" name="raffle_code" class="form-control premium-input" placeholder="e.g. A-1024-Red" value="{{ old('raffle_code') }}" required>
+                                    @error('raffle_code') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                    <div class="form-text small opacity-75">Format: Alphabetic-Number-Colour (e.g., A-1024-Red)</div>
+                                </div>
 
                                 <div class="col-12 mt-4 text-center">
                                     <button type="submit" class="btn btn-orange-lg px-5 py-3 rounded-pill fw-bold shadow-lg w-100">

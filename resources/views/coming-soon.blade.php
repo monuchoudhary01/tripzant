@@ -45,7 +45,7 @@
 
         <div class="event-shortcut mt-5 animate__animated animate__fadeIn animate__delay-3s">
             <p class="text-muted mb-2">Attending our Melbourne Event?</p>
-            <a href="{{ route('event.melbourne') }}" class="btn btn-outline-orange rounded-pill px-5 py-2 fw-bold">Go to Event Page <i class="fas fa-calendar-star ms-2"></i></a>
+            <a href="{{ route('event') }}" class="btn btn-outline-orange rounded-pill px-5 py-2 fw-bold">Go to Event Page <i class="fas fa-calendar-star ms-2"></i></a>
         </div>
     </div>
 </div>

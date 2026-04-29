@@ -381,24 +381,24 @@
                 </div>
                 <div class="modal-body py-4">
                     <!-- Very Large QR Code in Middle -->
-                    <div class="qr-code-section mb-5 text-center">
-                        <div class="bg-white p-4 rounded-5 shadow-lg d-inline-block border border-3 border-navy animate__animated animate__zoomIn">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data={{ urlencode(route('event.melbourne')) }}" alt="QR Code" width="300" class="img-fluid">
-                            <div class="mt-3 text-navy fw-900 fs-3">SCAN TO WIN</div>
+                    <div class="qr-code-section mb-3 text-center">
+                        <div class="bg-white p-3 rounded-5 shadow-lg d-inline-block border border-3 border-navy animate__animated animate__zoomIn">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ urlencode(route('event')) }}" alt="QR Code" width="200" class="img-fluid">
+                            <div class="mt-2 text-navy fw-900 fs-4">SCAN TO WIN</div>
                             <p class="text-muted mb-0 fw-bold fs-6">Scan to enter the Lucky Draw!</p>
                         </div>
                     </div>
 
                     <div class="flyer-section animate__animated animate__fadeInUp">
                         <p class="text-muted fw-bold mb-3 small text-uppercase letter-spacing-1">Event Flyer</p>
-                        <div class="flyer-container bg-white p-2 rounded-4 shadow-sm d-inline-block border border-warning" style="cursor: pointer; max-width: 280px;" onclick="window.location.href='{{ route('event.melbourne') }}'">
+                        <div class="flyer-container bg-white p-2 rounded-4 shadow-sm d-inline-block border border-warning" style="cursor: pointer; max-width: 280px;" onclick="window.location.href='{{ route('event') }}'">
                             <img src="/img/image.jpeg?v={{ time() }}" alt="Event Flyer" class="img-fluid rounded-3 shadow">
                             <div class="mt-2 text-primary x-small fw-bold"><i class="fas fa-mouse-pointer me-1"></i> Click to Open Form</div>
                         </div>
                     </div>
 
                     <div class="mt-3">
-                        <a href="{{ route('event.melbourne') }}" class="btn btn-navy rounded-pill px-5 py-3 fw-bold w-100 shadow-lg hvr-grow">
+                        <a href="{{ route('event') }}" class="btn btn-navy rounded-pill px-5 py-3 fw-bold w-100 shadow-lg hvr-grow">
                              OPEN REGISTRATION FORM <i class="fas fa-external-link-alt ms-2"></i>
                         </a>
                     </div>

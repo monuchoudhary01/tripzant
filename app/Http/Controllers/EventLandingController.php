@@ -12,7 +12,7 @@ class EventLandingController extends Controller
      */
     public function showMelbourneEvent()
     {
-        return view('events.melbourne-sri-lanka');
+        return view('events.event');
     }
 
     /**
@@ -24,25 +24,24 @@ class EventLandingController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:20',
+            'raffle_code' => 'required|string|max:50|unique:event_leads,raffle_code',
         ]);
 
-        $types = ['A', 'B', 'C', 'N', 'X', 'Y', 'Z'];
-        $colors = ['Red', 'Blue', 'Green', 'Gold', 'Silver'];
-
-        do {
-            $type = $types[array_rand($types)];
-            $number = rand(1000, 9999);
-            $color = $colors[array_rand($colors)];
-            $raffleCode = $type . '-' . $number . '-' . $color;
-        } while (EventLead::where('raffle_code', $raffleCode)->exists());
+        $raffleCode = $validated['raffle_code'];
+        
+        // Attempt to parse the code into parts if it matches the format
+        $parts = explode('-', $raffleCode);
+        $alphabetic = $parts[0] ?? null;
+        $number = $parts[1] ?? null;
+        $colour = $parts[2] ?? null;
 
         $lead = EventLead::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'],
-            'raffle_alphabetic' => $type,
-            'raffle_number' => (string) $number,
-            'raffle_colour' => $color,
+            'raffle_alphabetic' => $alphabetic,
+            'raffle_number' => $number,
+            'raffle_colour' => $colour,
             'raffle_code' => $raffleCode,
             'event_name' => 'Symphony in the Stratosphere 2026'
         ]);
