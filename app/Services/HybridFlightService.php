@@ -40,10 +40,17 @@ class HybridFlightService
 
         foreach ($this->providers as $name => $provider) {
             try {
-                \Illuminate\Support\Facades\Log::info("Calling provider: $name");
+                $startTimeProvider = microtime(true);
+                \Illuminate\Support\Facades\Log::info("HybridFlightService: Calling provider: $name");
+                
                 $results = $provider->search($params);
                 
                 $flights = $results['flights'] ?? [];
+                $count = count($flights);
+                $duration = round(microtime(true) - $startTimeProvider, 2);
+                
+                \Illuminate\Support\Facades\Log::info("HybridFlightService: Provider $name returned $count flights in {$duration}s");
+                
                 $providerMeta = $results['meta'] ?? [];
                 
                 // Merge metadata (like calendar data)
@@ -67,7 +74,7 @@ class HybridFlightService
                     }
                 }
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Provider $name failed: " . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error("HybridFlightService: Provider $name FAILED: " . $e->getMessage());
             }
         }
 
