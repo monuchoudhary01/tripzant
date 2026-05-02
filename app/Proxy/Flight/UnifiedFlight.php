@@ -24,6 +24,8 @@ class UnifiedFlight
     public $terminal;
     public $source; // amadeus, rapidapi, scraper
     public $is_cheapest = false;
+    public $booking_class;
+    public $seats_available;
     public $raw_data;
 
     public function __construct(array $data)

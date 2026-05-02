@@ -96,6 +96,8 @@ class TravelPayoutsProvider implements FlightProvider
                     'baggage' => $f['baggage'] ?? '15',
                     'baggage_unit' => $f['baggage_unit'] ?? 'KG',
                     'terminal' => $f['terminal'] ?? 'T1',
+                    'booking_class' => $f['class'] ?? 'Y',
+                    'seats_available' => $f['seats_left'] ?? 9,
                     'source' => 'travelpayouts',
                     'raw_data' => $mockRaw
                 ]);
