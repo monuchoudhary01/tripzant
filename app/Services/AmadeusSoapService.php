@@ -15,19 +15,17 @@ class AmadeusSoapService
     public function __construct($region = 'IN')
     {
         $this->config = config("tripzant.amadeus.providers.{$region}");
-        $this->wsap = '1ASIWIBEESI'; 
+        $this->wsap = $this->config['wsap'] ?? '1ASIWIBEESI'; 
         $this->endpoint = "https://noded2.test.webservices.amadeus.com/{$this->wsap}";
     }
 
     /**
-     * Build Classic SOAP 4.0 Envelope with wsse:Security
+     * Build Hybrid SOAP 4.0 Envelope (Security in HTTP Header, not in XML)
      */
     protected function wrapInSoapEnvelope($bodyXml, $action)
     {
         $messageId = 'urn:uuid:' . Str::uuid();
         $to = $this->endpoint;
-        $username = $this->config['user'] ?? 'WSESIIBE';
-        $password = $this->config['password'] ?? 'zmry#GcJ*9JR';
         
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
@@ -36,13 +34,6 @@ class AmadeusSoapService
         <wsa:MessageID>{$messageId}</wsa:MessageID>
         <wsa:Action>{$action}</wsa:Action>
         <wsa:To>{$to}</wsa:To>
-        
-        <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
-            <wsse:UsernameToken>
-                <wsse:Username>{$username}</wsse:Username>
-                <wsse:Password>{$password}</wsse:Password>
-            </wsse:UsernameToken>
-        </wsse:Security>
     </soapenv:Header>
     <soapenv:Body>
         {$bodyXml}
@@ -52,7 +43,7 @@ XML;
     }
 
     /**
-     * Master Pricer Travelboard Search (Classic Password via D2 Node)
+     * Master Pricer Travelboard Search (Hybrid Auth via D2 Node)
      */
     public function masterPricerSearch($requestXml)
     {
@@ -63,9 +54,16 @@ XML;
         
         $fullSoapXml = $this->wrapInSoapEnvelope($requestXml, $actionUrl);
 
+        $apiKey = config('tripzant.amadeus.key');
+        $apiSecret = config('tripzant.amadeus.secret');
+        $auth = base64_encode("{$apiKey}:{$apiSecret}");
+
         $headers = [
             'Content-Type' => 'text/xml; charset=utf-8',
             'SOAPAction' => '"' . $actionUrl . '"',
+            'Authorization' => 'Basic ' . $auth,
+            'X-Amadeus-Header-Version' => '4.0',
+            'X-Amadeus-DNS-Node' => 'D2',
         ];
 
         try {
@@ -77,6 +75,7 @@ XML;
                 return [
                     'error' => true, 
                     'message' => 'SOAP Gateway Error',
+                    'status' => $response->status(),
                     'body' => $response->body()
                 ];
             }

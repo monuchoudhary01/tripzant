@@ -32,6 +32,31 @@ Route::get('/clear-cache', function() {
     return "Cache cleared successfully!";
 });
 
+// Amadeus SOAP Test Route
+Route::get('/test-amadeus-soap', function() {
+    $soap = new \App\Services\AmadeusSoapService('IN');
+    $mockXml = '
+    <Fare_MasterPricerTravelBoardSearch xmlns="http://xml.amadeus.com/FMPTBQ_24_6_1A">
+        <numberOfUnit>
+            <unitNumberDetail>
+                <numberOfUnits>1</numberOfUnits>
+                <typeOfUnit>PX</typeOfUnit>
+            </unitNumberDetail>
+        </numberOfUnit>
+        <paxReference>
+            <ptc>ADT</ptc>
+            <traveller>
+                <ref>1</ref>
+            </traveller>
+        </paxReference>
+    </Fare_MasterPricerTravelBoardSearch>';
+    
+    $result = $soap->masterPricerSearch($mockXml);
+    
+    return response($result['data'] ?? $result['body'] ?? json_encode($result), 200)
+        ->header('Content-Type', 'text/xml');
+});
+
 // // ====== ROLE-BASED AUTH ROUTES (Standardized) ======
 Route::get('/login', [AuthController::class, 'showUserLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);

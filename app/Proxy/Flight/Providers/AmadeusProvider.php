@@ -68,6 +68,8 @@ class AmadeusProvider implements FlightProvider
                 'baggage' => $fareDetails['includedCheckedBags']['weight'] ?? ($fareDetails['includedCheckedBags']['quantity'] ?? '15'),
                 'baggage_unit' => $fareDetails['includedCheckedBags']['weightUnit'] ?? (isset($fareDetails['includedCheckedBags']['weight']) ? 'KG' : 'PC'),
                 'terminal' => $firstSeg['departure']['terminal'] ?? 'T1',
+                'booking_class' => $fareDetails['bookingCode'] ?? 'Y',
+                'seats_available' => $offer['numberOfBookableSeats'] ?? 9,
                 'source' => 'amadeus',
                 'raw_data' => $offer
             ]);

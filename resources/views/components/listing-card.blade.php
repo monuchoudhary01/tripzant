@@ -78,10 +78,16 @@
                                     {{ strtoupper($source) }}
                                 </span>
                             </div>
-                            <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex flex-column gap-1 mt-1">
                                 <span class="text-muted fw-700 uppercase" style="font-size:10px;">{{ $subtitle }}</span>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="badge bg-navy bg-opacity-10 text-navy" style="font-size:9px; font-weight:900; border: 1px solid rgba(0,0,128,0.1);">
+                                        <i class="fas fa-chair me-1" style="font-size:8px;"></i> {{ $f['booking_class'] ?? 'Y' }}{{ $f['seats_available'] ?? '9' }}+
+                                    </span>
+                                    <span class="text-muted fw-800" style="font-size:9px;">{{ strtoupper($f['cabin'] ?? 'ECONOMY') }}</span>
+                                </div>
                                 @if(Auth::check() && Auth::user()->role === 'b2b')
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size:9px; font-weight:800;" title="B2B Hub Code">NODE: {{ strtoupper(substr($source, 0, 3)) }}-{{ rand(100,999) }}</span>
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 mt-1" style="font-size:9px; font-weight:800; width: fit-content;" title="B2B Hub Code">NODE: {{ strtoupper(substr($source, 0, 3)) }}-{{ rand(100,999) }}</span>
                                 @endif
                             </div>
                         </div>
@@ -250,7 +256,7 @@
                 <i class="fas fa-bowl-food text-primary"></i> <span class="text-muted">MEALS:</span> {{ $f['meal_info'] ?? 'FREE MEALS' }}
             </div>
             <div class="d-flex align-items-center gap-2 small fw-800 text-navy uppercase" style="font-size:10.5px; letter-spacing:0.3px;">
-                <i class="fas fa-chair text-primary"></i> <span class="text-muted">SEAT:</span> {{ $f['cabin'] ?? 'ECONOMY' }}
+                <i class="fas fa-chair text-primary"></i> <span class="text-muted">SEAT:</span> {{ $f['booking_class'] ?? 'Y' }}{{ $f['seats_available'] ?? '9' }}+ ({{ $f['cabin'] ?? 'ECONOMY' }})
             </div>
         </div>
         <div class="d-flex gap-3 align-items-center">
