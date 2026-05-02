@@ -46,6 +46,56 @@ class CheckoutController extends Controller
 
             if ($item) {
                 $item = is_object($item) ? $item->toArray() : $item;
+
+                // If it's a UnifiedFlight (from SOAP), wrap it in a mock REST structure
+                // We keep original properties too for compatibility with flat-accessing JS
+                if (isset($item['departure_city'])) {
+                    $mockOffer = array_merge($item, [
+                        'id' => $item['id'],
+                        'itineraries' => [
+                            [
+                                'duration' => $item['duration'] ?? 'PT2H',
+                                'segments' => [
+                                    [
+                                        'departure' => [
+                                            'iataCode' => $item['departure_city'],
+                                            'at' => $item['departure_at'],
+                                            'terminal' => $item['terminal'] ?? 'T1'
+                                        ],
+                                        'arrival' => [
+                                            'iataCode' => $item['arrival_city'],
+                                            'at' => $item['arrival_at']
+                                        ],
+                                        'carrierCode' => $item['airline_code'],
+                                        'number' => $item['flight_number'],
+                                        'duration' => $item['duration'] ?? 'PT2H'
+                                    ]
+                                ]
+                            ]
+                        ],
+                        'price' => [
+                            'currency' => $item['currency'] ?? 'INR',
+                            'total' => $item['price'],
+                            'base' => $item['price'] * 0.8
+                        ],
+                        'travelerPricings' => [
+                            [
+                                'fareDetailsBySegment' => [
+                                    [
+                                        'cabin' => $item['cabin'] ?? 'ECONOMY',
+                                        'class' => 'Y',
+                                        'includedCheckedBags' => [
+                                            'weight' => str_replace(' KG', '', $item['baggage'] ?? '15'),
+                                            'weightUnit' => 'KG'
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]);
+                    $item = $mockOffer;
+                }
+
                 $priceVal = $item['price'] ?? ($item['total_price'] ?? 0);
                 
                 // If price is an object (Amadeus raw style), extract total

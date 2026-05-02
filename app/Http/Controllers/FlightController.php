@@ -288,7 +288,7 @@ class FlightController extends Controller
         $fullResult = \Illuminate\Support\Facades\Cache::get($cacheKey) ?: \Illuminate\Support\Facades\Cache::get('flight_search_full', []);
         $rawFlights = $fullResult['raw_data'] ?? [];
         
-        // Handle dictionaries which might be in meta or root
+        // Handle dictionaries
         $dictionaries = $fullResult['dictionaries'] ?? ($fullResult['meta']['dictionaries'] ?? []);
 
         // Find the flight by ID in the raw data
@@ -301,10 +301,64 @@ class FlightController extends Controller
             return response()->json(['error' => 'Flight selection expired. Please search again.'], 404);
         }
 
+        // Ensure it's an array for easier checking
+        if (is_object($flightOffer)) {
+            $flightOffer = method_exists($flightOffer, 'toArray') ? $flightOffer->toArray() : (array)$flightOffer;
+        }
+
+        // If it's a UnifiedFlight (from SOAP) or a partial array, wrap it in a mock REST structure
+        // We check for 'departure_city' or missing 'itineraries' to trigger the wrapper
+        if (isset($flightOffer['departure_city']) || !isset($flightOffer['itineraries'])) {
+            $mockOffer = array_merge($flightOffer, [
+                'id' => $flightOffer['id'] ?? $id,
+                'itineraries' => [
+                    [
+                        'duration' => $flightOffer['duration'] ?? 'PT2H',
+                        'segments' => [
+                            [
+                                'departure' => [
+                                    'iataCode' => $flightOffer['departure_city'] ?? ($flightOffer['from'] ?? '???'),
+                                    'at' => $flightOffer['departure_at'] ?? '',
+                                    'terminal' => $flightOffer['terminal'] ?? 'T1'
+                                ],
+                                'arrival' => [
+                                    'iataCode' => $flightOffer['arrival_city'] ?? ($flightOffer['to'] ?? '???'),
+                                    'at' => $flightOffer['arrival_at'] ?? ''
+                                ],
+                                'carrierCode' => $flightOffer['airline_code'] ?? '??',
+                                'number' => $flightOffer['flight_number'] ?? '000',
+                                'duration' => $flightOffer['duration'] ?? 'PT2H'
+                            ]
+                        ]
+                    ]
+                ],
+                'price' => [
+                    'currency' => $flightOffer['currency'] ?? 'INR',
+                    'total' => $flightOffer['price'] ?? 0,
+                    'base' => ($flightOffer['price'] ?? 0) * 0.8
+                ],
+                'travelerPricings' => [
+                    [
+                        'fareDetailsBySegment' => [
+                            [
+                                'cabin' => $flightOffer['cabin'] ?? 'ECONOMY',
+                                'class' => 'Y',
+                                'includedCheckedBags' => [
+                                    'weight' => str_replace(' KG', '', $flightOffer['baggage'] ?? '15'),
+                                    'weightUnit' => 'KG'
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]);
+            $flightOffer = $mockOffer;
+        }
+
         return response()->json([
             'success' => true,
             'data' => $flightOffer,
-            'dictionaries' => (object)$dictionaries // Ensure it's an object in JSON
+            'dictionaries' => (object)$dictionaries
         ]);
     }
 
@@ -326,6 +380,54 @@ class FlightController extends Controller
 
         if (!$flightOffer) {
             return response()->json(['error' => 'Flight selection expired. Please search again.'], 404);
+        }
+
+        // If it's a UnifiedFlight (from SOAP), wrap it in a mock REST structure
+        if (isset($flightOffer['departure_city'])) {
+            $mockOffer = array_merge($flightOffer, [
+                'id' => $flightOffer['id'],
+                'itineraries' => [
+                    [
+                        'duration' => $flightOffer['duration'] ?? 'PT2H',
+                        'segments' => [
+                            [
+                                'departure' => [
+                                    'iataCode' => $flightOffer['departure_city'],
+                                    'at' => $flightOffer['departure_at'],
+                                    'terminal' => $flightOffer['terminal'] ?? 'T1'
+                                ],
+                                'arrival' => [
+                                    'iataCode' => $flightOffer['arrival_city'],
+                                    'at' => $flightOffer['arrival_at']
+                                ],
+                                'carrierCode' => $flightOffer['airline_code'],
+                                'number' => $flightOffer['flight_number'],
+                                'duration' => $flightOffer['duration'] ?? 'PT2H'
+                            ]
+                        ]
+                    ]
+                ],
+                'price' => [
+                    'currency' => $flightOffer['currency'] ?? 'INR',
+                    'total' => $flightOffer['price'],
+                    'base' => $flightOffer['price'] * 0.8
+                ],
+                'travelerPricings' => [
+                    [
+                        'fareDetailsBySegment' => [
+                            [
+                                'cabin' => $flightOffer['cabin'] ?? 'ECONOMY',
+                                'class' => 'Y',
+                                'includedCheckedBags' => [
+                                    'weight' => str_replace(' KG', '', $flightOffer['baggage'] ?? '15'),
+                                    'weightUnit' => 'KG'
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]);
+            $flightOffer = $mockOffer;
         }
 
         $frontendTravelers = $request->input('travelers', []);

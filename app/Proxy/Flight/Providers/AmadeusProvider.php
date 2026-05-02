@@ -69,7 +69,27 @@ class AmadeusProvider implements FlightProvider
 
         foreach ($recommendations as $rec) {
             $recId = $rec['itemNumber']['itemNumber'] ?? uniqid();
-            $price = (float) ($rec['recPriceInfo']['monetaryDetail']['amount'] ?? 0);
+            
+            // Refined Price Extraction
+            $price = 0;
+            $monetary = $rec['recPriceInfo']['monetaryDetail'] ?? [];
+            
+            if (isset($monetary['amount'])) {
+                $price = (float)$monetary['amount'];
+            } elseif (is_array($monetary) && count($monetary) > 0) {
+                // Look for '707' qualifier which usually means total price including taxes
+                foreach ($monetary as $m) {
+                    $qualifier = $m['amountQualifier'] ?? ($m['tier?'] ?? '');
+                    if ($qualifier == '707') {
+                        $price = (float)$m['amount'];
+                        break;
+                    }
+                }
+                // Fallback to first one if 707 not found
+                if ($price == 0) {
+                    $price = (float)($monetary[0]['amount'] ?? 0);
+                }
+            }
             
             // Normalize paxFareProduct
             $paxFareProducts = $rec['paxFareProduct'] ?? [];
@@ -77,10 +97,6 @@ class AmadeusProvider implements FlightProvider
                 $paxFareProducts = [$paxFareProducts];
             }
             
-            if (empty($paxFareProducts)) {
-                Log::info('AmadeusProvider: Recommendation has no paxFareProduct', ['rec_id' => $recId, 'keys' => array_keys($rec)]);
-            }
-
             foreach ($paxFareProducts as $fareProd) {
                 $fareDetails = $fareProd['fareDetails'] ?? [];
                 if (isset($fareDetails[0])) {
@@ -88,17 +104,10 @@ class AmadeusProvider implements FlightProvider
                 }
 
                 $segRef = $fareDetails['segmentRef']['segRef'] ?? null;
-                Log::info('AmadeusProvider: Checking segRef', ['segRef' => $segRef]);
-                
-                if (!$segRef) {
-                    continue;
-                }
+                if (!$segRef) continue;
 
                 $flightDetailsGrp = $this->findFlightByIndex($flightIndex, $segRef);
-                if (!$flightDetailsGrp) {
-                    Log::info('AmadeusProvider: Flight Details not found for segRef', ['segRef' => $segRef]);
-                    continue;
-                }
+                if (!$flightDetailsGrp) continue;
 
                 // Normalize flightDetails
                 $flights = $flightDetailsGrp['flightDetails'] ?? [];
@@ -109,16 +118,29 @@ class AmadeusProvider implements FlightProvider
                 $firstSeg = $flights[0];
                 $lastSeg = end($flights);
 
+                $depAt = $this->parseAmadeusDate($firstSeg['flightInformation']['productDateTime']['dateOfDeparture'], $firstSeg['flightInformation']['productDateTime']['timeOfDeparture']);
+                $arrAt = $this->parseAmadeusDate($lastSeg['flightInformation']['productDateTime']['dateOfArrival'] ?? $firstSeg['flightInformation']['productDateTime']['dateOfDeparture'], $lastSeg['flightInformation']['productDateTime']['timeOfArrival'] ?? '0000');
+                
+                // Calculate duration
+                $duration = 'N/A';
+                try {
+                    $d1 = new \DateTime($depAt);
+                    $d2 = new \DateTime($arrAt);
+                    $diff = $d1->diff($d2);
+                    $duration = ($diff->h + ($diff->days * 24)) . 'h ' . $diff->i . 'm';
+                } catch (\Exception $e) {}
+
                 $unified[] = new UnifiedFlight([
                     'id' => 'amadeus_' . $recId . '_' . $segRef,
                     'airline_code' => $firstSeg['flightInformation']['companyId']['marketingCarrier'] ?? '??',
                     'airline_name' => $this->getAirlineName($firstSeg['flightInformation']['companyId']['marketingCarrier'] ?? ''),
                     'flight_number' => $firstSeg['flightInformation']['flightOrtrainNumber'] ?? '000',
-                    'departure_at' => $this->parseAmadeusDate($firstSeg['flightInformation']['productDateTime']['dateOfDeparture'], $firstSeg['flightInformation']['productDateTime']['timeOfDeparture']),
-                    'arrival_at' => $this->parseAmadeusDate($lastSeg['flightInformation']['productDateTime']['dateOfArrival'] ?? $firstSeg['flightInformation']['productDateTime']['dateOfDeparture'], $lastSeg['flightInformation']['productDateTime']['timeOfArrival'] ?? '0000'),
+                    'departure_at' => $depAt,
+                    'arrival_at' => $arrAt,
                     'departure_city' => $firstSeg['flightInformation']['location'][0]['locationId'] ?? '???',
                     'arrival_city' => $lastSeg['flightInformation']['location'][1]['locationId'] ?? '???',
-                    'duration' => 'N/A', 
+                    'terminal' => $firstSeg['flightInformation']['location'][0]['terminal'] ?? ($firstSeg['flightInformation']['location'][1]['terminal'] ?? 'T1'),
+                    'duration' => $duration, 
                     'stops' => count($flights) - 1,
                     'price' => $price,
                     'net_price' => $price,
@@ -132,7 +154,11 @@ class AmadeusProvider implements FlightProvider
         }
 
         Log::info('AmadeusProvider: Mapping complete', ['count' => count($unified)]);
-        return ['flights' => $unified, 'meta' => []];
+        return [
+            'flights' => $unified,
+            'raw_data' => $unified, // Important for FlightController caching
+            'meta' => []
+        ];
     }
 
     protected function findFlightByIndex($flightIndex, $ref)
@@ -164,6 +190,9 @@ class AmadeusProvider implements FlightProvider
 
     protected function parseAmadeusDate($date, $time)
     {
+        if (strlen($date) < 6) return date('Y-m-d H:i:s');
+        if (strlen($time) < 4) $time = '0000';
+
         $d = substr($date, 0, 2);
         $m = substr($date, 2, 2);
         $y = '20' . substr($date, 4, 2);

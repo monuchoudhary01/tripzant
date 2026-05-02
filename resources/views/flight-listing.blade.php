@@ -2495,7 +2495,7 @@
                                             </div>
                                             <div class="row g-0 align-items-center">
                                                 <div class="col-3">
-                                                    <div class="fw-900 fs-4 text-navy">${s.departure ? s.departure.at.split('T')[1].substring(0,5) : '--:--'}</div>
+                                                    <div class="fw-900 fs-4 text-navy">${s.departure && s.departure.at ? (s.departure.at.includes('T') ? s.departure.at.split('T')[1].substring(0,5) : s.departure.at.split(' ')[1].substring(0,5)) : '--:--'}</div>
                                                     <div class="x-small fw-800 text-navy mt-1">${depDate ? depDate.toLocaleDateString('en-GB', {weekday:'short', day:'2-digit', month:'short', year:'2-digit'}) : ''}</div>
                                                     <div class="x-small text-muted mt-1 fw-700">Terminal ${s.departure ? (s.departure.terminal || 'T1') : 'T1'}</div>
                                                     <div class="x-small text-muted fw-800">${(dict.locations && s.departure) ? (dict.locations[s.departure.iataCode]?.cityCode || s.departure.iataCode) : (s.departure ? s.departure.iataCode : '???')}, India</div>
@@ -2505,7 +2505,7 @@
                                                     <div style="height:2px; background:#26debd; position:relative; width:60%; margin:0 auto;"></div>
                                                 </div>
                                                 <div class="col-3">
-                                                    <div class="fw-900 fs-4 text-navy">${s.arrival ? s.arrival.at.split('T')[1].substring(0,5) : '--:--'}</div>
+                                                    <div class="fw-900 fs-4 text-navy">${s.arrival && s.arrival.at ? (s.arrival.at.includes('T') ? s.arrival.at.split('T')[1].substring(0,5) : s.arrival.at.split(' ')[1].substring(0,5)) : '--:--'}</div>
                                                     <div class="x-small fw-800 text-navy mt-1">${arrDate ? arrDate.toLocaleDateString('en-GB', {weekday:'short', day:'2-digit', month:'short', year:'2-digit'}) : ''}</div>
                                                     <div class="x-small text-muted mt-1 fw-700">Terminal ${s.arrival ? (s.arrival.terminal || 'T1') : 'T1'}</div>
                                                     <div class="x-small text-muted fw-800">${(dict.locations && s.arrival) ? (dict.locations[s.arrival.iataCode]?.cityCode || s.arrival.iataCode) : (s.arrival ? s.arrival.iataCode : '???')}, India</div>
@@ -2609,7 +2609,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <div class="fw-900 text-navy fs-6">${(itineraries[0] && itineraries[0].segments && itineraries[0].segments[0]) ? itineraries[0].segments[0].departure.iataCode : '???'} → ${(itineraries[0] && itineraries[0].segments) ? itineraries[0].segments[itineraries[0].segments.length-1].arrival.iataCode : '???'}</div>
                                                 <div class="d-flex gap-2 align-items-center">
-                                                    <span class="x-small text-muted fw-bold font-monospace bg-white border px-2 py-1 rounded">ID: ${offer.id.substring(0,8)}...</span>
+                                                    <span class="x-small text-muted fw-bold font-monospace bg-white border px-2 py-1 rounded">ID: ${offer.id ? offer.id.substring(0,8) : 'N/A'}...</span>
                                                     <div class="badge bg-primary bg-opacity-10 text-primary fw-800">${itineraries.length > 1 ? 'Round Trip' : 'One Way'}</div>
                                                 </div>
                                             </div>
@@ -2640,7 +2640,7 @@
                                                                 </div>
                                                                 <div class="row align-items-center">
                                                                     <div class="col-4">
-                                                                        <div class="fw-900 fs-4 text-navy lh-1">${(s.departure && s.departure.at) ? s.departure.at.split('T')[1].substring(0,5) : '--:--'}</div>
+                                                                        <div class="fw-900 fs-4 text-navy lh-1">${(s.departure && s.departure.at) ? (s.departure.at.includes('T') ? s.departure.at.split('T')[1].substring(0,5) : s.departure.at.split(' ')[1].substring(0,5)) : '--:--'}</div>
                                                                         <div class="x-small text-navy fw-800 mt-2">${(s.departure && s.departure.at) ? new Date(s.departure.at).toLocaleDateString('en-GB', {weekday:'short', day:'2-digit', month:'short'}) : ''}</div>
                                                                         <div class="x-small text-muted fw-700 mt-1">${s.departure ? (s.departure.iataCode + ', Terminal ' + (s.departure.terminal || '1')) : '???'}</div>
                                                                     </div>
@@ -2653,7 +2653,7 @@
                                                                         <div class="x-small fw-800 text-success mt-2">Non-Stop</div>
                                                                     </div>
                                                                     <div class="col-4 text-end">
-                                                                        <div class="fw-900 fs-4 text-navy lh-1">${(s.arrival && s.arrival.at) ? s.arrival.at.split('T')[1].substring(0,5) : '--:--'}</div>
+                                                                        <div class="fw-900 fs-4 text-navy lh-1">${(s.arrival && s.arrival.at) ? (s.arrival.at.includes('T') ? s.arrival.at.split('T')[1].substring(0,5) : s.arrival.at.split(' ')[1].substring(0,5)) : '--:--'}</div>
                                                                         <div class="x-small text-navy fw-800 mt-2">${(s.arrival && s.arrival.at) ? new Date(s.arrival.at).toLocaleDateString('en-GB', {weekday:'short', day:'2-digit', month:'short'}) : ''}</div>
                                                                         <div class="x-small text-muted fw-700 mt-1">${s.arrival ? (s.arrival.iataCode + ', Terminal ' + (s.arrival.terminal || '1')) : '???'}</div>
                                                                     </div>
