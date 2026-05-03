@@ -1,0 +1,75 @@
+Tripzant Project - All System Panels & Modules List
+===================================================
+
+This project contains a comprehensive set of panels designed for different stakeholders in the travel ecosystem.
+
+1.  Master Admin Dashboard
+    - Path: /admin-dashboard or /admin
+    - Purpose: Full system control, user management, API configs, and global settings.
+
+2.  Individual (B2C) User Dashboard
+    - Path: /dashboard
+    - Purpose: For regular travelers to manage bookings, profile, and wallet.
+
+3.  Standard B2B Agent Dashboard
+    - Path: /agent-dashboard
+    - Purpose: General B2B agents for booking flights, hotels, and managing markups.
+
+4.  IATA Agent Dashboard
+    - Path: /iata-dashboard
+    - Purpose: High-level agents with direct GDS access, PNR management, and BSP settlement.
+
+5.  Corporate Dashboard
+    - Path: /corporate-dashboard or /corporate
+    - Purpose: For corporate clients to manage employee travel, policies, and approvals.
+
+6.  Investor Panel
+    - Path: /investor
+    - Purpose: For investors to track earnings, ROI, and funded segments.
+
+7.  Hotel Dashboard (Standalone)
+    - Path: /hotel-dashboard
+    - Purpose: Dedicated module for hotel inventory, bookings, and channel management.
+
+8.  Amadeus GDS Partner Dashboard
+    - Path: /amadeus-dashboard
+    - Purpose: Operations suite specifically for Amadeus GDS partners.
+
+9.  Tour Builder / Supplier Dashboard
+    - Path: /tourbuilder-dashboard
+    - Purpose: For tour operators to create and manage travel packages.
+
+10. Local Service Provider Module
+    - Path: /local-provider
+    - Purpose: For local service providers (cabs, local tours, etc.) to manage requests.
+
+11. Dedicated Accounting Panel
+    - Path: /accounting
+    - Purpose: Finance and ledger management, GST, and invoice tracking.
+
+12. Cargo System Panels
+    - Path: /user-cargo (User), /cargo-agent (Driver), /cargo-hub (Support)
+    - Purpose: Complete logistics and cargo management system.
+
+13. Affiliate Dashboard
+    - Path: /affiliate-dashboard
+    - Purpose: For marketing partners to track referrals and commissions.
+
+14. Partner B2B Portal
+    - Path: /partner
+    - Purpose: Alternative B2B interface for specific partner types.
+
+15. Visa Services Panel
+    - Path: /visa
+    - Purpose: Management and listing of visa services.
+
+16. Agent Global Partner Network
+    - Path: /agent
+    - Purpose: Networking portal for IATA agents to collaborate.
+
+17. Smart Travel Explorer
+    - Path: /explorer
+    - Purpose: Trends, festivals, and travel discovery module.
+
+---------------------------------------------------
+Generated on: 2026-05-02
