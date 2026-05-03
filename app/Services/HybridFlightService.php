@@ -99,7 +99,10 @@ class HybridFlightService
             'data' => $allResults,
             'meta' => $metadata,
             'dictionaries' => $metadata['dictionaries'] ?? [],
-            'raw_data' => array_map(fn($f) => $f->raw_data, $allResults)
+            'raw_data' => array_map(function($f) {
+                // Return the full unified flight array so controllers have all fields for mock-REST wrapping
+                return is_object($f) ? $f->toArray() : $f;
+            }, $allResults)
         ];
 
         // Cache results for 30 mins to support Details/Booking views

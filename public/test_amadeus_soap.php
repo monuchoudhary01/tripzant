@@ -6,7 +6,7 @@ require __DIR__.'/../vendor/autoload.php';
 $app = require_once __DIR__.'/../bootstrap/app.php';
 $app->make('Illuminate\Contracts\Http\Kernel')->handle(Illuminate\Http\Request::capture());
 
-$soap = new AmadeusSoapService('AU'); // Testing with Australia OID BNEA828CT and Working Old Keys
+$soap = new AmadeusSoapService('IN'); // Testing with India credentials
 
 echo "--- Amadeus SOAP Integration Test ---\n";
 echo "DNS Node: " . config('tripzant.amadeus.soap.dns_node') . "\n";
