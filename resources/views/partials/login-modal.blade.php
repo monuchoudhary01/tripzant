@@ -66,18 +66,20 @@
 
                                 <!-- Email Login Panel -->
                                 <div class="tab-pane fade" id="email-panel">
-                                    <div class="mb-4">
-                                        <label class="small fw-700 text-muted mb-2">Email Address</label>
-                                        <input type="email" id="email-input" class="form-control border rounded-3 p-3 shadow-none fw-700" placeholder="name@example.com" style="height: 54px; border-color: #dee2e6 !important;">
-                                    </div>
-                                    <div class="mb-5">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <label class="small fw-700 text-muted">Password</label>
-                                            <a href="javascript:void(0)" onclick="showForgotPassword()" class="small text-decoration-none fw-bold" style="color:#0076f7;">Forgot?</a>
+                                    <form id="emailLoginForm" onsubmit="event.preventDefault(); loginWithEmail();">
+                                        <div class="mb-4">
+                                            <label class="small fw-700 text-muted mb-2">Email Address</label>
+                                            <input type="email" id="email-input" class="form-control border rounded-3 p-3 shadow-none fw-700" placeholder="name@example.com" style="height: 54px; border-color: #dee2e6 !important;" required>
                                         </div>
-                                        <input type="password" id="pass-input" class="form-control border rounded-3 p-3 shadow-none fw-700" placeholder="••••••••" style="height: 54px; border-color: #dee2e6 !important;">
-                                    </div>
-                                    <button type="button" onclick="loginWithEmail()" class="btn btn-navy w-100 rounded-pill fw-800 py-3 shadow-sm mb-4" style="height: 56px; background: #002f55; color: white;">SIGN IN</button>
+                                        <div class="mb-5">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <label class="small fw-700 text-muted">Password</label>
+                                                <a href="javascript:void(0)" onclick="showForgotPassword()" class="small text-decoration-none fw-bold" style="color:#0076f7;">Forgot?</a>
+                                            </div>
+                                            <input type="password" id="pass-input" class="form-control border rounded-3 p-3 shadow-none fw-700" placeholder="••••••••" style="height: 54px; border-color: #dee2e6 !important;" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-navy w-100 rounded-pill fw-800 py-3 shadow-sm mb-4" style="height: 56px; background: #002f55; color: white;">SIGN IN</button>
+                                    </form>
                                 </div>
                                 
                                 <!-- Forgot Password Panel -->
@@ -90,11 +92,13 @@
                                         <p class="text-muted small mb-4">Enter your email to receive a reset OTP.</p>
                                         
                                         <div class="text-start">
-                                            <div class="mb-4">
-                                                <label class="small fw-700 text-muted mb-2">Registered Email Address</label>
-                                                <input type="email" id="forgot-email-input" class="form-control border rounded-3 p-3 shadow-none fw-700" placeholder="name@example.com" style="height: 54px; border-color: #dee2e6 !important;">
-                                            </div>
-                                            <button type="button" onclick="sendPasswordResetOtp()" class="btn btn-login-header w-100 rounded-pill fw-800 py-3 shadow-sm mb-4" style="height: 56px;">SEND RESET OTP</button>
+                                            <form id="forgotPasswordForm" onsubmit="event.preventDefault(); sendPasswordResetOtp();">
+                                                <div class="mb-4">
+                                                    <label class="small fw-700 text-muted mb-2">Registered Email Address</label>
+                                                    <input type="email" id="forgot-email-input" class="form-control border rounded-3 p-3 shadow-none fw-700" placeholder="name@example.com" style="height: 54px; border-color: #dee2e6 !important;" required>
+                                                </div>
+                                                <button type="submit" class="btn btn-login-header w-100 rounded-pill fw-800 py-3 shadow-sm mb-4" style="height: 56px;">SEND RESET OTP</button>
+                                            </form>
                                             <div class="text-center"><a href="javascript:void(0)" onclick="resetLoginView()" class="small text-primary fw-bold text-decoration-none"><i class="fas fa-arrow-left me-1"></i> Back to Login</a></div>
                                         </div>
                                     </div>

@@ -113,7 +113,7 @@
     </section>
 
     <!-- ====== SEARCH WIDGET ====== -->
-    <div class="container" style="margin-top: -65px; position: relative; z-index: 1000;">
+    <div class="container" id="mainSearchContainer" style="margin-top: -65px; position: relative; z-index: 1000;">
         <x-search-widget type="flights" />
     </div>
 

@@ -80,9 +80,9 @@ class AmadeusProvider implements FlightProvider
                 // Look for '707' qualifier which usually means total price including taxes
                 foreach ($monetary as $m) {
                     $qualifier = $m['amountQualifier'] ?? ($m['tier?'] ?? '');
-                    if ($qualifier == '707') {
-                        $price = (float)$m['amount'];
-                        break;
+                    if ($qualifier == '707' || $qualifier == '705') {
+                        $price = (float)($m['amount'] ?? 0);
+                        if ($price > 0) break;
                     }
                 }
                 // Fallback to first one if 707 not found
@@ -130,6 +130,11 @@ class AmadeusProvider implements FlightProvider
                     $duration = ($diff->h + ($diff->days * 24)) . 'h ' . $diff->i . 'm';
                 } catch (\Exception $e) {}
 
+                // Try to get real cabin
+                $cabin = $fareProd['fareDetails']['groupOfFares']['productInformation']['cabinProduct']['cabin'] ?? 'M';
+                $cabinMap = ['M' => 'ECONOMY', 'W' => 'PREMIUM_ECONOMY', 'C' => 'BUSINESS', 'F' => 'FIRST'];
+                $unifiedCabin = $cabinMap[$cabin] ?? 'ECONOMY';
+
                 $unified[] = new UnifiedFlight([
                     'id' => 'amadeus_' . $recId . '_' . $segRef,
                     'airline_code' => $firstSeg['flightInformation']['companyId']['marketingCarrier'] ?? '??',
@@ -145,8 +150,8 @@ class AmadeusProvider implements FlightProvider
                     'price' => $price,
                     'net_price' => $price,
                     'currency' => 'INR',
-                    'cabin' => $fareProd['fareDetails']['groupOfFares']['productInformation']['cabinProduct']['cabin'] ?? 'M',
-                    'baggage' => '15 KG', 
+                    'cabin' => $unifiedCabin,
+                    'baggage' => '15 KG', // Fallback, SOAP MasterPricer sometimes doesn't return this in simple replies
                     'source' => 'amadeus',
                     'raw_data' => $rec
                 ]);
@@ -156,7 +161,7 @@ class AmadeusProvider implements FlightProvider
         Log::info('AmadeusProvider: Mapping complete', ['count' => count($unified)]);
         return [
             'flights' => $unified,
-            'raw_data' => $unified, // Important for FlightController caching
+            'raw_data' => array_map(fn($f) => $f->toArray(), $unified), 
             'meta' => []
         ];
     }

@@ -1,3 +1,4 @@
+{{-- Cache Busting: 2026-05-03 04:02 --}}
 @extends('layouts.app')
 
 @php
@@ -103,6 +104,294 @@
 @section('active-flights', 'active')
 
 @section('content')
+<script>
+    /** 
+     * GLOBAL FARE OPTIONS MODAL LOGIC 
+     * Defined at the top to ensure it's available for all flight cards.
+     */
+    window.currentFareData = null;
+    window.selectedFareType = 'regular';
+    window.selectedCabinClass = 'ECONOMY';
+    window.activeFareFlightId = null;   // tracks which flight the modal is open for
+
+    window.openFareOptions = async function(flightId, price, airline) {
+        console.log("Triggered openFareOptions:", flightId);
+        window.activeFareFlightId = flightId;   // <-- store for booking step
+        
+        // 1. Reset Modal UI state
+        const airlineEl = document.getElementById('modalAirlineName');
+        if(airlineEl) airlineEl.innerText = airline;
+        
+        window.selectedCabinClass = 'ECONOMY';
+        window.selectedFareType = 'regular';
+        
+        // Show Loader
+        const loader = document.getElementById('fareModalLoader');
+        if(loader) { loader.classList.remove('d-none'); loader.classList.add('d-flex'); }
+
+        // 2. Open Modal
+        const modalEl = document.getElementById('fareOptionsModal');
+        if (!modalEl) {
+            console.error("Fare Modal missing from DOM");
+            return;
+        }
+        
+        if (typeof bootstrap !== 'undefined') {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        }
+
+        // 3. Fetch Data
+        try {
+            const res = await fetch(`{{ url('/flights/fare-classes') }}?id=${flightId}&price=${price}`);
+            const data = await res.json();
+            if (data.success) {
+                window.currentFareData = data.fares;
+                window.updateFareModalUI();
+            }
+        } catch (err) {
+            console.error("Fare fetch failed:", err);
+        } finally {
+            if(loader) { loader.classList.add('d-none'); loader.classList.remove('d-flex'); }
+        }
+    };
+
+    window.updateFareModalUI = function() {
+        if (!window.currentFareData) return;
+        const activeCabinData = window.currentFareData[window.selectedCabinClass];
+        if (activeCabinData) {
+            if(document.getElementById('modalPriceRegular')) document.getElementById('modalPriceRegular').innerText = '₹' + activeCabinData.regular.toLocaleString();
+            if(document.getElementById('modalPriceStudent')) document.getElementById('modalPriceStudent').innerText = '₹' + activeCabinData.student.toLocaleString();
+            if(document.getElementById('modalPriceSenior')) document.getElementById('modalPriceSenior').innerText = '₹' + activeCabinData.senior.toLocaleString();
+        }
+        
+        // Update Cabin Tabs
+        Object.keys(window.currentFareData).forEach(cabin => {
+            const seatEl = document.getElementById(`seat_${cabin}`);
+            if (seatEl) seatEl.innerText = `${window.currentFareData[cabin].seats} Seats Left`;
+        });
+
+        // Highlight active tab
+        document.querySelectorAll('.cabin-tab').forEach(btn => {
+            if (btn.dataset.cabin === window.selectedCabinClass) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+    };
+
+    window.updateFareModalClass = function(cabinCode) {
+        window.selectedCabinClass = cabinCode;
+        if(document.getElementById('modalSelectedClass')) document.getElementById('modalSelectedClass').innerText = cabinCode;
+        window.updateFareModalUI();
+    };
+
+    window.selectSpecialFare = function(type, element) {
+        window.selectedFareType = type;
+        document.querySelectorAll('.fare-option-card').forEach(c => c.classList.remove('active'));
+        element.classList.add('active');
+    };
+
+    window.confirmFareSelection = function() {
+        if (!window.currentFareData || !window.activeFareFlightId) {
+            Swal.fire('Error', 'Please select a fare option first.', 'error');
+            return;
+        }
+
+        const activeCabinData = window.currentFareData[window.selectedCabinClass];
+        if (!activeCabinData) return;
+
+        const farePrice = activeCabinData[window.selectedFareType];
+
+        // Apply active bank offer discount if any
+        let finalPrice = farePrice;
+        let bankDiscount = 0;
+        const bankOffer = window.activeBankOffer;
+        if (bankOffer && farePrice >= (bankOffer.min_amount || 0)) {
+            if (bankOffer.discount_type === 'percentage') {
+                bankDiscount = Math.floor(farePrice * bankOffer.discount_value / 100);
+                if (bankOffer.max_discount) bankDiscount = Math.min(bankDiscount, bankOffer.max_discount);
+            } else {
+                bankDiscount = bankOffer.discount_value;
+            }
+            finalPrice = Math.max(0, farePrice - bankDiscount);
+        }
+
+        // Show loading
+        const btn = document.getElementById('confirmFareBtn');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...'; }
+
+        fetch('{{ url('/flights/select-fare') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: JSON.stringify({
+                id:          window.activeFareFlightId,
+                price:       finalPrice,
+                cabin:       window.selectedCabinClass,
+                fare_type:   window.selectedFareType,
+                bank_offer:  bankOffer ? bankOffer.bank_name : null,
+                bank_discount: bankDiscount
+            })
+        })
+        .then(async r => {
+            const isJson = r.headers.get('content-type')?.includes('application/json');
+            const data = isJson ? await r.json() : null;
+            
+            if (!r.ok) {
+                throw new Error(data?.message || `Server error: ${r.status}`);
+            }
+            return data;
+        })
+        .then(data => {
+            if (data.success && data.redirect) {
+                window.location.href = data.redirect;
+            } else {
+                throw new Error(data.message || 'Could not proceed to checkout.');
+            }
+        })
+        .catch(err => {
+            Swal.fire('Error', err.message, 'error');
+            if (btn) { btn.disabled = false; btn.innerHTML = 'CONTINUE BOOKING'; }
+        });
+    };
+</script>
+
+<!-- Fare Options & Seat Class Modal — placed here so it's in DOM before any card renders -->
+<div class="modal fade" id="fareOptionsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+            <div class="modal-header border-0 p-4" style="background: #1e293b;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-white rounded-circle p-2 shadow-sm" style="width:45px; height:45px; display:flex; align-items:center; justify-content:center;">
+                        <i class="fas fa-ticket-alt text-navy" style="color: #1e293b;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-900 text-white mb-0">Select Your Fare &amp; Class</h5>
+                        <p class="text-white-50 mb-0 x-small fw-700 uppercase" id="modalAirlineName">Multiple options available</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="row g-0">
+                    <!-- Sidebar: Cabin Classes -->
+                    <div class="col-md-4 bg-light border-end p-4">
+                        <h6 class="fw-800 text-navy mb-3 x-small uppercase">Choose Cabin Class</h6>
+                        <div class="d-flex flex-column gap-2" id="cabinClassTabs">
+                            <button class="btn btn-outline-navy active text-start fw-800 p-3 rounded-3 cabin-tab" data-cabin="ECONOMY" onclick="updateFareModalClass('ECONOMY')">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex flex-column">
+                                        <span>Economy</span>
+                                        <span class="x-small text-muted fw-700" id="seat_ECONOMY">9+ Seats Left</span>
+                                    </div>
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </button>
+                            <button class="btn btn-outline-navy text-start fw-800 p-3 rounded-3 cabin-tab" data-cabin="PREMIUM_ECONOMY" onclick="updateFareModalClass('PREMIUM_ECONOMY')">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex flex-column">
+                                        <span>Premium Eco</span>
+                                        <span class="x-small text-muted fw-700" id="seat_PREMIUM_ECONOMY">Checking...</span>
+                                    </div>
+                                    <i class="fas fa-circle-notch opacity-25"></i>
+                                </div>
+                            </button>
+                            <button class="btn btn-outline-navy text-start fw-800 p-3 rounded-3 cabin-tab" data-cabin="BUSINESS" onclick="updateFareModalClass('BUSINESS')">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex flex-column">
+                                        <span>Business</span>
+                                        <span class="x-small text-muted fw-700" id="seat_BUSINESS">Checking...</span>
+                                    </div>
+                                    <i class="fas fa-circle-notch opacity-25"></i>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main Content: Special Fares -->
+                    <div class="col-md-8 p-4 position-relative">
+                        <!-- Loading Overlay -->
+                        <div id="fareModalLoader" class="position-absolute top-0 start-0 w-100 h-100 d-none flex-column align-items-center justify-content-center bg-white bg-opacity-75" style="z-index: 10;">
+                            <div class="spinner-border text-primary mb-2" role="status"></div>
+                            <div class="fw-800 text-navy x-small">Fetching Live Fares...</div>
+                        </div>
+
+                        <h6 class="fw-800 text-navy mb-4 x-small uppercase">Select a Fare Type</h6>
+
+                        <div class="fare-option-card mb-3 p-3 rounded-4 border-2 border active" onclick="selectSpecialFare('regular', this)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2" style="width:35px; height:35px; display:flex; align-items:center; justify-content:center;"><i class="fas fa-user"></i></div>
+                                    <div>
+                                        <h6 class="mb-0 fw-800 text-navy">Regular Fares</h6>
+                                        <p class="mb-0 text-muted x-small fw-700">Standard booking rules apply</p>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-900 text-navy h5 mb-0" id="modalPriceRegular">₹0</div>
+                                    <span class="badge bg-success bg-opacity-10 text-success fw-800" style="font-size:9px;">AVAILABLE</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="fare-option-card mb-3 p-3 rounded-4 border-2 border" onclick="selectSpecialFare('student', this)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-info bg-opacity-10 text-info rounded-circle p-2" style="width:35px; height:35px; display:flex; align-items:center; justify-content:center;"><i class="fas fa-user-graduate"></i></div>
+                                    <div>
+                                        <h6 class="mb-0 fw-800 text-navy">Student Fares</h6>
+                                        <p class="mb-0 text-muted x-small fw-700">Valid Student ID required</p>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-900 text-navy h5 mb-0" id="modalPriceStudent">₹0</div>
+                                    <span class="badge bg-info bg-opacity-10 text-info fw-800" style="font-size:9px;">5% EXTRA OFF</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="fare-option-card mb-3 p-3 rounded-4 border-2 border" onclick="selectSpecialFare('senior', this)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-warning bg-opacity-10 text-warning rounded-circle p-2" style="width:35px; height:35px; display:flex; align-items:center; justify-content:center;"><i class="fas fa-user-clock"></i></div>
+                                    <div>
+                                        <h6 class="mb-0 fw-800 text-navy">Senior Citizen</h6>
+                                        <p class="mb-0 text-muted x-small fw-700">Age 60+ only</p>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-900 text-navy h5 mb-0" id="modalPriceSenior">₹0</div>
+                                    <span class="badge bg-warning bg-opacity-10 text-warning fw-800" style="font-size:9px;">8% EXTRA OFF</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0 p-4 d-flex justify-content-between">
+                <div class="text-muted small fw-700">
+                    <i class="fas fa-info-circle me-1"></i> Selection will update your booking price
+                </div>
+                <button type="button" class="btn btn-primary rounded-pill px-5 fw-900 shadow-sm" id="confirmFareBtn" onclick="confirmFareSelection()" style="background: #1e293b; border: none;">
+                    CONTINUE BOOKING
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .fare-option-card { cursor: pointer; transition: all 0.2s; border-color: #f1f5f9; background: #fff; }
+    .fare-option-card:hover { border-color: #2563eb; transform: translateY(-2px); }
+    .fare-option-card.active { border-color: #2563eb; background: #f0f7ff; }
+    .cabin-tab.active { background: #1e293b !important; color: #fff !important; border-color: #1e293b !important; }
+    .cabin-tab.active .text-muted { color: rgba(255,255,255,0.65) !important; }
+    .btn-outline-navy { color: #1e293b; border-color: #1e293b; }
+    .btn-outline-navy:hover { background: #1e293b; color: #fff; }
+</style>
+
 <div class="multi-city-wrapper {{ $isMultiCity ? 'is-multi-city' : '' }}">
     <!-- MMT-STYLE HEADER & PERMANENT SEARCH RIBBON -->
     <div class="mmt-header-wrapper" style="background:#001d3d; position: sticky; top: 70px; z-index: 999; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
@@ -398,6 +687,8 @@
         .cal-day-card { min-width: 140px; padding: 18px 10px; text-align: center; border-right: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
         .cal-day-card:hover { background: #f8fbff; }
         .cal-day-card.active { background: #fff; box-shadow: inset 0 -3px 0 0 #008cff; }
+        .hvr-light-bg:hover { background: #f1f5f9; transition: 0.2s; }
+        .cursor-pointer { cursor: pointer; }
         .cal-day-card.active .day-text, .cal-day-card.active .price-text { color: #008cff; font-weight: 800; }
         
         .day-text { font-size: 11px; font-weight: 800; color: #94a3b8; margin-bottom: 6px; text-transform: uppercase; }
@@ -436,6 +727,70 @@
         }
         .mmt-class-pill-lg:hover { border-color: #008cff; color: #008cff; background: #f0f7ff; }
         .mmt-class-pill-lg.active { background: #008cff !important; color: #fff !important; border-color: #008cff !important; box-shadow: 0 4px 10px rgba(0,140,255,0.3); }
+
+        /* Bank Offer Highlighting */
+        .flight-row.bank-offer-active .result-card {
+            border-color: #f37021 !important;
+            box-shadow: 0 0 20px rgba(243, 112, 33, 0.2) !important;
+            transform: scale(1.01);
+            background: linear-gradient(to right, #fff, #fff9f5) !important;
+        }
+        .bank-offer-badge {
+            position: absolute; top: -10px; right: 20px;
+            background: #f37021; color: #fff;
+            padding: 4px 12px; border-radius: 50px;
+            font-size: 10px; font-weight: 900;
+            box-shadow: 0 4px 10px rgba(243, 112, 33, 0.3);
+            z-index: 10; display: none;
+            animation: pulse-orange 2s infinite;
+        }
+        .flight-row.bank-offer-active .bank-offer-badge { display: block; }
+        @keyframes pulse-orange {
+            0% { transform: scale(1); box-shadow: 0 4px 10px rgba(243, 112, 33, 0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 4px 20px rgba(243, 112, 33, 0.5); }
+            100% { transform: scale(1); box-shadow: 0 4px 10px rgba(243, 112, 33, 0.3); }
+        }
+
+        /* Bank Selection Bar */
+        .bank-selection-banner {
+            background: #fff;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .bank-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: #fff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .bank-pill:hover {
+            border-color: #2563eb;
+            background: #f8fbff;
+        }
+        .bank-pill.active {
+            background: #eef2ff;
+            border-color: #2563eb;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+        .bank-pill.active .text-navy {
+            color: #2563eb !important;
+        }
+        .bank-scroll-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            padding: 5px;
+        }
+        .bank-scroll-container::-webkit-scrollbar {
+            display: none;
+        }
     </style>
 
     @php
@@ -712,20 +1067,47 @@
                     </div>
                 </div>
 
-                <!-- Dynamic Bank Promo Bar (Interactive) -->
-                <div class="bank-selection-banner mb-4">
-                    <div class="bank-scroll-container d-flex align-items-center gap-2 overflow-auto no-scrollbar px-1 py-1">
-                        <div class="bank-pill active" onclick="applyBankFilter('all', this)" id="bankAll">
-                            <div class="fw-800 x-small">ALL FLIGHTS</div>
+                <div class="bank-selection-banner mb-2 shadow-sm rounded-4 overflow-hidden" style="background:#fff; border: 1px solid #e2e8f0;">
+                    <div class="d-flex align-items-center">
+                        <button class="cal-nav-btn left border-end" onclick="scrollBankOffers(-200)" style="min-height:50px; width:35px;"><i class="fas fa-chevron-left"></i></button>
+                        
+                        <div class="bank-scroll-container d-flex align-items-center gap-2 overflow-auto no-scrollbar px-2 py-2 flex-grow-1" id="bankOfferScroll">
+                            <div class="bank-pill active" onclick="applyBankFilter('all', this)" id="bankAll" data-bank="all">
+                                <div class="fw-800 x-small">ALL FLIGHTS</div>
+                            </div>
+                            @foreach($bankOffers as $offer)
+                            <div class="bank-pill" onclick="applyBankFilter('{{ $offer->bank_name }}', this)" data-bank="{{ $offer->bank_name }}">
+                                @if($offer->logo)
+                                    <img src="{{ $offer->logo }}" style="width:20px; height:20px; object-fit:contain;" onerror="this.style.display='none'">
+                                @else
+                                    <div class="bg-light rounded p-1" style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:{{ $offer->color_code }};">{{ substr($offer->bank_name, 0, 1) }}</div>
+                                @endif
+                                <div class="d-flex flex-column">
+                                    <span class="fw-800 x-small text-navy" style="line-height:1;">{{ $offer->display_name }}</span>
+                                    <span class="text-muted fw-700 mt-1" style="font-size:8px; line-height:1;">{{ $offer->tagline }}</span>
+                                </div>
+                                <div class="offer-dot animate-pulse" style="width:5px; height:5px; background:{{ $offer->color_code }}; border-radius:50%; margin-left:5px;"></div>
+                            </div>
+                            @endforeach
                         </div>
-                        @php $banks = ['ICICI' => '#f37021', 'SBI' => '#00a1e3', 'HSBC' => '#db0011', 'HDFC' => '#00367b', 'PNB' => '#ed1c24']; @endphp
-                        @foreach($banks as $bName => $bColor)
-                        <div class="bank-pill" onclick="applyBankFilter('{{ $bName }}', this)">
-                            <div class="bg-light rounded p-1" style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:{{ $bColor }};">{{ substr($bName,0,1) }}</div>
-                            <span class="fw-800 x-small text-navy">{{ $bName }} BANK</span>
-                            <div class="offer-dot animate-pulse" style="width:5px; height:5px; background:{{ $bColor }}; border-radius:50%; margin-left:5px;"></div>
+
+                        <button class="cal-nav-btn right border-start" onclick="scrollBankOffers(200)" style="min-height:50px; width:35px;"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Descriptive Bank Promo Banner (Appears on Selection) -->
+                <div id="bankPromoBanner" class="alert alert-info border-0 rounded-4 p-3 mb-4 d-none" style="background: #eef2ff; border: 1px solid #e0e7ff !important;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div id="promoBankLogo" class="bg-white rounded-3 p-2 shadow-sm" style="width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-university text-primary"></i>
                         </div>
-                        @endforeach
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span id="promoCodeBadge" class="badge bg-navy fw-900" style="font-size:10px; letter-spacing:1px;">PROMOCODE</span>
+                                <h6 id="promoBankTitle" class="mb-0 fw-900 text-navy" style="font-size:14px;">BANK NAME</h6>
+                            </div>
+                            <p id="promoBankTagline" class="mb-0 text-muted fw-700 mt-1" style="font-size:13px;">Get up to Rs.5000 OFF via Bank Card only.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -2031,19 +2413,7 @@
         window.location.href = url.toString();
     }
 
-    // Scroll buttons logic for Fare Calendar
-    document.querySelectorAll('.cal-nav-btn').forEach(btn => {
-        btn.onclick = function() {
-            const container = document.getElementById('fareCalendarScroll');
-            const scrollAmount = 300;
-            if(this.classList.contains('left')) {
-                container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-            } else {
-                container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-            }
-        };
-    });
-
+    // Global scroll calendar logic removed in favor of inline onclick attributes
     if (isMultiCity || isRoundTrip) {
         document.body.classList.add('is-multi-city');
         const bar = document.getElementById('mcBottomBar');
@@ -2362,37 +2732,80 @@
             window.location.href = url.toString();
         }
 
-        // Bank Filter Logic (Reactive UI)
+        // Bank Filter Logic — applies real discounts from DB-driven offers
+        window.activeBankOffer = null;
+        window.originalPrices  = {}; // store original prices keyed by flight-row id
+
         window.applyBankFilter = function(bank, el) {
             document.querySelectorAll('.bank-pill').forEach(p => p.classList.remove('active'));
             el.classList.add('active');
-            
-            const resultsList = document.getElementById('resultsList');
-            if(!resultsList) return;
-            const items = resultsList.querySelectorAll('.flight-row');
-            
-            if (bank === 'all') {
-                items.forEach(item => {
-                    item.style.display = 'block';
-                    item.classList.remove('d-none');
-                });
-            } else {
-                items.forEach((item, idx) => {
-                    // Logic: Demo filter - every 2nd flight shows for bank offer
-                    // In real, we check data-bank-offers attribute
-                    if (idx % 2 === 0) {
-                        item.style.display = 'block';
-                        item.classList.remove('d-none');
-                    } else {
-                        item.style.setProperty('display', 'none', 'important');
-                        item.classList.add('d-none');
-                    }
-                });
+
+            // Find the offer object from server-injected bankOffers
+            const offers = window.bankOffers || [];
+            const offer  = bank === 'all' ? null : offers.find(o => o.bank_name === bank);
+            window.activeBankOffer = offer || null;
+
+            // Update promo banner
+            const banner = document.getElementById('bankPromoBanner');
+            if (offer && banner) {
+                document.getElementById('promoBankTitle').innerText  = offer.display_name;
+                document.getElementById('promoCodeBadge').innerText  = offer.promo_code || offer.bank_name;
+                document.getElementById('promoBankTagline').innerText = offer.tagline || '';
+                const logoEl = document.getElementById('promoBankLogo');
+                if (offer.logo) {
+                    logoEl.innerHTML = `<img src="${offer.logo}" style="width:36px;height:36px;object-fit:contain;">`;
+                } else {
+                    logoEl.innerHTML = `<span style="font-weight:900;font-size:16px;color:${offer.color_code}">${offer.bank_name.substring(0,2)}</span>`;
+                }
+                banner.style.border = `1px solid ${offer.color_code}50 !important`;
+                banner.classList.remove('d-none');
+            } else if (banner) {
+                banner.classList.add('d-none');
             }
-            console.log("Filtering by Bank Offer:", bank);
-            // Re-apply batching if needed
-            if(window.showInitialBatch) showInitialBatch();
-        }
+
+            // Apply / remove discount on all visible flight price elements
+            const resultsList = document.getElementById('resultsList');
+            if (!resultsList) return;
+
+            resultsList.querySelectorAll('.flight-row').forEach(row => {
+                const rowId = row.dataset.id || row.id;
+                const rawPrice = parseInt(row.dataset.price) || 0;
+
+                // Save original price once
+                if (!window.originalPrices[rowId]) {
+                    window.originalPrices[rowId] = rawPrice;
+                }
+                const base = window.originalPrices[rowId];
+
+                // Calculate discounted price
+                let discounted = base;
+                if (offer && base >= (offer.min_amount || 0)) {
+                    if (offer.discount_type === 'percentage') {
+                        let disc = Math.floor(base * offer.discount_value / 100);
+                        if (offer.max_discount) disc = Math.min(disc, offer.max_discount);
+                        discounted = base - disc;
+                    } else {
+                        discounted = Math.max(0, base - offer.discount_value);
+                    }
+                }
+
+                // Update the displayed price element inside the card
+                const priceEl = row.querySelector('.flight-price-display, [data-price-display]');
+                if (priceEl) {
+                    if (discounted < base) {
+                        priceEl.innerHTML = `
+                            <span class="text-muted text-decoration-line-through small">₹${base.toLocaleString()}</span>
+                            <span class="fw-900 text-success"> ₹${discounted.toLocaleString()}</span>
+                            <span class="badge bg-success bg-opacity-10 text-success ms-1" style="font-size:9px;">${offer.discount_type === 'percentage' ? offer.discount_value + '% OFF' : '₹' + (base-discounted).toLocaleString() + ' OFF'}</span>`;
+                    } else {
+                        priceEl.innerHTML = `<span class="fw-900">₹${base.toLocaleString()}</span>`;
+                    }
+                }
+
+                row.style.display = 'block';
+                row.classList.remove('d-none');
+            });
+        };
 
         // Sort Logic (Dynamic Reordering)
         window.sortByFilter = function(criteria, el) {
@@ -2438,6 +2851,13 @@
         window.scrollCalendar = function(amount) {
             document.getElementById('fareCalendarScroll').scrollBy({ left: amount, behavior: 'smooth' });
         }
+
+        window.scrollBankOffers = function(amount) {
+            const container = document.getElementById('bankOfferScroll');
+            if(container) {
+                container.scrollBy({ left: amount, behavior: 'smooth' });
+            }
+        };
 
         window.selectCalendarDate = function(el, date) {
             const url = new URL(window.location.href);
@@ -2771,6 +3191,10 @@
 
         window.selectFlightForCheckout = function(data) {
             console.log("Selecting flight for checkout:", data);
+            
+            if (window.activeBankOffer) {
+                data.bankOffer = window.activeBankOffer;
+            }
             
             // If it's a multi-segment itinerary (Round Trip or MC)
             if (isMultiCity || isRoundTrip) {
@@ -3120,10 +3544,18 @@
             
             const depPicker = document.getElementById('mmtDeparture')?._flatpickr;
             const retPicker = document.getElementById('mmtReturn')?._flatpickr;
-            const depDate = depPicker ? depPicker.selectedDates[0] : null;
-            const retDate = retPicker ? retPicker.selectedDates[0] : null;
+            
+            let depDate = depPicker && depPicker.selectedDates && depPicker.selectedDates[0];
+            if (!depDate && document.getElementById('mmtDeparture')?.value) {
+                depDate = new Date(document.getElementById('mmtDeparture').value);
+            }
+            
+            let retDate = retPicker && retPicker.selectedDates && retPicker.selectedDates[0];
+            if (!retDate && document.getElementById('mmtReturn')?.value && document.getElementById('mmtReturn').value !== 'Select Date') {
+                retDate = new Date(document.getElementById('mmtReturn').value);
+            }
 
-            if (!o || !d || !depDate || o.length < 3 || d.length < 3) {
+            if (!o || !d || !depDate || isNaN(depDate) || o.length < 3 || d.length < 3) {
                 Swal.fire({ title: 'Missing Information', text: 'Origin, destination and departure date are required.', icon: 'warning' });
                 return;
             }
@@ -3481,166 +3913,26 @@
 
     // Sorting Logic
     window.sortByFilter = function(criteria, el) {
-        const list = document.getElementById('resultsList');
-        const rows = Array.from(list.getElementsByClassName('flight-row'));
-        
-        if (el) {
-            document.querySelectorAll('.summary-card').forEach(c => c.classList.remove('active-summary-card'));
-            el.classList.add('active-summary-card');
-        }
+        document.querySelectorAll('.sort-pill').forEach(p => p.classList.remove('active'));
+        if (el) el.classList.add('active');
 
-        rows.sort((a, b) => {
-            if (criteria === 'price') {
-                return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+        const resultsList = document.getElementById('resultsList');
+        if (!resultsList) return;
+
+        const items = Array.from(resultsList.querySelectorAll('.flight-row'));
+        items.sort((a, b) => {
+            if (criteria === 'price' || criteria === 'cheapest' || criteria === 'recommended') {
+                return (parseInt(a.dataset.price) || 0) - (parseInt(b.dataset.price) || 0);
             } else if (criteria === 'duration') {
-                return parseInt(a.dataset.durationMinutes) - parseInt(b.dataset.durationMinutes);
+                return (parseInt(a.dataset.durationMinutes) || 0) - (parseInt(b.dataset.durationMinutes) || 0);
             } else if (criteria === 'departure') {
-                return parseInt(a.dataset.departureStamp) - parseInt(b.dataset.departureStamp);
-            } else if (criteria === 'recommended') {
-                const aStops = parseInt(a.dataset.stops);
-                const bStops = parseInt(b.dataset.stops);
-                if (aStops !== bStops) return aStops - bStops;
-                return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+                return (parseInt(a.dataset.departureStamp) || 0) - (parseInt(b.dataset.departureStamp) || 0);
             }
             return 0;
         });
-
-        list.innerHTML = '';
-        rows.forEach((row, i) => {
-            list.appendChild(row);
-        });
-    window.visibleLimit = 10;
-
-    window.loadMoreFlights = function() {
-        window.visibleLimit += 10;
-        applyFilters(false); // Don't scroll when loading more
+        items.forEach(item => resultsList.appendChild(item));
     };
-
-
-    window.applyFilters = function(shouldScroll = true) {
-        const list = document.getElementById('resultsList');
-        const rows = Array.from(list.getElementsByClassName('flight-row'));
-        
-        // Get active filter values
-        const selectedStops = Array.from(document.querySelectorAll('.filter-stops:checked')).map(cb => parseInt(cb.value));
-        const selectedCabin = Array.from(document.querySelectorAll('.filter-cabin:checked')).map(cb => cb.value);
-        const selectedAirlines = Array.from(document.querySelectorAll('[data-airline-filter]:checked')).map(cb => cb.dataset.airlineFilter);
-        const morningOnly = document.getElementById('pf2').checked;
-        const refundableOnly = document.getElementById('pf3').checked;
-        const maxPrice = parseFloat(document.querySelector('.custom-range').value);
-
-        let matchCount = 0;
-        let visibleCount = 0;
-
-        rows.forEach(row => {
-            let matches = true;
-
-            // 1. Stops Filter
-            if (selectedStops.length > 0) {
-                if (!selectedStops.includes(parseInt(row.dataset.stops))) matches = false;
-            }
-
-            // 2. Cabin Filter
-            if (matches && selectedCabin.length > 0) {
-                if (!selectedCabin.includes(row.dataset.cabin)) matches = false;
-            }
-
-            // 3. Airline Filter
-            if (matches && selectedAirlines.length > 0) {
-                if (!selectedAirlines.includes(row.dataset.airline)) matches = false;
-            }
-
-            // 4. Morning Departure
-            if (matches && morningOnly) {
-                const depTime = parseInt(row.dataset.departureStamp);
-                const date = new Date(depTime * 1000);
-                const hour = date.getHours();
-                if (hour < 6 || hour >= 12) matches = false;
-            }
-
-            // 5. Refundable
-            if (matches && refundableOnly) {
-                if (row.dataset.refundable !== '1') matches = false;
-            }
-
-            // 6. Price Range
-            if (matches && parseFloat(row.dataset.price) > maxPrice) matches = false;
-
-            if (matches) {
-                matchCount++;
-                if (matchCount <= window.visibleLimit) {
-                    row.style.display = 'block';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            } else {
-                row.style.display = 'none';
-            }
-        });
-
-        // Update count display if needed
-        const foundEl = document.querySelector('.results-bar h5');
-        if (foundEl) foundEl.innerText = `${matchCount} Flights Found`;
-
-        // Handle Load More Button
-        const loadMoreBox = document.getElementById('loadMoreContainer');
-        if (loadMoreBox) {
-            loadMoreBox.style.display = (matchCount > window.visibleLimit) ? 'block' : 'none';
-        }
-
-        // Use a small timeout to ensure layout has updated before scrolling
-        if (shouldScroll) {
-            setTimeout(() => {
-                const listEl = document.getElementById('resultsList');
-                if (listEl) {
-                    // Get current absolute position
-                    const rect = listEl.getBoundingClientRect();
-                    const absoluteTop = rect.top + window.pageYOffset;
-                    const targetY = Math.max(0, absoluteTop - 150);
-                    
-                    // Smooth scroll to results top
-                    window.scrollTo({
-                        top: targetY,
-                        behavior: 'smooth'
-                    });
-                }
-            }, 300);
-        }
-    };
-
-    // Attach listener to price range
-    document.querySelector('.custom-range').addEventListener('input', function() {
-        this.nextElementSibling.querySelectorAll('span')[1].innerText = `INR ${new Intl.NumberFormat().format(this.value)}`;
-        applyFilters();
-    });
-    
-    // Attach to popular filters
-    document.getElementById('pf1').addEventListener('change', function() {
-        document.getElementById('s0').checked = this.checked;
-        applyFilters();
-    });
-    document.getElementById('pf2').addEventListener('change', applyFilters);
-    document.getElementById('pf3').addEventListener('change', applyFilters);
-    document.querySelectorAll('[data-airline-filter]').forEach(cb => cb.addEventListener('change', applyFilters));
-
-    // Initial Budget Filter Application
-    window.addEventListener('DOMContentLoaded', () => {
-        @if(isset($initialMaxBudget))
-            applyFilters();
-        @endif
-    });
 </script>
-
-<style>
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-</style>
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <!-- Fare Monitor Tracker Modal -->
 <div class="modal fade" id="fareMonitorAlarmModal" tabindex="-1" aria-hidden="true">
@@ -3658,6 +3950,8 @@
                     @csrf
                     
                     <div class="row g-2 mb-3">
+                        <div class="col-6">
+$append
                         <div class="col-6">
                             <label class="x-small fw-bold text-muted uppercase mb-1">From</label>
                             <input type="text" name="origin" class="form-control form-control-sm bg-light border-0 fw-bold" value="{{ $origin }}" required onkeyup="this.value = this.value.toUpperCase()" maxlength="3">
@@ -3679,7 +3973,7 @@
                     <div class="mb-3">
                         <label class="x-small fw-bold text-muted uppercase mb-1">Target Budget (INR)</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light border-0">₹</span>
+                            <span class="input-group-text bg-light border-0">?</span>
                             <input type="number" name="target_price" class="form-control bg-light border-0 fw-bold text-navy" placeholder="e.g. {{ number_format(max(2000, ($minPrice ?? 10000) - 1500)) }}" required>
                         </div>
                         <span class="x-small text-muted">A realistic drop is usually 10-15% of current fare.</span>
@@ -3738,43 +4032,67 @@
     </div>
 </div>
 
-<script>
-    // Auto popup after 12 seconds of browsing 
-    setTimeout(() => {
-        if(!document.getElementById('fareMonitorAlarmModal').classList.contains('show')){
-            const modal = new bootstrap.Modal(document.getElementById('fareMonitorAlarmModal'));
-           // modal.show();
-        }
-    }, 12000);
 
-    document.getElementById('searchPageFareAlertForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const btn = document.getElementById('fareAlertSubmitBtn');
-        const form = this;
-        
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Activating...';
-        btn.disabled = true;
+@endsection
 
-        fetch(form.action, {
-            method: 'POST',
-            body: new FormData(form),
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
+@section('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="/css/flights/listing.css">
+@endsection
+
+@section('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="/js/flights/listing.js?v={{ time() }}"></script>
+    <script>
+        window.isRoundTrip = {{ $isRoundTrip ? 'true' : 'false' }};
+        window.isMultiCity = {{ $isMultiCity ? 'true' : 'false' }};
+        window.travelDate = "{{ $travelDate }}";
+        window.returnDate = "{{ $returnDate ?? '' }}";
+        window.mcNumSegments = {{ $isMultiCity ? count($params['origin']) : 0 }};
+        window.fareType = "{{ $fareType }}";
+        window.bankOffers = @json($bankOffers);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            @if(isset($initialMaxBudget))
+                const range = document.querySelector('.custom-range');
+                if (range) {
+                    range.value = {{ $initialMaxBudget }};
+                    if (window.runMasterFilters) runMasterFilters(false);
+                }
+            @endif
+            
+            setTimeout(() => {
+                const modalEl = document.getElementById('fareMonitorAlarmModal');
+                if(modalEl && !modalEl.classList.contains('show')){
+                    const modal = new bootstrap.Modal(modalEl);
+                    // modal.show();
+                }
+            }, 12000);
+
+            const fareForm = document.getElementById('searchPageFareAlertForm');
+            if (fareForm) {
+                fareForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const btn = document.getElementById('fareAlertSubmitBtn');
+                    const form = this;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Activating...';
+                    btn.disabled = true;
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                    })
+                    .then(res => res.json())
+                    .then(() => {
+                        form.style.display = 'none';
+                        document.getElementById('fareMonitorSuccess').style.display = 'block';
+                    })
+                    .catch(() => {
+                        btn.innerHTML = 'START TRACKING <i class="fas fa-arrow-right ms-1"></i>';
+                        btn.disabled = false;
+                    });
+                });
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            form.style.display = 'none';
-            document.getElementById('fareMonitorSuccess').style.display = 'block';
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            btn.innerHTML = 'START TRACKING <i class="fas fa-arrow-right ms-1"></i>';
-            btn.disabled = false;
-            alert('Something went wrong. Please try again.');
         });
-    });
-</script>
-
+    </script>
 @endsection

@@ -345,7 +345,7 @@
         </div>
 
             </div>
-        </div>
+       
 
             <!-- Hotels -->
             <div class="misty-fields-grid d-none" id="hotelsFields">
@@ -544,25 +544,32 @@
                     <div class="m-sub">Single Trip Policy</div>
                 </div>
             </div>
+             <!-- World-Class Floating Search Button -->
+    <div class="misty-search-glow-wrap">
+            <button class="misty-search-btn-v3" id="mainSearchBtn">
+                <span>SEARCH</span>
+                <i class="fas fa-search ms-2"></i>
+            </button>
+        </div>
         </div>
 
         <!-- Unique Fare Badges -->
         <div class="misty-fares-section TS-5" id="faresSection">
             <h6 class="fares-title">SPECIAL FARES <span><i class="fas fa-sparkles"></i></span></h6>
             <div class="misty-fare-row" id="flightSpecialFares">
-                <div class="m-fare-item active">
+                <div class="m-fare-item active" onclick="selectFareType('regular', this)" data-fare="regular">
                     <div class="m-fare-name">Regular</div>
                     <div class="m-fare-info">Best current dynamic rates</div>
                 </div>
-                <div class="m-fare-item">
+                <div class="m-fare-item" onclick="selectFareType('student', this)" data-fare="student">
                     <div class="m-fare-name">Student <span class="m-pop">POPULAR</span></div>
                     <div class="m-fare-info">Extra baggage + Student discount</div>
                 </div>
-                <div class="m-fare-item">
+                <div class="m-fare-item" onclick="selectFareType('senior', this)" data-fare="senior">
                     <div class="m-fare-name">Senior Citizens</div>
                     <div class="m-fare-info">Special assistance + Flat discounts</div>
                 </div>
-                <div class="m-fare-item">
+                <div class="m-fare-item" onclick="selectFareType('armed_forces', this)" data-fare="armed_forces">
                     <div class="m-fare-name">Armed Forces</div>
                     <div class="m-fare-info">Flat off for our heroes</div>
                 </div>
@@ -922,18 +929,12 @@
         box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.2);
     }
 </style>
-
+ </div>
 <!-- Load Flatpickr -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
-    <!-- World-Class Floating Search Button -->
-    <div class="misty-search-glow-wrap">
-            <button class="misty-search-btn-v3" id="mainSearchBtn">
-                <span>SEARCH</span>
-                <i class="fas fa-search ms-2"></i>
-            </button>
-        </div>
+   
     </div>
 
     <!-- Dynamic Results Container -->
@@ -1090,6 +1091,14 @@ function selectClass(className, el) {
     // Budget Mode Update
     const budgetTripClassDisplay = document.getElementById('budgetTripClass');
     if (budgetTripClassDisplay) budgetTripClassDisplay.innerText = className;
+}
+
+function selectFareType(type, el) {
+    const parent = el.closest('.misty-fare-row') || el.closest('.d-flex');
+    if (parent) {
+        parent.querySelectorAll('.m-fare-item').forEach(item => item.classList.remove('active'));
+        el.classList.add('active');
+    }
 }
 
 function updateTotalPassengers() {
@@ -1496,6 +1505,11 @@ document.addEventListener('click', (e) => {
                         if (isBudgetMode) {
                             const maxBudget = document.getElementById('globalMaxBudget').value;
                             url.searchParams.append('max_budget', maxBudget);
+                        }
+
+                        const activeFare = document.querySelector('#flightSpecialFares .m-fare-item.active');
+                        if (activeFare && activeFare.getAttribute('data-fare') !== 'regular') {
+                            url.searchParams.append('fare_type', activeFare.getAttribute('data-fare'));
                         }
 
                         // Trigger Group Booking Notice for > 9 passengers
