@@ -368,18 +368,22 @@ class FlightController extends Controller
     {
         $id = $request->input('id');
         
-        $cacheKey = 'flight_search_' . session()->getId();
-        $fullResult = \Illuminate\Support\Facades\Cache::get($cacheKey) ?: \Illuminate\Support\Facades\Cache::get('flight_search_full', []);
-        $rawFlights = $fullResult['raw_data'] ?? [];
-        
-        // Handle dictionaries
-        $dictionaries = $fullResult['dictionaries'] ?? ($fullResult['meta']['dictionaries'] ?? []);
+        // 1. Try to fetch from individual flight cache (robust)
+        $flightOffer = \Illuminate\Support\Facades\Cache::get('flight_data_' . $id);
+        $dictionaries = [];
 
-        // Find the flight by ID in the raw data
-        $flightOffer = collect($rawFlights)->first(function($item) use ($id) {
-            $itemId = is_array($item) ? ($item['id'] ?? null) : ($item->id ?? null);
-            return $itemId == $id;
-        });
+        if (!$flightOffer) {
+            // 2. Fallback to session search results
+            $cacheKey = 'flight_search_' . session()->getId();
+            $fullResult = \Illuminate\Support\Facades\Cache::get($cacheKey) ?: \Illuminate\Support\Facades\Cache::get('flight_search_full', []);
+            $rawFlights = $fullResult['raw_data'] ?? [];
+            $dictionaries = $fullResult['dictionaries'] ?? ($fullResult['meta']['dictionaries'] ?? []);
+
+            $flightOffer = collect($rawFlights)->first(function($item) use ($id) {
+                $itemId = is_array($item) ? ($item['id'] ?? null) : ($item->id ?? null);
+                return $itemId == $id;
+            });
+        }
 
         if (!$flightOffer) {
             return response()->json(['error' => 'Flight selection expired. Please search again.'], 404);
