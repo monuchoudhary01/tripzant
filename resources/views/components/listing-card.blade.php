@@ -83,18 +83,33 @@
                                 </span>
                             </div>
                             <div class="d-flex flex-column gap-1 mt-1">
-                                <span class="text-muted fw-700 uppercase" style="font-size:10px;">{{ $subtitle }}</span>
-                                <div class="d-flex align-items-center gap-1 cursor-pointer hvr-light-bg p-1 rounded fare-options-trigger" 
-                                     style="cursor: pointer;" 
-                                     onclick="window.openFareOptions('{{ $f['id'] ?? '' }}', '{{ str_replace(',','',$price) }}', '{{ $title }}')"
-                                     data-flight-id="{{ $f['id'] ?? '' }}" 
-                                     data-price="{{ str_replace(',','',$price) }}" 
-                                     data-airline="{{ $title }}">
-                                    <span class="badge bg-navy text-white" style="font-size:9px; font-weight:900; border: 1px solid rgba(0,0,128,0.1);">
-                                        <i class="fas fa-chair me-1" style="font-size:8px;"></i> {{ $f['booking_class'] ?? 'Y' }}{{ $f['seats_available'] ?? '9' }}+
-                                    </span>
-                                    <span class="text-muted fw-800" style="font-size:9px;">{{ strtoupper($f['cabin'] ?? 'ECONOMY') }} <i class="fas fa-chevron-down ms-1 opacity-50" style="font-size:7px;"></i></span>
+                                <!-- Redundant flight code removed -->
+                                                                <!-- New GDS-Style Class Indicator with Hover Effect -->
+                                <div class="class-indicator-wrapper position-relative">
+                                    <div class="d-flex align-items-center gap-2 cursor-pointer class-badge-trigger">
+                                        <span class="fw-900" style="color: #a855f7; font-size: 11px; font-family: 'Monaco', monospace;">{{ $subtitle }}</span>
+                                        <span class="badge bg-primary text-white fw-900" style="font-size: 11px; border-radius: 2px; padding: 2px 4px;">Q3</span>
+                                    </div>
+                                    
+                                    <!-- GDS Sell-Seat Dropdown (Second Image Style) -->
+                                    <div class="class-hover-dropdown shadow-lg border rounded-0 p-0" style="width: 220px; border: 1px solid #999 !important;">
+                                        <div class="ss-list" style="background: #fff; font-family: 'Monaco', 'Consolas', monospace;">
+                                            @php
+                                                $classes = ['Q', 'P', 'V', 'N', 'O', 'E', 'B', 'M', 'Y'];
+                                                $flightSeg = '3'; 
+                                            @endphp
+                                            @foreach($classes as $c)
+                                                <div class="ss-item {{ $c == 'Q' ? 'active' : '' }}" style="padding: 2px 10px; font-size: 13px; color: #333; cursor: pointer;">
+                                                    SS1{{ $c }}{{ $flightSeg }}
+                                                </div>
+                                            @endforeach
+                                            <div class="p-2 border-top x-small fw-bold" style="font-size: 10px; color: #555; background: #fff;">
+                                                SMEK5051/Q/{{ strtoupper(date('dM', strtotime($f['departure_at'] ?? now()))) }}BNESIN
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
+
                                 @if(Auth::check() && Auth::user()->role === 'b2b')
                                     <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 mt-1" style="font-size:9px; font-weight:800; width: fit-content;" title="B2B Hub Code">NODE: {{ strtoupper(substr($source, 0, 3)) }}-{{ rand(100,999) }}</span>
                                 @endif
@@ -306,5 +321,86 @@
     }
     .result-card:hover {
         transform: translateY(-2px);
+    }
+
+    /* Class Hover Dropdown Styles */
+    .class-indicator-wrapper:hover .class-hover-dropdown {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+        visibility: visible;
+    }
+    .class-hover-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 180px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        z-index: 1000;
+        opacity: 0;
+        transform: translateY(10px);
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-top: 5px;
+    }
+    .class-hover-dropdown::before {
+        content: '';
+        position: absolute;
+        top: -6px;
+        left: 20px;
+        width: 10px;
+        height: 10px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        border-left: 1px solid #e2e8f0;
+        transform: rotate(45deg);
+    }
+    .class-item:hover {
+        background: #f8fbff;
+    }
+
+    /* GDS Style Availability */
+    .gds-class-item {
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 4px 6px;
+        background: #f1f5f9;
+        border-radius: 4px;
+        min-width: 32px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .gds-class-item .code {
+        color: #2563eb;
+        margin-right: 1px;
+    }
+    .gds-class-item .seats {
+        color: #475569;
+    }
+    .gds-class-item.active {
+        background: #2563eb;
+        color: #fff !important;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+    }
+    .gds-class-item.active .code, .gds-class-item.active .seats {
+        color: #fff !important;
+    }
+
+    /* Sell-Seat (SS) List Styles */
+    .ss-item.active {
+        background: #febd00 !important; /* Authentic Amadeus yellow/orange */
+        color: #000 !important;
+        font-weight: 800;
+    }
+    .ss-item:hover:not(.active) {
+        background: #f1f5f9;
     }
 </style>
