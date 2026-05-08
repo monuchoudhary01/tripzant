@@ -76,8 +76,8 @@ class AuthController extends Controller
     {
         $user = User::where('email', $request->email)->first();
         
-        // Restrict to Partners (role_id 4 to 12)
-        if (!$user || $user->role_id < 4 || $user->role_id > 12) {
+        // Restrict to Partners (role_id >= 4)
+        if (!$user || $user->role_id < 4) {
             return response()->json(['success' => false, 'message' => 'This account is not authorized for the Partner Portal.']);
         }
 
@@ -98,7 +98,7 @@ class AuthController extends Controller
         
         // Special case: Only Super Admin (role_id 1) can access admin portal
         if ($expectedRole === 'admin') {
-            if ($user->role_id == 1) {
+            if ($user->role === 'admin') {
                 $isAuthorized = true;
             } else {
                 $isAuthorized = false;
@@ -136,15 +136,24 @@ class AuthController extends Controller
     private function getRedirectUrl($role)
     {
         switch ($role) {
-            case 'admin':
-            case 'super-admin': return '/admin-dashboard';
-            case 'amadeus-partner': return '/amadeus-dashboard';
+            case 'admin': return '/admin-dashboard';
+            case 'user': return '/dashboard';
+            case 'agent': return '/agent-dashboard';
             case 'iata': return '/iata-dashboard';
-            case 'corporate': return '/corporate';
-            case 'b2b': return '/agent-dashboard';
-            case 'supplier': return '/tourbuilder-dashboard';
-            case 'cargo': return '/cargo-dashboard';
-            default: return '/';
+            case 'corporate': return '/corporate-dashboard';
+            case 'investor': return '/investor/dashboard';
+            case 'hotel-partner': return '/hotel-dashboard';
+            case 'amadeus-partner': return '/amadeus-dashboard';
+            case 'tour-builder': return '/tourbuilder-dashboard';
+            case 'local-provider': return '/local-provider/dashboard';
+            case 'accounting': return '/accounting/dashboard';
+            case 'cargo': return '/user-cargo';
+            case 'affiliate': return '/affiliate-dashboard';
+            case 'partner': return '/partner/dashboard';
+            case 'visa-provider': return '/visa';
+            case 'iata-network': return '/agent/dashboard';
+            case 'explorer': return '/explorer/trends';
+            default: return '/dashboard';
         }
     }
 
@@ -261,7 +270,7 @@ class AuthController extends Controller
             'contact_name' => 'required',
             'email' => 'required|email|unique:users',
             'phone' => 'required',
-            'role' => 'required|in:b2b,corporate,supplier,hotel-partner,cargo,affiliate', 
+            'role' => 'required|in:agent,corporate,tour-builder,hotel-partner,cargo,affiliate,iata,investor,amadeus-partner,local-provider,accounting,partner,visa-provider,iata-network,explorer', 
             'password' => 'required|min:6|confirmed'
         ]);
 

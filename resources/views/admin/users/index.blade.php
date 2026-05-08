@@ -24,6 +24,42 @@
     </div>
     @endif
 
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 20px;">
+        <div class="card-body p-3">
+            <form action="{{ route('admin.users.index') }}" method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0" style="border-radius: 10px 0 0 10px;">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" name="search" class="form-control border-start-0" placeholder="Search by name, email, phone..." value="{{ request('search') }}" style="border-radius: 0 10px 10px 0;">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    @php $filterRoles = \App\Models\Role::where('slug', '!=', 'admin')->get(); @endphp
+                    <select name="role" class="form-select" style="border-radius: 10px;" onchange="this.form.submit()">
+                        <option value="">All Roles</option>
+                        @foreach($filterRoles as $fRole)
+                            <option value="{{ $fRole->slug }}" {{ request('role') == $fRole->slug ? 'selected' : '' }}>{{ $fRole->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select" style="border-radius: 10px;" onchange="this.form.submit()">
+                        <option value="">All Status</option>
+                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                        <option value="suspended" {{ request('status') == 'suspended' ? 'selected' : '' }}>Suspended</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-navy w-100 fw-bold" style="background: #002f55; color: #fff; border-radius: 10px;">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="card border-0 shadow-sm" style="border-radius: 20px; overflow: hidden;">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -69,97 +105,19 @@
                         </td>
                         <td class="text-end px-4">
                             <div class="d-flex justify-content-end gap-2">
-                                <button type="button" class="btn btn-sm btn-light border" style="border-radius: 8px; font-weight: 600; padding: 6px 12px;" data-bs-toggle="modal" data-bs-target="#viewModal-{{ $user->id }}">
+                                <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-sm btn-light border" style="border-radius: 8px; font-weight: 600; padding: 6px 12px;">
                                     <i class="fas fa-eye me-1 text-primary"></i> View
-                                </button>
-                                <button class="btn btn-sm btn-light border" style="border-radius: 8px; font-weight: 600; padding: 6px 12px;">Edit</button>
+                                </a>
+                                <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-light border" style="border-radius: 8px; font-weight: 600; padding: 6px 12px;">
+                                    <i class="fas fa-edit me-1 text-info"></i> Edit
+                                </a>
                                 <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger border-0" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 8px; font-weight: 600;">Delete</button>
+                                    <button type="submit" class="btn btn-sm btn-danger border-0" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 8px; font-weight: 600;">
+                                        <i class="fas fa-trash-alt me-1"></i> Delete
+                                    </button>
                                 </form>
-                            </div>
-
-                            <!-- User Details Modal -->
-                            <div class="modal fade" id="viewModal-{{ $user->id }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content border-0 shadow-lg" style="border-radius: 24px;">
-                                        <div class="modal-header border-0 pb-0 px-4 pt-4">
-                                            <h5 class="fw-800 text-navy mb-0">Full Profile Details</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body p-4 text-start">
-                                            <div class="d-flex align-items-center mb-4 p-3 bg-light rounded-4">
-                                                <div style="width: 54px; height: 54px; border-radius: 14px; background: #002f55; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px; margin-right: 15px;">
-                                                    {{ substr($user->name, 0, 1) }}
-                                                </div>
-                                                <div>
-                                                    <h6 class="mb-0 fw-bold fs-5 text-navy">{{ $user->name }}</h6>
-                                                    <span class="badge bg-primary-subtle text-primary x-small">{{ strtoupper($user->role) }}</span>
-                                                </div>
-                                            </div>
-
-                                            <div class="row g-4">
-                                                <div class="col-6">
-                                                    <label class="x-small fw-bold text-muted text-uppercase mb-1">Email Address</label>
-                                                    <p class="fw-bold small text-navy mb-0">{{ $user->email }}</p>
-                                                </div>
-                                                <div class="col-6">
-                                                    <label class="x-small fw-bold text-muted text-uppercase mb-1">Phone Number</label>
-                                                    <p class="fw-bold small text-navy mb-0">{{ $user->phone }}</p>
-                                                </div>
-                                                <div class="col-6">
-                                                    <label class="x-small fw-bold text-muted text-uppercase mb-1">Status</label>
-                                                    <p class="mb-0"><span class="badge {{ $user->status == 'active' ? 'bg-success' : 'bg-warning' }}">{{ strtoupper($user->status) }}</span></p>
-                                                </div>
-                                                <div class="col-6">
-                                                    <label class="x-small fw-bold text-muted text-uppercase mb-1">Joined On</label>
-                                                    <p class="fw-bold small text-navy mb-0">{{ $user->created_at->format('d M, Y') }}</p>
-                                                </div>
-                                            </div>
-
-                                            @if($user->role !== 'user')
-                                                <hr class="my-4 opacity-10">
-                                                <h6 class="fw-bold text-navy mb-3"><i class="fas fa-building me-2"></i> Business Information</h6>
-                                                <div class="row g-3">
-                                                    <div class="col-12">
-                                                        <label class="x-small fw-bold text-muted text-uppercase mb-1">Agency/Company Name</label>
-                                                        <p class="fw-bold small text-navy">{{ $user->company_name ?? $user->agency_name ?? 'Not Provided' }}</p>
-                                                    </div>
-                                                    @if($user->gst_number)
-                                                    <div class="col-6">
-                                                        <label class="x-small fw-bold text-muted text-uppercase mb-1">GST Number</label>
-                                                        <p class="fw-bold small text-navy">{{ $user->gst_number }}</p>
-                                                    </div>
-                                                    @endif
-                                                    @if($user->provider_location)
-                                                    <div class="col-6">
-                                                        <label class="x-small fw-bold text-muted text-uppercase mb-1">Location</label>
-                                                        <p class="fw-bold small text-navy">{{ $user->provider_location }}</p>
-                                                    </div>
-                                                    @endif
-                                                </div>
-
-                                                @if($user->business_metadata)
-                                                    <div class="mt-4">
-                                                        <label class="x-small fw-bold text-muted text-uppercase mb-2">Additional Metadata</label>
-                                                        <div class="bg-light p-3 rounded-3 border-0">
-                                                            @foreach($user->business_metadata as $key => $value)
-                                                                <div class="mb-2 d-flex justify-content-between">
-                                                                    <span class="text-muted small fw-600">{{ str_replace(['_', '-'], ' ', ucfirst($key)) }}</span>
-                                                                    <span class="small fw-800 text-navy">{{ is_array($value) ? json_encode($value) : $value }}</span>
-                                                                </div>
-                                                            @endforeach
-                                                        </div>
-                                                    </div>
-                                                @endif
-                                            @endif
-                                        </div>
-                                        <div class="modal-footer border-0 px-4 pb-4">
-                                            <button type="button" class="btn btn-navy w-100 py-2 fw-bold rounded-3" data-bs-dismiss="modal" style="background: #002f55; color: #fff;">Close Profile</button>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </td>
                     </tr>

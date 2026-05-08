@@ -72,42 +72,31 @@
 
             <!-- Service Quick Icons -->
             <div class="hero-services animate-up animate-up-delay-2">
-                <a href="/flights" class="hero-service-item">
-                    <div class="hero-service-icon flight"><i class="fas fa-plane"></i></div>
-                    <span>Flights</span>
-                </a>
-                <a href="/hotels" class="hero-service-item">
-                    <div class="hero-service-icon hotel"><i class="fas fa-hotel"></i></div>
-                    <span>Hotels</span>
-                </a>
-                <a href="/flight-hotel" class="hero-service-item">
-                    <div class="hero-service-icon bundle"><i class="fas fa-suitcase-rolling"></i></div>
-                    <span>Flight + Hotel</span>
-                </a>
-                <a href="/homestays" class="hero-service-item">
-                    <div class="hero-service-icon homestay"><i class="fas fa-house-chimney"></i></div>
-                    <span>Homestays</span>
-                </a>
-                <a href="/cabs" class="hero-service-item">
-                    <div class="hero-service-icon cab"><i class="fas fa-car-side"></i></div>
-                    <span>Cabs</span>
-                </a>
-                <a href="/trains" class="hero-service-item">
-                    <div class="hero-service-icon train"><i class="fas fa-train"></i></div>
-                    <span>Trains</span>
-                </a>
-                <a href="#" class="hero-service-item">
-                    <div class="hero-service-icon holiday"><i class="fas fa-umbrella-beach"></i></div>
-                    <span>Holidays</span>
-                </a>
-                <a href="{{ route('booking.insurance') }}" class="hero-service-item">
-                    <div class="hero-service-icon insurance"><i class="fas fa-shield-alt"></i></div>
-                    <span>Insurance</span>
-                </a>
-                <a href="/esim/listings" class="hero-service-item">
-                    <div class="hero-service-icon esim"><i class="fas fa-sim-card"></i></div>
-                    <span>eSIM</span>
-                </a>
+                @php
+                    $services = [
+                        ['id' => 'flights', 'label' => 'Flights', 'icon' => 'plane', 'class' => 'flight', 'url' => '/flights'],
+                        ['id' => 'hotels', 'label' => 'Hotels', 'icon' => 'hotel', 'class' => 'hotel', 'url' => '/hotels'],
+                        ['id' => 'flight_hotel', 'label' => 'Flight + Hotel', 'icon' => 'suitcase-rolling', 'class' => 'bundle', 'url' => '/flight-hotel'],
+                        ['id' => 'homestays', 'label' => 'Homestays', 'icon' => 'house-chimney', 'class' => 'homestay', 'url' => '/homestays'],
+                        ['id' => 'cabs', 'label' => 'Cabs', 'icon' => 'car-side', 'class' => 'cab', 'url' => '/cabs'],
+                        ['id' => 'trains', 'label' => 'Trains', 'icon' => 'train', 'class' => 'train', 'url' => '/trains'],
+                        ['id' => 'holidays', 'label' => 'Holidays', 'icon' => 'umbrella-beach', 'class' => 'holiday', 'url' => '#'],
+                        ['id' => 'insurance', 'label' => 'Insurance', 'icon' => 'shield-alt', 'class' => 'insurance', 'url' => route('booking.insurance')],
+                        ['id' => 'esim', 'label' => 'eSIM', 'icon' => 'sim-card', 'class' => 'esim', 'url' => '/esim/listings'],
+                    ];
+                @endphp
+
+                @foreach($services as $s)
+                    @php 
+                        $isEnabled = \App\Models\GlobalSetting::get("service_{$s['id']}_enabled", '1') == '1';
+                    @endphp
+                    <a href="{{ $isEnabled ? $s['url'] : 'javascript:void(0)' }}" 
+                       class="hero-service-item {{ !$isEnabled ? 'disabled-service' : '' }}"
+                       @if(!$isEnabled) data-bs-toggle="tooltip" title="Coming Soon" @endif>
+                        <div class="hero-service-icon {{ $s['class'] }}"><i class="fas fa-{{ $s['icon'] }}"></i></div>
+                        <span>{{ $s['label'] }}</span>
+                    </a>
+                @endforeach
             </div>
         </div>
     </section>
@@ -199,9 +188,14 @@
     </style>
 
     <!-- ====== VISA ASSISTANCE ====== -->
-    <section class="py-4 position-relative overflow-hidden" style="background: #f1f5f9;">
+    <section class="py-4 position-relative overflow-hidden {{ \App\Models\GlobalSetting::get('service_visa_enabled', '1') != '1' ? 'opacity-50 grayscale pointer-none' : '' }}" style="background: #f1f5f9;">
         <div class="container">
             <div class="card-premium p-0 overflow-hidden border-0 shadow-lg">
+                @if(\App\Models\GlobalSetting::get('service_visa_enabled', '1') != '1')
+                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="z-index: 100; background: rgba(255,255,255,0.1); backdrop-filter: blur(2px);">
+                    <div class="badge bg-navy px-4 py-2 fs-5 shadow-lg rounded-pill">COMING SOON</div>
+                </div>
+                @endif
                 <div class="row g-0">
                     <div class="col-lg-5 p-5 d-flex flex-column justify-content-center" style="background: linear-gradient(135deg, var(--navy) 0%, #001f3f 100%); color: #fff;">
                         <span class="badge bg-primary mb-3 align-self-start py-2 px-3 fw-bold"><i class="fas fa-shield-halved me-1"></i> VERIFIED EXPERTS</span>
@@ -604,7 +598,12 @@
     </section>
 
     <!-- ====== TOUR BUILDER / PACKAGES (NEW SECTION) ====== -->
-    <section class="py-5 bg-white reveal">
+    <section class="py-5 bg-white reveal {{ \App\Models\GlobalSetting::get('service_holidays_enabled', '1') != '1' ? 'opacity-50 grayscale pointer-none position-relative' : '' }}">
+        @if(\App\Models\GlobalSetting::get('service_holidays_enabled', '1') != '1')
+        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="z-index: 100;">
+            <div class="badge bg-navy px-4 py-2 fs-5 shadow-lg rounded-pill">COMING SOON</div>
+        </div>
+        @endif
         <div class="container text-navy">
             <div class="row align-items-end mb-5">
                 <div class="col-lg-6">
@@ -649,7 +648,12 @@
     </section>
 
     <!-- ====== POPULAR eSIM COUNTRIES (NEW SECTION) ====== -->
-    <section class="py-4 bg-white reveal stagger-children" style="border-top:1px solid #f1f5f9;">
+    <section class="py-4 bg-white reveal stagger-children {{ \App\Models\GlobalSetting::get('service_esim_enabled', '1') != '1' ? 'opacity-50 grayscale pointer-none position-relative' : '' }}" style="border-top:1px solid #f1f5f9;">
+        @if(\App\Models\GlobalSetting::get('service_esim_enabled', '1') != '1')
+        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="z-index: 100;">
+            <div class="badge bg-navy px-4 py-2 fs-5 shadow-lg rounded-pill">COMING SOON</div>
+        </div>
+        @endif
         <div class="container text-navy">
             <div class="row align-items-center mb-5">
                 <div class="col-lg-6">

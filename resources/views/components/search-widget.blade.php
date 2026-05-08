@@ -8,38 +8,33 @@
     <!-- Sophisticated Segmented Control -->
     <div class="misty-search-nav">
         <div class="nav-glow-pill"></div>
-        <div class="misty-tab active" onclick="switchSearch('flights', this)">
-            <div class="misty-tab-icon"><i class="fas fa-plane"></i></div>
-            <span>Flights</span>
-        </div>
-        <div class="misty-tab" onclick="switchSearch('hotels', this)">
-            <div class="misty-tab-icon"><i class="fas fa-hotel"></i></div>
-            <span>Hotels</span>
-        </div>
-        <div class="misty-tab" onclick="switchSearch('homestays', this)">
-            <div class="misty-tab-icon"><i class="fas fa-home"></i></div>
-            <span>Homestays</span>
-        </div>
-        <div class="misty-tab" onclick="switchSearch('combos', this)">
-            <div class="misty-tab-icon"><i class="fas fa-gem"></i></div>
-            <span>Packages</span>
-        </div>
-        <div class="misty-tab" onclick="switchSearch('trains', this)">
-            <div class="misty-tab-icon"><i class="fas fa-train"></i></div>
-            <span>Trains</span>
-        </div>
-        <div class="misty-tab" onclick="switchSearch('cabs', this)">
-            <div class="misty-tab-icon"><i class="fas fa-car-side"></i></div>
-            <span>Cabs</span>
-        </div>
-        <div class="misty-tab" onclick="switchSearch('esim', this)">
-            <div class="misty-tab-icon"><i class="fas fa-sim-card"></i></div>
-            <span>eSIM</span>
-        </div>
-        <div class="misty-tab" onclick="switchSearch('insurance', this)">
-            <div class="misty-tab-icon"><i class="fas fa-shield-alt"></i></div>
-            <span>Insurance</span>
-        </div>
+        @php
+            $tabs = [
+                ['id' => 'flights', 'label' => 'Flights', 'icon' => 'plane', 'type' => 'flights'],
+                ['id' => 'hotels', 'label' => 'Hotels', 'icon' => 'hotel', 'type' => 'hotels'],
+                ['id' => 'homestays', 'label' => 'Homestays', 'icon' => 'home', 'type' => 'homestays'],
+                ['id' => 'holidays', 'label' => 'Packages', 'icon' => 'gem', 'type' => 'combos'],
+                ['id' => 'trains', 'label' => 'Trains', 'icon' => 'train', 'type' => 'trains'],
+                ['id' => 'cabs', 'label' => 'Cabs', 'icon' => 'car-side', 'type' => 'cabs'],
+                ['id' => 'esim', 'label' => 'eSIM', 'icon' => 'sim-card', 'type' => 'esim'],
+                ['id' => 'insurance', 'label' => 'Insurance', 'icon' => 'shield-alt', 'type' => 'insurance'],
+            ];
+            $firstActiveFound = false;
+        @endphp
+
+        @foreach($tabs as $tab)
+            @php 
+                $isEnabled = \App\Models\GlobalSetting::get("service_{$tab['id']}_enabled", '1') == '1';
+                $isActive = !$firstActiveFound && $isEnabled;
+                if ($isActive) $firstActiveFound = true;
+            @endphp
+            <div class="misty-tab {{ $isActive ? 'active' : '' }} {{ !$isEnabled ? 'disabled-service' : '' }}" 
+                 onclick="{{ $isEnabled ? "switchSearch('{$tab['type']}', this)" : "" }}"
+                 @if(!$isEnabled) data-bs-toggle="tooltip" title="Coming Soon" @endif>
+                <div class="misty-tab-icon"><i class="fas fa-{{ $tab['icon'] }}"></i></div>
+                <span>{{ $tab['label'] }}</span>
+            </div>
+        @endforeach
     </div>
 
     <div class="misty-search-glass-card">
@@ -928,6 +923,12 @@
         border-color: var(--primary);
         box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.2);
     }
+    .disabled-service {
+        opacity: 0.5 !important;
+        filter: grayscale(1) !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+    }
 </style>
  </div>
 <!-- Load Flatpickr -->
@@ -1272,8 +1273,15 @@ document.addEventListener('click', (e) => {
             setupAutocomplete('flightBudgetDestinationInput', 'flightBudgetDestinationResults', 'flightBudgetDestinationSub');
             setupAutocomplete('hotelDestinationInput', 'hotelDestinationResults', 'hotelDestinationSub');
 
-            // Initialize display
+            // --- Initialize Display & First Active Tab ---
             updateTotalPassengers();
+            
+            const activeTabOnLoad = document.querySelector('.misty-tab.active');
+            if (activeTabOnLoad) {
+                // Determine the type from the onclick attribute or just call switchSearch
+                // The cleanest way is to trigger the click
+                activeTabOnLoad.click();
+            }
 
             // --- Trip Type Switcher ---
             const tripTypeRadios = document.querySelectorAll('input[name="tripType"]');

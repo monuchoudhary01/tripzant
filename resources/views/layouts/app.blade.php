@@ -216,6 +216,13 @@
             border-color: #005eb8 !important;
             box-shadow: 0 0 0 3px rgba(0, 94, 184, 0.1) !important;
         }
+
+        .disabled-service {
+            opacity: 0.5 !important;
+            filter: grayscale(1) !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+        }
     </style>
     @yield('styles')
 </head>
@@ -233,43 +240,34 @@
                 </a>
                 
                 <nav class="d-none d-lg-flex align-items-center gap-1">
-                    <a href="/flights" class="nav-link-mmt @yield('active-flights')">
-                        <i class="fas fa-plane"></i>
-                        <span>Flights</span>
-                    </a>
-                    <a href="/hotels" class="nav-link-mmt @yield('active-hotels')">
-                        <i class="fas fa-hotel"></i>
-                        <span>Hotels</span>
-                    </a>
-                    <a href="/flight-hotel" class="nav-link-mmt @yield('active-flight-hotel')">
-                        <i class="fas fa-suitcase-rolling"></i>
-                        <span>Flight + Hotel</span>
-                    </a>
-                    <a href="/homestays" class="nav-link-mmt @yield('active-homestays')">
-                        <i class="fas fa-house-chimney"></i>
-                        <span>Homestays</span>
-                    </a>
-                    <a href="/cabs" class="nav-link-mmt @yield('active-cabs')">
-                        <i class="fas fa-car-side"></i>
-                        <span>Cabs</span>
-                    </a>
-                    <a href="/trains" class="nav-link-mmt @yield('active-trains')">
-                        <i class="fas fa-train"></i>
-                        <span>Trains</span>
-                    </a>
+                    @php
+                        $navServices = [
+                            ['id' => 'flights', 'label' => 'Flights', 'icon' => 'plane', 'url' => '/flights'],
+                            ['id' => 'hotels', 'label' => 'Hotels', 'icon' => 'hotel', 'url' => '/hotels'],
+                            ['id' => 'flight_hotel', 'label' => 'Flight + Hotel', 'icon' => 'suitcase-rolling', 'url' => '/flight-hotel'],
+                            ['id' => 'homestays', 'label' => 'Homestays', 'icon' => 'house-chimney', 'url' => '/homestays'],
+                            ['id' => 'cabs', 'label' => 'Cabs', 'icon' => 'car-side', 'url' => '/cabs'],
+                            ['id' => 'trains', 'label' => 'Trains', 'icon' => 'train', 'url' => '/trains'],
+                            ['id' => 'holidays', 'label' => 'Tours', 'icon' => 'camera-retro', 'url' => route('tours.index')],
+                            ['id' => 'cargo', 'label' => 'Cargo', 'icon' => 'boxes-packing', 'url' => '/cargo'],
+                        ];
+                    @endphp
 
-                    <a href="{{ route('tours.index') }}" class="nav-link-mmt {{ request()->routeIs('tours.*') ? 'active' : '' }}">
-                        <i class="fas fa-camera-retro"></i>
-                        <span>Tours</span>
-                    </a>
+                    @foreach($navServices as $s)
+                        @php $isEnabled = \App\Models\GlobalSetting::get("service_{$s['id']}_enabled", '1') == '1'; @endphp
+                        <a href="{{ $isEnabled ? $s['url'] : 'javascript:void(0)' }}" 
+                           class="nav-link-mmt {{ !$isEnabled ? 'disabled-service' : '' }} @yield('active-'.$s['id'])"
+                           @if(!$isEnabled) data-bs-toggle="tooltip" title="Coming Soon" @endif>
+                            <i class="fas fa-{{ $s['icon'] }}"></i>
+                            <span>{{ $s['label'] }}</span>
+                        </a>
+                    @endforeach
 
-                    <a href="/cargo" class="nav-link-mmt">
-                        <i class="fas fa-boxes-packing"></i>
-                        <span>Cargo</span>
-                    </a>
-
+                    @php $isEventEnabled = \App\Models\GlobalSetting::get('service_event_qr_enabled', '1') == '1'; @endphp
                     <!-- Melbourn Event Button -->
-                    <a href="javascript:void(0)" class="nav-link-mmt festive-nav-btn" data-bs-toggle="modal" data-bs-target="#eventQrModal">
+                    <a href="{{ $isEventEnabled ? 'javascript:void(0)' : 'javascript:void(0)' }}" 
+                       class="nav-link-mmt festive-nav-btn {{ !$isEventEnabled ? 'disabled-service' : '' }}" 
+                       @if($isEventEnabled) data-bs-toggle="modal" data-bs-target="#eventQrModal" @else data-bs-toggle="tooltip" title="Coming Soon" @endif>
                          <div class="festive-icon-wrap animate__animated animate__swing animate__infinite">
                             <i class="fas fa-qrcode"></i>
                          </div>
@@ -284,9 +282,14 @@
                         </a>
                         <ul class="dropdown-menu border-0 shadow-lg p-2 mt-2" style="border-radius: 12px; min-width: 200px;">
                             <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy" href="/explore-map"><i class="fas fa-map-location-dot me-2 text-primary"></i> Explore</a></li>
-                            <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy" href="/esim"><i class="fas fa-sim-card me-2 text-primary"></i> eSIM</a></li>
-                            <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy" href="{{ route('visa.index') }}"><i class="fas fa-id-card me-2 text-primary"></i> Visa</a></li>
-                            <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy" href="{{ route('booking.insurance') }}"><i class="fas fa-shield-alt me-2 text-primary"></i> Insurance</a></li>
+                            @php $isEsimEnabled = \App\Models\GlobalSetting::get('service_esim_enabled', '1') == '1'; @endphp
+                            <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy {{ !$isEsimEnabled ? 'disabled-service' : '' }}" href="{{ $isEsimEnabled ? '/esim' : 'javascript:void(0)' }}" @if(!$isEsimEnabled) data-bs-toggle="tooltip" title="Coming Soon" @endif><i class="fas fa-sim-card me-2 text-primary"></i> eSIM</a></li>
+                            
+                            @php $isVisaEnabled = \App\Models\GlobalSetting::get('service_visa_enabled', '1') == '1'; @endphp
+                            <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy {{ !$isVisaEnabled ? 'disabled-service' : '' }}" href="{{ $isVisaEnabled ? route('visa.index') : 'javascript:void(0)' }}" @if(!$isVisaEnabled) data-bs-toggle="tooltip" title="Coming Soon" @endif><i class="fas fa-id-card me-2 text-primary"></i> Visa</a></li>
+                            
+                            @php $isInsEnabled = \App\Models\GlobalSetting::get('service_insurance_enabled', '1') == '1'; @endphp
+                            <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy {{ !$isInsEnabled ? 'disabled-service' : '' }}" href="{{ $isInsEnabled ? route('booking.insurance') : 'javascript:void(0)' }}" @if(!$isInsEnabled) data-bs-toggle="tooltip" title="Coming Soon" @endif><i class="fas fa-shield-alt me-2 text-primary"></i> Insurance</a></li>
                         </ul>
                     </div>
                 </nav>
@@ -354,8 +357,6 @@
         </div>
     </header>
     @endunless
-
-
 
     <!-- Partner Signup Modal -->
     <div class="modal fade" id="partnerSignupModal" tabindex="-1" aria-hidden="true">
@@ -447,16 +448,28 @@
                     </form>
                 @endif
                 <hr>
-                <a href="/flights" class="dash-nav-link"><i class="fas fa-plane-departure"></i> Flights</a>
-                <a href="/hotels" class="dash-nav-link"><i class="fas fa-hotel"></i> Hotels</a>
-                <a href="/homestays" class="dash-nav-link"><i class="fas fa-house-chimney"></i> Homestays</a>
-                <a href="/cabs" class="dash-nav-link"><i class="fas fa-car-side"></i> Cabs</a>
-                <a href="/trains" class="dash-nav-link"><i class="fas fa-train"></i> Trains</a>
-                <a href="/explore-map" class="dash-nav-link text-primary fw-bold"><i class="fas fa-map-location-dot"></i> Explore on Map</a>
-                <a href="/tours/listings" class="dash-nav-link"><i class="fas fa-camera-retro"></i> Tours & Activities</a>
+                @php
+                    $mobileServices = [
+                        ['id' => 'flights', 'label' => 'Flights', 'icon' => 'plane-departure', 'url' => '/flights'],
+                        ['id' => 'hotels', 'label' => 'Hotels', 'icon' => 'hotel', 'url' => '/hotels'],
+                        ['id' => 'homestays', 'label' => 'Homestays', 'icon' => 'house-chimney', 'url' => '/homestays'],
+                        ['id' => 'cabs', 'label' => 'Cabs', 'icon' => 'car-side', 'url' => '/cabs'],
+                        ['id' => 'trains', 'label' => 'Trains', 'icon' => 'train', 'url' => '/trains'],
+                        ['id' => 'holidays', 'label' => 'Tours & Activities', 'icon' => 'camera-retro', 'url' => '/tours/listings'],
+                        ['id' => 'esim', 'label' => 'Travel eSIM', 'icon' => 'sim-card', 'url' => '/esim'],
+                        ['id' => 'insurance', 'label' => 'Travel Insurance', 'icon' => 'shield-alt', 'url' => route('booking.insurance')],
+                    ];
+                @endphp
 
-                <a href="/esim" class="dash-nav-link"><i class="fas fa-sim-card"></i> Travel eSIM</a>
-                <a href="{{ route('booking.insurance') }}" class="dash-nav-link"><i class="fas fa-shield-alt"></i> Travel Insurance</a>
+                @foreach($mobileServices as $s)
+                    @php $isEnabled = \App\Models\GlobalSetting::get("service_{$s['id']}_enabled", '1') == '1'; @endphp
+                    <a href="{{ $isEnabled ? $s['url'] : 'javascript:void(0)' }}" 
+                       class="dash-nav-link {{ !$isEnabled ? 'disabled-service' : '' }}"
+                       @if(!$isEnabled) data-bs-toggle="tooltip" title="Coming Soon" @endif>
+                        <i class="fas fa-{{ $s['icon'] }}"></i> {{ $s['label'] }}
+                    </a>
+                @endforeach
+                <a href="/explore-map" class="dash-nav-link text-primary fw-bold"><i class="fas fa-map-location-dot"></i> Explore on Map</a>
             </div>
         </div>
     </div>
@@ -608,13 +621,27 @@
                 <div class="col-lg-2 col-md-3 col-6">
                     <h6 class="footer-title">Products</h6>
                     <ul class="footer-links">
-                        <li><a href="/flights">Flights</a></li>
-                        <li><a href="/hotels">Hotels</a></li>
-                        <li><a href="/homestays">Homestays & Villas</a></li>
-                        <li><a href="/cabs">Cabs</a></li>
-                        <li><a href="/trains">Trains</a></li>
-                        <li><a href="{{ route('booking.insurance') }}">Travel Insurance</a></li>
-                        <li><a href="#">Holiday Packages</a></li>
+                        @php
+                            $footerProducts = [
+                                ['id' => 'flights', 'label' => 'Flights', 'url' => '/flights'],
+                                ['id' => 'hotels', 'label' => 'Hotels', 'url' => '/hotels'],
+                                ['id' => 'homestays', 'label' => 'Homestays & Villas', 'url' => '/homestays'],
+                                ['id' => 'cabs', 'label' => 'Cabs', 'url' => '/cabs'],
+                                ['id' => 'trains', 'label' => 'Trains', 'url' => '/trains'],
+                                ['id' => 'insurance', 'label' => 'Travel Insurance', 'url' => route('booking.insurance')],
+                                ['id' => 'holidays', 'label' => 'Holiday Packages', 'url' => '#'],
+                            ];
+                        @endphp
+                        @foreach($footerProducts as $p)
+                            @php $isEnabled = \App\Models\GlobalSetting::get("service_{$p['id']}_enabled", '1') == '1'; @endphp
+                            <li>
+                                <a href="{{ $isEnabled ? $p['url'] : 'javascript:void(0)' }}" 
+                                   class="{{ !$isEnabled ? 'disabled-service' : '' }}"
+                                   @if(!$isEnabled) data-bs-toggle="tooltip" title="Coming Soon" @endif>
+                                    {{ $p['label'] }}
+                                </a>
+                            </li>
+                        @endforeach
                     </ul>
                 </div>
                 <div class="col-lg-2 col-md-3 col-6">

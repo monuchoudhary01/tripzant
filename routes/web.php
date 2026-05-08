@@ -141,7 +141,7 @@ Route::get('/cabs', [App\Http\Controllers\CabController::class, 'index'])->name(
 Route::get('/trains', [App\Http\Controllers\TrainController::class, 'index'])->name('trains.index');
 
 // --- TRIPZANT CARGO SYSTEM (MODULE 1-10) ---
-Route::prefix('user-cargo')->name('cargo.dashboard.')->middleware('auth')->group(function () {
+Route::prefix('user-cargo')->name('cargo.dashboard.')->middleware(['auth', 'role:cargo,admin'])->group(function () {
     Route::get('/', [App\Http\Controllers\User\CargoDashboardController::class, 'index'])->name('index');
     Route::get('/book', [App\Http\Controllers\User\CargoDashboardController::class, 'create'])->name('book');
     Route::post('/search-providers', [App\Http\Controllers\User\CargoDashboardController::class, 'searchProviders'])->name('search.providers');
@@ -153,7 +153,7 @@ Route::prefix('user-cargo')->name('cargo.dashboard.')->middleware('auth')->group
 });
 
 // --- CARGO AGENT (DRIVER) MODULE (Module 6) ---
-Route::prefix('cargo-agent')->name('cargo.agent.')->middleware('auth')->group(function () {
+Route::prefix('cargo-agent')->name('cargo.agent.')->middleware(['auth', 'role:cargo,admin'])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\User\CargoAgentController::class, 'dashboard'])->name('dashboard');
     Route::get('/earnings', [App\Http\Controllers\User\CargoAgentController::class, 'earnings'])->name('earnings');
     Route::get('/history', [App\Http\Controllers\User\CargoAgentController::class, 'history'])->name('history');
@@ -169,7 +169,7 @@ Route::prefix('cargo-agent')->name('cargo.agent.')->middleware('auth')->group(fu
 });
 
 // --- CARGO HUB & SUPPORT (Module 4) ---
-Route::prefix('cargo-hub')->name('cargo.support.')->middleware('auth')->group(function () {
+Route::prefix('cargo-hub')->name('cargo.support.')->middleware(['auth', 'role:cargo,admin'])->group(function () {
     Route::get('/warehouse', [App\Http\Controllers\User\CargoSupportController::class, 'warehouseDashboard'])->name('warehouse');
     Route::get('/customs', [App\Http\Controllers\User\CargoSupportController::class, 'customsDashboard'])->name('customs');
     Route::post('/process', [App\Http\Controllers\User\CargoSupportController::class, 'processStatus'])->name('status');
@@ -258,7 +258,7 @@ Route::get('/agent/hotel-bookings', function () { return view('agent-hotel-booki
 Route::get('/agent/hotel-bookings', function () { return view('agent-hotel-bookings'); })->name('agent.hotel.bookings');
 
 // 1. Individual (B2C) Dashboard
-Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(function () {
+Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'role:user,admin'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('index');
     Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
     Route::post('/profile/update', [DashboardController::class, 'updateProfile'])->name('profile.update');
@@ -278,10 +278,10 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(functi
 });
 
 // 2. Standard B2B Agent Dashboard
-Route::get('/agent-dashboard', [B2bAgentController::class, 'dashboard'])->middleware('auth')->name('agent.dashboard');
+Route::get('/agent-dashboard', [B2bAgentController::class, 'dashboard'])->middleware(['auth', 'role:agent,b2b,admin'])->name('agent.dashboard');
 
 // 5. IATA Agent Dashboard & Sub-modules
-Route::prefix('iata-dashboard')->name('iata.')->middleware('auth')->group(function () {
+Route::prefix('iata-dashboard')->name('iata.')->middleware(['auth', 'role:iata,admin'])->group(function () {
     Route::get('/', function () { return view('agent.dashboard'); })->name('dashboard');
     
     // Flight Booking Flow
@@ -326,16 +326,18 @@ Route::prefix('iata-dashboard')->name('iata.')->middleware('auth')->group(functi
 });
 
 // 5. Corporate Dashboard & Sub-modules
-Route::get('/corporate-dashboard', function () { return view('corporate.dashboard'); })->middleware('auth')->name('corporate.dashboard');
-Route::get('/corporate-dashboard/groups', function () { return view('corporate.groups'); })->middleware('auth')->name('corporate.groups');
-Route::get('/corporate-dashboard/employees', function () { return view('corporate.employees'); })->middleware('auth')->name('corporate.employees');
-Route::get('/corporate-dashboard/audit', function () { return view('corporate.audit'); })->middleware('auth')->name('corporate.audit');
-Route::get('/corporate-dashboard/policies', function () { return view('corporate.policies'); })->middleware('auth')->name('corporate.policies');
-Route::get('/corporate-dashboard/approvals', function () { return view('corporate.approvals'); })->middleware('auth')->name('corporate.approvals');
-Route::get('/corporate-dashboard/settings', function () { return view('corporate.settings'); })->middleware('auth')->name('corporate.settings');
+Route::middleware(['auth', 'role:corporate,admin'])->group(function() {
+    Route::get('/corporate-dashboard', function () { return view('corporate.dashboard'); })->name('corporate.dashboard');
+    Route::get('/corporate-dashboard/groups', function () { return view('corporate.groups'); })->name('corporate.groups');
+    Route::get('/corporate-dashboard/employees', function () { return view('corporate.employees'); })->name('corporate.employees');
+    Route::get('/corporate-dashboard/audit', function () { return view('corporate.audit'); })->name('corporate.audit');
+    Route::get('/corporate-dashboard/policies', function () { return view('corporate.policies'); })->name('corporate.policies');
+    Route::get('/corporate-dashboard/approvals', function () { return view('corporate.approvals'); })->name('corporate.approvals');
+    Route::get('/corporate-dashboard/settings', function () { return view('corporate.settings'); })->name('corporate.settings');
+});
 
 // 6. Tour Builder / Supplier Dashboard
-Route::prefix('tourbuilder-dashboard')->middleware('auth')->group(function () {
+Route::prefix('tourbuilder-dashboard')->middleware(['auth', 'role:tour-builder,supplier,admin'])->group(function () {
     Route::get('/', function () { return view('partner.manage-tours'); })->name('tourbuilder.dashboard');
     Route::get('/packages', function () { return view('partner.tourbuilder-packages'); })->name('tourbuilder.packages');
     Route::get('/bookings', function () { return view('partner.tourbuilder-bookings'); })->name('tourbuilder.bookings');
@@ -344,7 +346,7 @@ Route::prefix('tourbuilder-dashboard')->middleware('auth')->group(function () {
 });
 
 // 7. Amadeus GDS Partner Dashboard & Operatons Suite
-Route::prefix('amadeus-dashboard')->name('amadeus.')->middleware('auth')->group(function () {
+Route::prefix('amadeus-dashboard')->name('amadeus.')->middleware(['auth', 'role:amadeus-partner,admin'])->group(function () {
     Route::get('/', function () { return view('amadeus.dashboard'); })->name('dashboard');
     Route::get('/booking', function () { return view('amadeus.booking'); })->name('booking');
     Route::get('/issue-ticket', function () { return view('amadeus.issue_ticket'); })->name('issue-ticket');
@@ -388,7 +390,7 @@ Route::prefix('amadeus-dashboard')->name('amadeus.')->middleware('auth')->group(
 });
 
 // Dedicated Hotel Module (Standalone)
-Route::prefix('hotel-dashboard')->name('hotel_dashboard.')->group(function () {
+Route::prefix('hotel-dashboard')->name('hotel_dashboard.')->middleware(['auth', 'role:hotel-partner,admin'])->group(function () {
     Route::get('/', function () { return view('hotel.dashboard'); })->name('dashboard');
     Route::get('/search', function () { return view('hotel.search'); })->name('search');
     Route::get('/results', [HotelController::class, 'index'])->name('results');
@@ -444,153 +446,10 @@ Route::prefix('hotel-dashboard')->name('hotel_dashboard.')->group(function () {
     Route::get('/external-hotels', function () { return view('hotel.external_hotels'); })->name('external-hotels');
 });
 
-// 8. Master Admin Dashboard
-Route::get('/admin-dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->middleware('auth')->name('admin.dashboard');
-
-// Master Admin Sub-Routes (Protected)
-Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
-    Route::get('/dashboard', function () { return redirect('/admin-dashboard'); });
-
-    // Bank Offers
-    Route::prefix('bank-offers')->name('bank-offers.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Admin\BankOfferController::class, 'index'])->name('index');
-        Route::post('/', [App\Http\Controllers\Admin\BankOfferController::class, 'store'])->name('store');
-        Route::put('/{bankOffer}', [App\Http\Controllers\Admin\BankOfferController::class, 'update'])->name('update');
-        Route::patch('/{bankOffer}/toggle', [App\Http\Controllers\Admin\BankOfferController::class, 'toggleStatus'])->name('toggle');
-        Route::delete('/{bankOffer}', [App\Http\Controllers\Admin\BankOfferController::class, 'destroy'])->name('destroy');
-    });
-
-    Route::get('/partners', function () {
-        return view('admin.partners');
-    })->name('partners');
-
-    Route::get('/flights', function () {
-        return view('admin.flights');
-    })->name('flights');
-
-    Route::get('/hotels', function () {
-        return view('admin.hotels');
-    })->name('hotels');
-
-    Route::get('/tours', function () {
-        return view('admin.tours');
-    })->name('tours');
-
-    Route::get('/bookings', [App\Http\Controllers\Admin\BookingController::class, 'index'])->name('bookings');
-
-    Route::get('/marketing', function () {
-        return view('admin.marketing');
-    })->name('marketing');
-
-    // System Master Settings
-    Route::get('/settings', [App\Http\Controllers\Admin\SystemSettingsController::class, 'index'])->name('settings.index');
-    Route::post('/settings/global', [App\Http\Controllers\Admin\SystemSettingsController::class, 'updateGlobal'])->name('settings.global.update');
-    Route::post('/settings/markup', [App\Http\Controllers\Admin\SystemSettingsController::class, 'updateMarkup'])->name('settings.markup.update');
-    Route::post('/settings/api-configs', [App\Http\Controllers\Admin\SystemSettingsController::class, 'updateApiConfig'])->name('settings.api-configs.update');
-
-    Route::get('/notifications', function () {
-        return view('admin.notifications');
-    })->name('notifications');
-
-    Route::get('/broadcasts', function () {
-        return view('admin.broadcasts');
-    })->name('broadcasts');
-
-    // Inventory Control
-    Route::get('/homestays', [App\Http\Controllers\Admin\HomestayController::class, 'index'])->name('homestays.index');
-    Route::get('/trains', [App\Http\Controllers\Admin\TrainController::class, 'index'])->name('trains.index');
-    Route::get('/enquiries', [App\Http\Controllers\EnquiryController::class, 'adminIndex'])->name('enquiries.index');
-
-    Route::get('/cms', function () {
-        return view('admin.cms');
-    })->name('cms');
-
-    Route::get('/settings', function () {
-        return view('admin.settings');
-    })->name('settings');
-
-    Route::get('/profile', function () {
-        return view('admin.profile');
-    })->name('profile');
-
-    Route::get('/api-dashboard', function () {
-        return view('admin.api-dashboard');
-    })->name('api.dashboard');
-
-    Route::get('/fare-monitor', function () {
-        return view('admin.fare-monitor');
-    })->name('api.fare-monitor');
-
-    // User & Partnership Management
-    Route::prefix('users')->name('users.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Admin\UserController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\Admin\UserController::class, 'create'])->name('create');
-        Route::post('/store', [App\Http\Controllers\Admin\UserController::class, 'store'])->name('store');
-        Route::get('/requests', [App\Http\Controllers\Admin\UserController::class, 'requests'])->name('requests');
-        Route::post('/{id}/approve', [App\Http\Controllers\Admin\UserController::class, 'approve'])->name('approve');
-        Route::post('/{id}/reject', [App\Http\Controllers\Admin\UserController::class, 'reject'])->name('reject');
-        Route::delete('/{id}', [App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('destroy');
-    });
-
-    // Google API Dashboard
-    Route::prefix('google-api')->name('google-api.')->group(function () {
-        Route::get('/', function () {
-            return view('admin.google-api.dashboard');
-        })->name('dashboard');
-
-        Route::get('/flights', function () {
-            return view('admin.google-api.flights');
-        })->name('flights');
-
-        Route::get('/hotels', function () {
-            return view('admin.google-api.hotels');
-        })->name('hotels');
-    });
-
-    // Audit Logs
-    Route::prefix('audit-logs')->name('audit-logs.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('index');
-        Route::get('/analytics', [App\Http\Controllers\Admin\AuditLogController::class, 'dashboard'])->name('analytics');
-        Route::get('/{id}', [App\Http\Controllers\Admin\AuditLogController::class, 'show'])->name('show');
-    });
-
-    // Money Transfer Management
-    Route::prefix('money-transfer')->name('money-transfer.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Admin\MoneyTransferController::class, 'index'])->name('index');
-        Route::get('/providers', [App\Http\Controllers\Admin\MoneyTransferController::class, 'providers'])->name('providers');
-        Route::post('/providers/{id}', [App\Http\Controllers\Admin\MoneyTransferController::class, 'updateProvider'])->name('providers.update');
-        Route::post('/{id}/status', [App\Http\Controllers\Admin\MoneyTransferController::class, 'updateStatus'])->name('status.update');
-    });
-
-    // Website Traffic & Partnership System
-    Route::prefix('partnership')->name('partnership.')->group(function () {
-        Route::get('/dashboard', [App\Http\Controllers\Admin\PartnershipSystemController::class, 'dashboard'])->name('dashboard');
-        Route::get('/websites', [App\Http\Controllers\Admin\PartnershipSystemController::class, 'index'])->name('index');
-        Route::get('/checker', [App\Http\Controllers\Admin\PartnershipSystemController::class, 'create'])->name('checker');
-        Route::post('/fetch', [App\Http\Controllers\Admin\PartnershipSystemController::class, 'fetchTraffic'])->name('fetch');
-        Route::get('/website/{id}', [App\Http\Controllers\Admin\PartnershipSystemController::class, 'show'])->name('show');
-        Route::post('/website/{id}/status', [App\Http\Controllers\Admin\PartnershipSystemController::class, 'updateStatus'])->name('status.update');
-        Route::get('/widget', [App\Http\Controllers\Admin\PartnershipSystemController::class, 'widget'])->name('widget');
-        Route::get('/revenue', [App\Http\Controllers\Admin\PartnershipSystemController::class, 'revenue'])->name('revenue');
-    });
-});
-
-// Dedicated Accounting Panel (Separate Structure)
-Route::prefix('accounting')->name('accounting.')->group(function () {
-    Route::get('/dashboard', [App\Http\Controllers\Admin\AccountingController::class, 'dashboard'])->name('dashboard');
-    Route::get('/ledger', [App\Http\Controllers\Admin\AccountingController::class, 'ledger'])->name('ledger');
-    Route::get('/invoices', [App\Http\Controllers\Admin\AccountingController::class, 'invoices'])->name('invoices');
-    Route::get('/payments', [App\Http\Controllers\Admin\AccountingController::class, 'payments'])->name('payments');
-    Route::get('/expenses', [App\Http\Controllers\Admin\AccountingController::class, 'expenses'])->name('expenses');
-    Route::get('/reports', [App\Http\Controllers\Admin\AccountingController::class, 'reports'])->name('reports');
-    Route::get('/transactions', [App\Http\Controllers\Admin\AccountingController::class, 'ledger'])->name('transactions'); // Re-using ledger for now
-    Route::get('/gst', [App\Http\Controllers\Admin\AccountingController::class, 'gst'])->name('gst');
-    Route::get('/sync', [App\Http\Controllers\Admin\AccountingController::class, 'syncView'])->name('sync');
-    Route::post('/sync/{platform}', [App\Http\Controllers\Admin\AccountingController::class, 'syncNow'])->name('sync.now');
-});
+// Master Admin & Accounting routes moved to routes/admin.php
 
 // Partner B2B Portal Routes (Accessible directly for preview)
-Route::prefix('partner')->name('partner.')->group(function () {
+Route::prefix('partner')->name('partner.')->middleware(['auth', 'role:partner,admin'])->group(function () {
     // Auth routes are handled above in the main auth section
 
     Route::get('/dashboard', function () {
@@ -686,7 +545,7 @@ Route::prefix('corporate')->name('corporate.')->group(function () {
 });
 
 // Investor Module Routes
-Route::prefix('investor')->name('investor.')->group(function () {
+Route::prefix('investor')->name('investor.')->middleware(['auth', 'role:investor,admin'])->group(function () {
     Route::get('/login', function () {
         return view('investor.login');
     })->name('login');
@@ -713,7 +572,7 @@ Route::prefix('investor')->name('investor.')->group(function () {
 });
 
 // IATA Agent Global Partner Network Routes
-Route::prefix('agent')->name('agent.')->middleware('auth')->group(function () {
+Route::prefix('agent')->name('agent.')->middleware(['auth', 'role:iata-network,admin'])->group(function () {
     Route::get('/login', function () {
         return view('agent.login');
     })->name('login')->withoutMiddleware('auth');
@@ -873,7 +732,7 @@ Route::get('/money-transfer/comparison', [App\Http\Controllers\MoneyTransferCont
 Route::get('/money-transfer/form/{provider}', [App\Http\Controllers\MoneyTransferController::class, 'showTransferForm'])->name('money-transfer.form');
 
 // 10. Local Service Provider Module
-Route::prefix('local-provider')->name('provider.')->group(function () {
+Route::prefix('local-provider')->name('provider.')->middleware(['auth', 'role:local-provider,admin'])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\LocalServiceProviderController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [App\Http\Controllers\LocalServiceProviderController::class, 'profile'])->name('profile');
     Route::get('/services', [App\Http\Controllers\LocalServiceProviderController::class, 'services'])->name('services');
