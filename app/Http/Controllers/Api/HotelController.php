@@ -16,6 +16,19 @@ class HotelController extends Controller
         $this->hotelService = $hotelService;
     }
 
+    /**
+     * @OA\Get(
+     *     path="/hotels/search",
+     *     tags={"Hotels"},
+     *     summary="Search Hotels",
+     *     description="Search for hotels based on city code and dates",
+     *     @OA\Parameter(name="city_code", in="query", required=false, @OA\Schema(type="string", example="DXB"), description="Destination city code (e.g. DXB)"),
+     *     @OA\Parameter(name="checkin", in="query", required=false, @OA\Schema(type="string", format="date", example="2024-12-01"), description="Check-in date (YYYY-MM-DD)"),
+     *     @OA\Parameter(name="checkout", in="query", required=false, @OA\Schema(type="string", format="date", example="2024-12-05"), description="Check-out date (YYYY-MM-DD)"),
+     *     @OA\Parameter(name="adults", in="query", @OA\Schema(type="integer", example=2), description="Number of adults"),
+     *     @OA\Response(response=200, description="List of hotels")
+     * )
+     */
     public function search(Request $request)
     {
         $params = [
@@ -39,6 +52,18 @@ class HotelController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/hotels/details/{code}",
+     *     tags={"Hotels"},
+     *     summary="Hotel Details",
+     *     description="Get room types and availability for a specific hotel",
+     *     @OA\Parameter(name="code", in="path", required=true, @OA\Schema(type="string"), description="Hotel code"),
+     *     @OA\Parameter(name="checkIn", in="query", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="checkOut", in="query", @OA\Schema(type="string", format="date")),
+     *     @OA\Response(response=200, description="Hotel content and availability")
+     * )
+     */
     public function details(Request $request, $code)
     {
         $checkIn   = $request->input('checkIn', date('Y-m-d', strtotime('+7 days')));
@@ -63,6 +88,16 @@ class HotelController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/hotels/bookings",
+     *     tags={"Hotels"},
+     *     summary="My Hotel Bookings",
+     *     description="Get list of hotel bookings for the authenticated user",
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(response=200, description="List of hotel bookings")
+     * )
+     */
     public function bookings(Request $request)
     {
         $bookings = auth()->user()->bookings()->where('booking_type', 'hotel')->get();

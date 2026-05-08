@@ -1,0 +1,471 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Tripzant API Documentation",
+        "description": "API endpoints for Tripzant Mobile App",
+        "contact": {
+            "email": "support@tripzant.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000/api/v1",
+            "description": "Local Development Server"
+        },
+        {
+            "url": "https://tripnstays.com/api/v1",
+            "description": "Staging/Live Server"
+        }
+    ],
+    "paths": {
+        "/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User Login",
+                "description": "Login with email and password to receive a Bearer Token",
+                "operationId": "67d6d0fdd54fba132e1b6f55ca254183",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful login",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "1|abc..."
+                                        },
+                                        "user": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User Registration",
+                "description": "Register a new user and receive an OTP",
+                "operationId": "5d4fa5d5607ed675ba93907e1fc94534",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "phone",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "9876543210"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP sent successfully"
+                    }
+                }
+            }
+        },
+        "/login/otp/send": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Send Login OTP",
+                "description": "Send a 4-digit OTP to the user's mobile for login",
+                "operationId": "51f859525ddb7d67c67968bb29e3a10d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "9876543210"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP sent successfully"
+                    }
+                }
+            }
+        },
+        "/login/otp/verify": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify Login OTP",
+                "description": "Verify mobile OTP to receive a Bearer Token",
+                "operationId": "9d1cbcbdcbc874f006d9be4ed2fc7704",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone",
+                                    "otp"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "9876543210"
+                                    },
+                                    "otp": {
+                                        "type": "string",
+                                        "example": "1234"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful"
+                    }
+                }
+            }
+        },
+        "/flights/search": {
+            "get": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "Search Flights",
+                "description": "Search for One-Way, Round-Trip, or Multi-City flights",
+                "operationId": "85e361ddb085b867138a5ea2a4061db7",
+                "parameters": [
+                    {
+                        "name": "origin",
+                        "in": "query",
+                        "description": "Origin airport code (e.g. DEL)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "DEL"
+                        }
+                    },
+                    {
+                        "name": "destination",
+                        "in": "query",
+                        "description": "Destination airport code (e.g. BOM)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "BOM"
+                        }
+                    },
+                    {
+                        "name": "departure_date",
+                        "in": "query",
+                        "description": "Departure date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2024-12-10"
+                        }
+                    },
+                    {
+                        "name": "return_date",
+                        "in": "query",
+                        "description": "Return date for Round-Trip",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2024-12-15"
+                        }
+                    },
+                    {
+                        "name": "trip",
+                        "in": "query",
+                        "description": "Trip type",
+                        "schema": {
+                            "type": "string",
+                            "default": "oneway",
+                            "enum": [
+                                "oneway",
+                                "round"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "multi_city",
+                        "in": "query",
+                        "description": "Set true for Multi-City",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of flights"
+                    }
+                }
+            }
+        },
+        "/flights/details/{id}": {
+            "get": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "Flight Details",
+                "description": "Get detailed info for a specific flight from the last search",
+                "operationId": "f78919ea4b5d0a83383f07bd8f1fb2f4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Flight details object"
+                    }
+                }
+            }
+        },
+        "/flights/bookings": {
+            "get": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "My Flight Bookings",
+                "description": "Get list of flight bookings for the authenticated user",
+                "operationId": "018c4d9b581839d144fb35cc3d676995",
+                "responses": {
+                    "200": {
+                        "description": "List of bookings"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/hotels/search": {
+            "get": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "Search Hotels",
+                "description": "Search for hotels based on city code and dates",
+                "operationId": "b94dcf740b8a9a82b7a9d96b9886ec05",
+                "parameters": [
+                    {
+                        "name": "city_code",
+                        "in": "query",
+                        "description": "Destination city code (e.g. DXB)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "DXB"
+                        }
+                    },
+                    {
+                        "name": "checkin",
+                        "in": "query",
+                        "description": "Check-in date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2024-12-01"
+                        }
+                    },
+                    {
+                        "name": "checkout",
+                        "in": "query",
+                        "description": "Check-out date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2024-12-05"
+                        }
+                    },
+                    {
+                        "name": "adults",
+                        "in": "query",
+                        "description": "Number of adults",
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of hotels"
+                    }
+                }
+            }
+        },
+        "/hotels/details/{code}": {
+            "get": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "Hotel Details",
+                "description": "Get room types and availability for a specific hotel",
+                "operationId": "cfce546d9a0ff642369cd4fe8847c550",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "description": "Hotel code",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "checkIn",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "checkOut",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Hotel content and availability"
+                    }
+                }
+            }
+        },
+        "/hotels/bookings": {
+            "get": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "My Hotel Bookings",
+                "description": "Get list of hotel bookings for the authenticated user",
+                "operationId": "64b7e9ea2d3c7722a5abdc832680932b",
+                "responses": {
+                    "200": {
+                        "description": "List of hotel bookings"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Authentication",
+            "description": "API Endpoints for User Authentication"
+        },
+        {
+            "name": "Flights",
+            "description": "API Endpoints for Flight Search and Booking"
+        },
+        {
+            "name": "Hotels",
+            "description": "API Endpoints for Hotel Search and Booking"
+        }
+    ]
+}

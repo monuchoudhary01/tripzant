@@ -12,6 +12,35 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/login",
+     *     tags={"Authentication"},
+     *     summary="User Login",
+     *     description="Login with email and password to receive a Bearer Token",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email","password"},
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="password123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful login",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="token", type="string", example="1|abc..."),
+     *             @OA\Property(property="user", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Invalid credentials"
+     *     )
+     * )
+     */
     public function login(Request $request)
     {
         $request->validate([
@@ -40,6 +69,25 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/register",
+     *     tags={"Authentication"},
+     *     summary="User Registration",
+     *     description="Register a new user and receive an OTP",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name","email","phone","password"},
+     *             @OA\Property(property="name", type="string", example="John Doe"),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     *             @OA\Property(property="phone", type="string", example="9876543210"),
+     *             @OA\Property(property="password", type="string", format="password", example="password123")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="OTP sent successfully")
+     * )
+     */
     public function register(Request $request)
     {
         $request->validate([
@@ -75,6 +123,22 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/login/otp/send",
+     *     tags={"Authentication"},
+     *     summary="Send Login OTP",
+     *     description="Send a 4-digit OTP to the user's mobile for login",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"phone"},
+     *             @OA\Property(property="phone", type="string", example="9876543210")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="OTP sent successfully")
+     * )
+     */
     public function sendOtp(Request $request)
     {
         $request->validate(['phone' => 'required']);
@@ -90,6 +154,23 @@ class AuthController extends Controller
         return response()->json(['success' => true, 'message' => 'OTP sent successfully.']);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/login/otp/verify",
+     *     tags={"Authentication"},
+     *     summary="Verify Login OTP",
+     *     description="Verify mobile OTP to receive a Bearer Token",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"phone","otp"},
+     *             @OA\Property(property="phone", type="string", example="9876543210"),
+     *             @OA\Property(property="otp", type="string", example="1234")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Login successful")
+     * )
+     */
     public function verifyOtp(Request $request)
     {
         $request->validate([
