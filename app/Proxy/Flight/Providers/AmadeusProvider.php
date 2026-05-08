@@ -146,6 +146,8 @@ class AmadeusProvider implements FlightProvider
                     'net_price' => $price,
                     'currency' => 'INR',
                     'cabin' => $fareProd['fareDetails']['groupOfFares']['productInformation']['cabinProduct']['cabin'] ?? 'M',
+                    'booking_class' => $fareProd['fareDetails']['groupOfFares']['productInformation']['cabinProduct']['rbd'] ?? ($fareProd['fareDetails']['groupOfFares']['productInformation']['cabinProduct']['cabin'] ?? 'Y'),
+                    'seats_available' => $fareProd['fareDetails']['groupOfFares']['productInformation']['avlSelectedQuotation']['quantity'] ?? 9,
                     'baggage' => '15 KG', 
                     'source' => 'amadeus',
                     'raw_data' => $rec

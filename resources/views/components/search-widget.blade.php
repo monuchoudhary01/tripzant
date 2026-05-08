@@ -52,6 +52,9 @@
                 <button class="m-mode-btn" onclick="switchFlightMode('budget', this)">
                     <i class="fas fa-money-bill-wave"></i> Search by budget
                 </button>
+                <button class="m-mode-btn" onclick="switchFlightMode('baggage', this)">
+                    <i class="fas fa-suitcase-rolling"></i> Search by baggage
+                </button>
                 <!-- Slice Pay Info -->
                 <div class="d-flex align-items-center ms-2 bg-light rounded-pill px-3 py-1 border border-primary border-opacity-25" style="height: 38px;">
                     <img src="/img/slice-logo.svg" alt="Slice" style="height: 20px; object-fit: contain; margin-right: 8px;">
@@ -140,7 +143,7 @@
             </div>
         </div>
 
-         <!-- Unified Budget Modifier (Visible only in Budget Mode) -->
+        <!-- Unified Budget Modifier (Visible only in Budget Mode) -->
         <div class="misty-budget-row d-none animate__animated animate__fadeInDown mb-4" id="budgetModifierRow">
             <div class="d-flex align-items-center justify-content-left">
                 <div class="misty-budget-card-unified">
@@ -158,6 +161,55 @@
                 </div>
             </div>
         </div>
+
+        <!-- Unified Baggage Modifier (Visible only in Baggage Mode) -->
+        <div class="misty-budget-row d-none animate__animated animate__fadeInDown mb-4" id="baggageModifierRow">
+            <div class="d-flex align-items-center justify-content-left w-100">
+                <div class="misty-budget-card-unified w-100" style="border-color: #10b981; max-width: none;">
+                    <div>
+                        <div class="budget-label-group mb-2 d-flex align-items-center">
+                            <i class="fas fa-suitcase-rolling me-2 text-success"></i>
+                            <span class="fw-900 text-navy uppercase" style="font-size: 11px; letter-spacing: 1px;">SELECT AIRLINE BAGGAGE ALLOWANCE</span>
+                        </div>
+                        <div class="budget-input-box mt-2">
+                            <select id="baggagePreference" class="m-budget-unified-input border-0 bg-transparent w-100 fw-800 text-navy" style="font-size: 18px; outline: none;">
+                                <option value="ANY">Any Baggage (Default)</option>
+                                <option value="5">5 KG Baggage</option>
+                                <option value="7">7 KG Baggage</option>
+                                <option value="10">10 KG Baggage</option>
+                                <option value="15">15 KG Baggage</option>
+                                <option value="20">20 KG Baggage</option>
+                                <option value="25">25 KG Baggage</option>
+                                <option value="30">30 KG (2 Bags x 15 KG)</option>
+                                <option value="35">35 KG (2 Bags x 17.5 KG)</option>
+                                <option value="40">40 KG (2 Bags x 20 KG)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <style>
+            .baggage-opt-card {
+                flex-direction: row !important;
+                min-width: 160px !important;
+                padding: 8px 12px !important;
+            }
+            .baggage-opt-card .airline-name {
+                font-size: 10px !important;
+                opacity: 0.7;
+                margin-bottom: -2px;
+            }
+            .baggage-opt-card .baggage-weight {
+                font-size: 13px !important;
+                font-weight: 900 !important;
+                color: #1a1a2e !important;
+            }
+            .baggage-opt-card.active .baggage-weight, 
+            .baggage-opt-card.active .airline-name {
+                color: #fff !important;
+            }
+        </style>
 
         <div class="position-relative" style="overflow:visible;">
             <!-- Flights (DATE MODE) -->
@@ -336,6 +388,21 @@
                     <div class="class-pill" onclick="selectClass('Premium Economy', this)">Premium</div>
                     <div class="class-pill" onclick="selectClass('Business', this)">Business</div>
                     <div class="class-pill" onclick="selectClass('First Class', this)">First Class</div>
+                </div>
+            </div>
+
+            <!-- Carry-on Baggage (Flights Only) -->
+            <div class="picker-section border-top pt-4 flight-only">
+                <label class="picker-label">CARRY-ON BAGGAGE</label>
+                <div class="mt-2">
+                    <select class="form-select border-0 bg-light rounded-3 fw-700" id="carryOnBaggage" style="font-size: 14px; padding: 12px;">
+                        <option value="default" selected>Airline ticket allowance (default)</option>
+                        <option value="cabin_only">Cabin Bag Only (7KG)</option>
+                        <option value="none">No Carry-on Bag</option>
+                    </select>
+                    <p class="mt-2 text-muted" style="font-size: 11px; line-height: 1.4;">
+                        Selection records your preference for matching fares; cabin baggage limits are always set by the airline and fare purchased — verify on the ticket before travel.
+                    </p>
                 </div>
             </div>
 
@@ -1034,11 +1101,24 @@ function switchFlightMode(mode, el) {
     el.classList.add('active');
 
     const budgetRow = document.getElementById('budgetModifierRow');
+    const baggageRow = document.getElementById('baggageModifierRow');
+    
     if (mode === 'budget') {
-        budgetRow.classList.remove('d-none');
+        budgetRow?.classList.remove('d-none');
+        baggageRow?.classList.add('d-none');
+    } else if (mode === 'baggage') {
+        baggageRow?.classList.remove('d-none');
+        budgetRow?.classList.add('d-none');
     } else {
-        budgetRow.classList.add('d-none');
+        budgetRow?.classList.add('d-none');
+        baggageRow?.classList.add('d-none');
     }
+}
+
+function selectBaggageOption(code, el) {
+    el.parentNode.querySelectorAll('.baggage-opt-card').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    console.log('Selected baggage option:', code);
 }
 
 // Traveller Picker Logic
@@ -1580,6 +1660,7 @@ document.addEventListener('click', (e) => {
                                 url.searchParams.append('return_date', returnDateInput.value);
                             }
                         }
+
                         window.location.href = url.toString();
                     }
 

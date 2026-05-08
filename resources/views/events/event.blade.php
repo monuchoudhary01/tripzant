@@ -289,4 +289,25 @@
 </style>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+@if(session('success'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+            title: '<div class="text-success fw-800">Registration Successful!</div>',
+            html: '<div class="text-navy fw-700">You are successfully eligible for the referral program.</div>',
+            icon: 'success',
+            confirmButtonText: 'Got it!',
+            confirmButtonColor: '#f97316',
+            background: '#fff',
+            customClass: {
+                popup: 'rounded-4 shadow-lg border-0',
+                title: 'fs-4',
+                confirmButton: 'rounded-pill px-4 fw-700'
+            }
+        });
+    });
+</script>
+@endif
 @endsection

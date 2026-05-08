@@ -1226,34 +1226,7 @@
     }
     .animate-pulse { animation: pulse-red 2s infinite; }
 
-    /* GDS Style Dropdown */
-    .gds-menu {
-        border-radius: 4px !important;
-        overflow: hidden;
-        animation: gdsFadeIn 0.2s ease-out;
-    }
-    @keyframes gdsFadeIn {
-        from { opacity: 0; transform: translateY(-5px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .gds-item {
-        color: #000 !important;
-        transition: none !important;
-    }
-    .gds-item:hover {
-        background-color: #ffeb3b !important; /* Authentic GDS Yellow */
-        color: #000 !important;
-    }
 
-    /* Show Dropdown on Hover */
-    .dropdown:hover > .dropdown-menu {
-        display: block !important;
-        margin-top: 0;
-    }
-    .dropdown > .dropdown-menu {
-        margin-top: 10px; /* Offset to bridge gap */
-        display: none;
-    }
     /* Multi-Class Selected Bar */
     .split-booking-bar {
         position: fixed;
