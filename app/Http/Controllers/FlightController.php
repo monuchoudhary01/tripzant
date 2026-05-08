@@ -230,6 +230,8 @@ class FlightController extends Controller
             if (!empty($f['is_refundable'])) $refundableCount++;
         }
 
+        $bankOffers = \App\Models\BankOffer::where('is_active', true)->orderBy('sort_order')->get();
+
         $view = view('flight-listing', [
             'flights' => $allFlightsSorted,
             'params' => $params,
@@ -248,6 +250,7 @@ class FlightController extends Controller
             'error_message' => $errorMessage ?? null,
             'isBudgetError' => $isBudgetError ?? false,
             'fareType' => $fareType,
+            'bankOffers' => $bankOffers,
             'adults' => $params['adults'],
             'children' => $params['children'],
             'infants' => $params['infants'],
@@ -275,6 +278,87 @@ class FlightController extends Controller
         return $view;
     }
 
+    public function getFareClasses(Request $request)
+    {
+        $id = $request->input('id');
+        $basePrice = (float) $request->input('price');
+        
+        // Simulation: In real apps, we'd call the API to check availability/price for other cabins
+        // Here we apply multipliers based on industry averages
+        $cabins = [
+            'ECONOMY' => ['multiplier' => 1.0, 'name' => 'Economy', 'seats' => 9],
+            'PREMIUM_ECONOMY' => ['multiplier' => 1.5, 'name' => 'Premium Economy', 'seats' => 4],
+            'BUSINESS' => ['multiplier' => 3.2, 'name' => 'Business', 'seats' => 2],
+            'FIRST' => ['multiplier' => 5.5, 'name' => 'First Class', 'seats' => 1]
+        ];
+
+        $results = [];
+        foreach ($cabins as $code => $data) {
+            $cabinPrice = $basePrice * $data['multiplier'];
+            $results[$code] = [
+                'regular' => round($cabinPrice),
+                'student' => round($cabinPrice * 0.95),
+                'senior' => round($cabinPrice * 0.92),
+                'name' => $data['name'],
+                'seats' => $data['seats']
+            ];
+        }
+
+        return response()->json(['success' => true, 'fares' => $results]);
+    }
+
+    public function selectFare(Request $request)
+    {
+        try {
+        $id        = $request->input('id');
+        $price     = (float) $request->input('price');
+        $cabin     = $request->input('cabin', 'ECONOMY');
+        $fareType  = $request->input('fare_type', 'regular');
+
+        // Patch the cached flight data so checkout reads the selected price
+        $cacheKey  = 'flight_data_' . $id;
+        $searchKey = 'flight_search_' . session()->getId();
+
+        $existing = \Illuminate\Support\Facades\Cache::get($cacheKey);
+
+        if (!$existing) {
+            // Fall back to the search cache
+            $fullResult = \Illuminate\Support\Facades\Cache::get($searchKey)
+                       ?: \Illuminate\Support\Facades\Cache::get('flight_search_full', []);
+            $rawFlights = $fullResult['data'] ?? [];
+            foreach ($rawFlights as $flight) {
+                $fid = is_object($flight) ? ($flight->id ?? null) : ($flight['id'] ?? null);
+                if ($fid == $id) {
+                    $existing = is_object($flight) ? $flight->toArray() : $flight;
+                    break;
+                }
+            }
+        }
+
+        if ($existing) {
+            // Update the price and cabin to what user selected in the modal
+            $existing['price']       = $price;
+            $existing['cabin']       = $cabin;
+            $existing['fare_type']   = $fareType;
+            // Also patch nested price array if it exists (Amadeus REST style)
+            if (isset($existing['price']) && is_array($existing['price'])) {
+                $existing['price']['total'] = $price;
+            }
+            \Illuminate\Support\Facades\Cache::put($cacheKey, $existing, now()->addMinutes(30));
+        }
+
+        return response()->json([
+            'success'      => true,
+            'redirect'     => route('checkout', ['type' => 'flight', 'id' => $id]),
+            'selected_price' => $price,
+            'cabin'        => $cabin,
+        ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Flight Select Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
     public function search(Request $request)
     {
         return $this->index($request);
@@ -284,18 +368,22 @@ class FlightController extends Controller
     {
         $id = $request->input('id');
         
-        $cacheKey = 'flight_search_' . session()->getId();
-        $fullResult = \Illuminate\Support\Facades\Cache::get($cacheKey) ?: \Illuminate\Support\Facades\Cache::get('flight_search_full', []);
-        $rawFlights = $fullResult['raw_data'] ?? [];
-        
-        // Handle dictionaries
-        $dictionaries = $fullResult['dictionaries'] ?? ($fullResult['meta']['dictionaries'] ?? []);
+        // 1. Try to fetch from individual flight cache (robust)
+        $flightOffer = \Illuminate\Support\Facades\Cache::get('flight_data_' . $id);
+        $dictionaries = [];
 
-        // Find the flight by ID in the raw data
-        $flightOffer = collect($rawFlights)->first(function($item) use ($id) {
-            $itemId = is_array($item) ? ($item['id'] ?? null) : ($item->id ?? null);
-            return $itemId == $id;
-        });
+        if (!$flightOffer) {
+            // 2. Fallback to session search results
+            $cacheKey = 'flight_search_' . session()->getId();
+            $fullResult = \Illuminate\Support\Facades\Cache::get($cacheKey) ?: \Illuminate\Support\Facades\Cache::get('flight_search_full', []);
+            $rawFlights = $fullResult['raw_data'] ?? [];
+            $dictionaries = $fullResult['dictionaries'] ?? ($fullResult['meta']['dictionaries'] ?? []);
+
+            $flightOffer = collect($rawFlights)->first(function($item) use ($id) {
+                $itemId = is_array($item) ? ($item['id'] ?? null) : ($item->id ?? null);
+                return $itemId == $id;
+            });
+        }
 
         if (!$flightOffer) {
             return response()->json(['error' => 'Flight selection expired. Please search again.'], 404);

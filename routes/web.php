@@ -98,6 +98,8 @@ Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->name('verify.o
 
 // Flights
 Route::get('/flights', [FlightController::class, 'index'])->name('flights.index');
+Route::get('/flights/fare-classes', [FlightController::class, 'getFareClasses'])->name('flights.fare-classes');
+Route::post('/flights/select-fare', [FlightController::class, 'selectFare'])->name('flights.select-fare');
 Route::post('/flights/search', [FlightController::class, 'search'])->name('flights.search');
 Route::get('/flights/details', [FlightController::class, 'details'])->name('flights.details');
 Route::post('/flights/book', [FlightController::class, 'book'])->name('flights.book');
@@ -448,6 +450,15 @@ Route::get('/admin-dashboard', [App\Http\Controllers\Admin\DashboardController::
 // Master Admin Sub-Routes (Protected)
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/dashboard', function () { return redirect('/admin-dashboard'); });
+
+    // Bank Offers
+    Route::prefix('bank-offers')->name('bank-offers.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\BankOfferController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\Admin\BankOfferController::class, 'store'])->name('store');
+        Route::put('/{bankOffer}', [App\Http\Controllers\Admin\BankOfferController::class, 'update'])->name('update');
+        Route::patch('/{bankOffer}/toggle', [App\Http\Controllers\Admin\BankOfferController::class, 'toggleStatus'])->name('toggle');
+        Route::delete('/{bankOffer}', [App\Http\Controllers\Admin\BankOfferController::class, 'destroy'])->name('destroy');
+    });
 
     Route::get('/partners', function () {
         return view('admin.partners');

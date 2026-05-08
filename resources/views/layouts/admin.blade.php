@@ -9,6 +9,7 @@
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <!-- Google Fonts -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
@@ -292,6 +293,9 @@
                 </a>
 
                 <span class="admin-nav-label">Configuration</span>
+                <a href="{{ route('admin.bank-offers.index') }}" class="admin-nav-link {{ request()->is('admin/bank-offers*') ? 'active' : '' }}">
+                    <i class="fas fa-credit-card"></i> Bank Offers
+                </a>
                 <a href="/admin/marketing" class="admin-nav-link {{ request()->is('admin/marketing') ? 'active' : '' }}">
                     <i class="fas fa-bullhorn"></i> Marketing & Social
                 </a>
@@ -350,5 +354,8 @@
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @stack('scripts')
 </body>
 </html>

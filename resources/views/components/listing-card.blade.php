@@ -34,6 +34,10 @@
         </div>
     @endif
 
+    <div class="bank-offer-badge" id="bankBadge_{{ $f['id'] ?? uniqid() }}">
+        <i class="fas fa-percentage me-1"></i> BANK OFFER APPLIED
+    </div>
+
     <!-- Main Result Content -->
     <div class="p-4">
         @if($type == 'flight')
@@ -79,31 +83,17 @@
                                 </span>
                             </div>
                             <div class="d-flex flex-column gap-1 mt-1">
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="text-muted fw-800 uppercase" style="font-size:10px;">FLT NO: {{ $f['flight_number'] ?? $subtitle }}</span>
-                                    <span class="badge bg-green-soft text-success border border-success border-opacity-10 px-2" style="font-size: 8px; font-weight: 800;">
-                                        <i class="fas fa-suitcase me-1"></i> CARRY-ON INCL.
-                                    </span>
-                                </div>
-                                <div class="d-flex align-items-center gap-1 dropdown">
-                                    <div class="badge bg-navy bg-opacity-10 text-navy cursor-pointer" style="font-size:9px; font-weight:900; border: 1px solid rgba(0,0,128,0.1);" data-bs-toggle="dropdown">
+                                <span class="text-muted fw-700 uppercase" style="font-size:10px;">{{ $subtitle }}</span>
+                                <div class="d-flex align-items-center gap-1 cursor-pointer hvr-light-bg p-1 rounded fare-options-trigger" 
+                                     style="cursor: pointer;" 
+                                     onclick="window.openFareOptions('{{ $f['id'] ?? '' }}', '{{ str_replace(',','',$price) }}', '{{ $title }}')"
+                                     data-flight-id="{{ $f['id'] ?? '' }}" 
+                                     data-price="{{ str_replace(',','',$price) }}" 
+                                     data-airline="{{ $title }}">
+                                    <span class="badge bg-navy text-white" style="font-size:9px; font-weight:900; border: 1px solid rgba(0,0,128,0.1);">
                                         <i class="fas fa-chair me-1" style="font-size:8px;"></i> {{ $f['booking_class'] ?? 'Y' }}{{ $f['seats_available'] ?? '9' }}+
-                                    </div>
-                                    <span class="text-muted fw-800" style="font-size:9px;">{{ strtoupper($f['cabin'] ?? 'ECONOMY') }}</span>
-                                    
-                                    <ul class="dropdown-menu gds-menu shadow-lg border-0 p-0" style="min-width: 110px; background: #f4f7fa;">
-                                        @php 
-                                            $bClass = $f['booking_class'] ?? 'Y';
-                                            $seats = $f['seats_available'] ?? 9;
-                                            $classes = [$bClass.$seats, 'B'.rand(1,9), 'H'.rand(1,9), 'K'.rand(1,9)];
-                                        @endphp
-                                        @foreach($classes as $c)
-                                        <li class="gds-item px-2 py-1 fw-bold d-flex justify-content-between align-items-center" style="font-family: 'Courier New', Courier, monospace; font-size: 11px; border-bottom: 1px solid rgba(0,0,0,0.05);">
-                                            <span>SS1{{ $c }}{{ rand(1,5) }}</span>
-                                            <span class="text-success" style="font-size: 9px;">{{ $currency }} {{ number_format(str_replace(',','',$price) + rand(-500, 2000)) }}</span>
-                                        </li>
-                                        @endforeach
-                                    </ul>
+                                    </span>
+                                    <span class="text-muted fw-800" style="font-size:9px;">{{ strtoupper($f['cabin'] ?? 'ECONOMY') }} <i class="fas fa-chevron-down ms-1 opacity-50" style="font-size:7px;"></i></span>
                                 </div>
                                 @if(Auth::check() && Auth::user()->role === 'b2b')
                                     <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 mt-1" style="font-size:9px; font-weight:800; width: fit-content;" title="B2B Hub Code">NODE: {{ strtoupper(substr($source, 0, 3)) }}-{{ rand(100,999) }}</span>
@@ -155,7 +145,7 @@
                                 <div class="text-muted text-decoration-line-through me-1" style="font-size: 11px;">{{ $currency }} {{ number_format($f['original_price'] ?? 0) }}</div>
                             </div>
                         @endif
-                        <span class="fw-900 text-navy" style="font-size:22px;">{{ $currency }} {{ $price }}</span>
+                        <span class="fw-900 text-navy flight-price-display" style="font-size:22px;">{{ $currency }} {{ $price }}</span>
                         <span class="text-muted fw-800" style="font-size:10px; display:block; margin-top:-5px;">per adult</span>
                         
                         @if(!$isBest)
@@ -208,7 +198,7 @@
                             </div>
                             <div class="text-end">
                                 <span class="text-muted fw-700 block mb-1" style="font-size:11px; opacity:0.6;">Starting from</span>
-                                <h4 class="fw-900 text-navy mb-0" style="font-size:24px;">{{ $currency }} {{ $price }}</h4>
+                                <h4 class="fw-900 text-navy mb-0 flight-price-display" style="font-size:24px;">{{ $currency }} {{ $price }}</h4>
                                 <span class="text-muted fw-700" style="font-size:10px; display:block;">per night</span>
                             </div>
                         </div>
@@ -251,7 +241,7 @@
                 </div>
                 <div class="col-lg-3 text-end border-start px-4">
                     <div class="mb-2">
-                        <span class="fw-900 text-navy" style="font-size:26px;">{{ $currency }} {{ $price }}</span>
+                        <span class="fw-900 text-navy flight-price-display" style="font-size:26px;">{{ $currency }} {{ $price }}</span>
                     </div>
                     <button class="btn btn-navy w-100 rounded-pill fw-900 shadow-sm" style="padding: 10px; font-size:14px;">
                         BOOK NOW
@@ -274,27 +264,20 @@
             <div class="d-flex align-items-center gap-2 small fw-800 text-navy uppercase" style="font-size:10.5px; letter-spacing:0.3px;">
                 <i class="fas fa-bowl-food text-primary"></i> <span class="text-muted">MEALS:</span> {{ $f['meal_info'] ?? 'FREE MEALS' }}
             </div>
-            <div class="d-flex align-items-center gap-2 small fw-800 text-navy uppercase dropdown" style="font-size:10.5px; letter-spacing:0.3px;">
-                <div class="cursor-pointer" data-bs-toggle="dropdown">
-                    <i class="fas fa-chair text-primary"></i> <span class="text-muted">SEAT:</span> {{ $f['booking_class'] ?? 'Y' }}{{ $f['seats_available'] ?? '9' }}+ ({{ $f['cabin'] ?? 'ECONOMY' }})
-                </div>
-                <ul class="dropdown-menu gds-menu shadow-lg border-0 p-0" style="min-width: 120px; background: #f4f7fa;">
-                    @php 
-                        $bClass = $f['booking_class'] ?? 'Y';
-                        $seats = $f['seats_available'] ?? 9;
-                        $classes = [$bClass.$seats, 'B'.rand(1,9), 'H'.rand(1,9), 'K'.rand(1,9), 'L'.rand(1,9), 'M'.rand(1,9)];
-                    @endphp
-                    @foreach($classes as $c)
-                    <li class="gds-item px-3 py-1 fw-bold d-flex justify-content-between align-items-center" style="font-family: 'Courier New', Courier, monospace; font-size: 12px; border-bottom: 1px solid rgba(0,0,0,0.05);">
-                        <span>SS1{{ $c }}{{ rand(1,5) }}</span>
-                        <span class="text-success" style="font-size: 10px;">{{ $currency }} {{ number_format(str_replace(',','',$price) + rand(-500, 2000)) }}</span>
-                    </li>
-                    @endforeach
-                    <li class="bg-navy text-white px-3 py-1 small fw-bold" style="font-size: 9px;">
-                        {{ strtoupper($source) }} GDS LIVE
-                    </li>
-                </ul>
+            <div class="d-flex align-items-center gap-2 small fw-800 text-navy uppercase" style="font-size:10.5px; letter-spacing:0.3px;">
+                <i class="fas fa-chair text-primary"></i> <span class="text-muted">SEAT:</span> {{ $f['booking_class'] ?? 'Y' }}{{ $f['seats_available'] ?? '9' }}+ ({{ $f['cabin'] ?? 'ECONOMY' }})
             </div>
+            @if(request('fare_type') && request('fare_type') !== 'regular')
+                @php
+                    $ft = request('fare_type');
+                    $fareLabel = $ft == 'senior' ? 'SeniorCitizen' : ($ft == 'student' ? 'Student' : ($ft == 'armed_forces' ? 'ArmedForces' : ucfirst($ft)));
+                @endphp
+                <div class="d-flex align-items-center ms-2">
+                    <span style="background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; padding: 4px 14px; border-radius: 50px; font-size: 11px; font-weight: 800; letter-spacing: 0.3px;">
+                        {{ $fareLabel }}
+                    </span>
+                </div>
+            @endif
         </div>
         <div class="d-flex gap-3 align-items-center">
             <button onclick="showFlightDetails('{{ $f['id'] ?? '' }}')" class="btn btn-link text-primary text-decoration-none fw-900 p-0" style="font-size:11px;">
@@ -323,37 +306,5 @@
     }
     .result-card:hover {
         transform: translateY(-2px);
-    }
-    .bg-green-soft { background-color: rgba(34, 197, 94, 0.1); }
-    
-    /* GDS Style Dropdown */
-    .gds-menu {
-        border-radius: 4px !important;
-        overflow: hidden;
-        animation: gdsFadeIn 0.2s ease-out;
-        z-index: 1000;
-    }
-    @keyframes gdsFadeIn {
-        from { opacity: 0; transform: translateY(-5px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .gds-item {
-        color: #000 !important;
-        transition: none !important;
-        cursor: default;
-    }
-    .gds-item:hover {
-        background-color: #ffeb3b !important; /* Authentic GDS Yellow */
-        color: #000 !important;
-    }
-
-    /* Show Dropdown on Hover */
-    .dropdown:hover > .dropdown-menu {
-        display: block !important;
-        margin-top: 0;
-    }
-    .dropdown > .dropdown-menu {
-        margin-top: 0;
-        display: none;
     }
 </style>

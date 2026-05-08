@@ -545,6 +545,7 @@
 @section('scripts')
 <script>
     // MMT Style State Management
+    let globalCheckoutData = null;
     let extraCharges = {
         seats: 0,
         baggage: 0,
@@ -553,7 +554,7 @@
     };
 
     function refreshTotal() {
-        const itemData = @json($item);
+        const itemData = globalCheckoutData || @json($item);
         let basePrice = parseFloat("{{ $totalPrice ?? 0 }}");
         
         if (basePrice <= 0 && itemData) {
@@ -571,7 +572,23 @@
         const seatFare = extraCharges.seats;
         const addonFare = extraCharges.baggage + extraCharges.meals;
         const tax = (paxTotal + seatFare + addonFare) * 0.12;
-        const total = paxTotal + seatFare + addonFare + tax;
+        
+        let preDiscountTotal = paxTotal + seatFare + addonFare + tax;
+        let bankDiscount = 0;
+        
+        if (itemData && itemData.bankOffer) {
+            const offer = itemData.bankOffer;
+            if (preDiscountTotal >= (offer.min_amount || 0)) {
+                if (offer.discount_type === 'percentage') {
+                    bankDiscount = Math.floor(preDiscountTotal * offer.discount_value / 100);
+                    if (offer.max_discount) bankDiscount = Math.min(bankDiscount, offer.max_discount);
+                } else {
+                    bankDiscount = offer.discount_value;
+                }
+            }
+        }
+        
+        const total = Math.max(0, preDiscountTotal - bankDiscount);
 
         document.getElementById('summaryBaseFare').innerText = '₹' + Math.round(basePrice).toLocaleString();
         document.getElementById('summaryPaxCount').innerText = '× ' + paxCount;
@@ -579,14 +596,45 @@
         
         if (seatFare > 0) {
             document.getElementById('seatChargeRow').classList.remove('d-none');
+            document.getElementById('seatChargeRow').classList.add('d-flex');
             document.getElementById('summarySeatFare').innerText = '₹' + Math.round(seatFare).toLocaleString();
             document.getElementById('selectedSeatBadge')?.classList.remove('d-none');
         }
 
         if (addonFare > 0) {
             document.getElementById('addonChargeRow').classList.remove('d-none');
+            document.getElementById('addonChargeRow').classList.add('d-flex');
             document.getElementById('summaryAddonFare').innerText = '₹' + Math.round(addonFare).toLocaleString();
             document.getElementById('selectedAddonBadge')?.classList.remove('d-none');
+        }
+
+        const discountRow = document.getElementById('discountRow');
+        if (bankDiscount > 0 && discountRow) {
+            discountRow.classList.remove('d-none');
+            discountRow.classList.add('d-flex');
+            document.getElementById('summaryDiscount').innerText = '-₹' + Math.round(bankDiscount).toLocaleString();
+            
+            if (!document.getElementById('appliedBankOfferBox')) {
+                const offerBox = document.createElement('div');
+                offerBox.id = 'appliedBankOfferBox';
+                offerBox.className = 'alert alert-success border-0 rounded-4 p-3 mb-4 d-flex align-items-center gap-3';
+                offerBox.style.background = '#f0fdf4';
+                offerBox.innerHTML = `
+                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width:40px; height:40px;"><i class="fas fa-tags"></i></div>
+                    <div>
+                        <div class="fw-900 text-success mb-0" style="font-size:14px;">${itemData.bankOffer.display_name} Applied!</div>
+                        <div class="small fw-bold text-success opacity-75">You saved ₹${Math.round(bankDiscount).toLocaleString()} on this booking</div>
+                    </div>
+                `;
+                const summaryContainer = document.getElementById('itineraryBreakdown');
+                if (summaryContainer) summaryContainer.insertAdjacentElement('afterend', offerBox);
+            } else {
+                document.querySelector('#appliedBankOfferBox .small').innerText = `You saved ₹${Math.round(bankDiscount).toLocaleString()} on this booking`;
+            }
+        } else if (discountRow) {
+            discountRow.classList.add('d-none');
+            discountRow.classList.remove('d-flex');
+            if (document.getElementById('appliedBankOfferBox')) document.getElementById('appliedBankOfferBox').remove();
         }
 
         document.getElementById('summaryTotal').innerText = '₹' + Math.round(total).toLocaleString();
@@ -755,6 +803,8 @@
                 itemData = parsed;
             }
         }
+        
+        globalCheckoutData = itemData;
 
         if (!itemData || (Array.isArray(itemData) && itemData.length === 0)) return;
 
