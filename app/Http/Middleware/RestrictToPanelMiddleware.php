@@ -34,24 +34,27 @@ class RestrictToPanelMiddleware
 
             // 2. Define Panel Prefixes and required roles
             $panelMapping = [
-                '/admin-dashboard'      => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
-                '/admin'                => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
-                '/accounting'           => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
-                '/agent-dashboard'      => User::ROLE_B2B_AGENT,
-                '/iata-dashboard'       => User::ROLE_IATA_AGENT,
+                '/admin-dashboard'      => User::ROLE_ADMIN,
+                '/admin'                => User::ROLE_ADMIN,
+                '/accounting'           => [User::ROLE_ADMIN, User::ROLE_ACCOUNTING],
+                '/agent-dashboard'      => User::ROLE_AGENT,
+                '/iata-dashboard'       => User::ROLE_IATA,
                 '/amadeus-dashboard'    => User::ROLE_AMADEUS_PARTNER,
                 '/corporate'            => User::ROLE_CORPORATE,
                 '/corporate-dashboard'  => User::ROLE_CORPORATE,
                 '/hotel-dashboard'      => User::ROLE_HOTEL_PARTNER,
-                '/tourbuilder-dashboard'=> User::ROLE_TOUR_SUPPLIER,
+                '/tourbuilder-dashboard'=> User::ROLE_TOUR_BUILDER,
                 '/cargo-dashboard'      => User::ROLE_CARGO,
-                '/cargo-agent'          => [User::ROLE_B2B_AGENT, User::ROLE_CARGO],
-                '/cargo-hub'            => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN, User::ROLE_CARGO],
-                '/dashboard'            => [User::ROLE_CUSTOMER, User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN],
-                '/user-cargo'           => [User::ROLE_CUSTOMER, User::ROLE_CARGO],
-                '/partner'              => User::ROLE_TOUR_SUPPLIER,
-                '/agent'                => User::ROLE_IATA_AGENT,
+                '/cargo-agent'          => [User::ROLE_AGENT, User::ROLE_CARGO],
+                '/cargo-hub'            => [User::ROLE_ADMIN, User::ROLE_CARGO],
+                '/dashboard'            => [User::ROLE_USER, User::ROLE_ADMIN],
+                '/user-cargo'           => [User::ROLE_USER, User::ROLE_CARGO],
+                '/partner'              => User::ROLE_TOUR_BUILDER,
+                '/agent'                => User::ROLE_IATA,
                 '/affiliate-dashboard'  => User::ROLE_AFFILIATE,
+                '/investor'             => [User::ROLE_INVESTOR, User::ROLE_ADMIN],
+                '/visa'                 => [User::ROLE_VISA_PROVIDER, User::ROLE_ADMIN],
+                '/local-provider'       => [User::ROLE_LOCAL_PROVIDER, User::ROLE_ADMIN],
             ];
 
             // 3. Check if user is accessing a panel and if they are authorized
@@ -82,10 +85,10 @@ class RestrictToPanelMiddleware
                 }
                 // Allow B2C Customers, B2B Agents & Affiliates to browse the frontend/booking pages
                 $allowedOnFrontend = [
-                    User::ROLE_CUSTOMER, 
+                    User::ROLE_USER, 
                     User::ROLE_AFFILIATE, 
-                    User::ROLE_B2B_AGENT, 
-                    User::ROLE_IATA_AGENT,
+                    User::ROLE_AGENT, 
+                    User::ROLE_IATA,
                     User::ROLE_CORPORATE
                 ];
 
