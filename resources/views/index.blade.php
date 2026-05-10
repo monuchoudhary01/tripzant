@@ -253,7 +253,7 @@
                     <h2 class="main-title">Handpicked Offers</h2>
                     <p class="section-subtitle">Curated deals you won't find anywhere else</p>
                 </div>
-                <a href="#" class="view-all-link">View All <i class="fas fa-arrow-right"></i></a>
+                <a href="/offers" class="view-all-link">View All <i class="fas fa-arrow-right"></i></a>
             </div>
 
             <!-- Offer category tabs -->
@@ -532,67 +532,77 @@
         <div class="container">
             <div class="section-head">
                 <div>
-                    <h2 class="main-title">Trending Destinations</h2>
-                    <p class="section-subtitle">Most searched places by travellers this month</p>
+                    <h2 class="main-title">Hotels in India</h2>
+                    <p class="section-subtitle">Trending places in India preferred by travellers this month</p>
                 </div>
-                <a href="#" class="view-all-link">Explore All <i class="fas fa-arrow-right"></i></a>
+                <a href="/hotels" class="view-all-link">Explore All <i class="fas fa-arrow-right"></i></a>
             </div>
 
-            <div class="row g-3">
-                <div class="col-lg-5 col-md-6">
-                    <div class="dest-card" style="height: 340px;">
-                        <img src="https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=700&auto=format&fit=crop&q=80" alt="Goa">
-                        <div class="dest-card-overlay">
-                            <h5>Goa</h5>
-                            <span>Beaches, Nightlife & Culture · Starting ₹5,500</span>
-                        </div>
+            <style>
+                .inline-dest-wrapper {
+                    display: flex;
+                    overflow-x: auto;
+                    gap: 15px;
+                    padding: 10px 0 25px;
+                    scroll-behavior: smooth;
+                    -webkit-overflow-scrolling: touch;
+                }
+                .inline-dest-wrapper::-webkit-scrollbar {
+                    height: 6px;
+                }
+                .inline-dest-wrapper::-webkit-scrollbar-thumb {
+                    background: #e2e8f0;
+                    border-radius: 10px;
+                }
+                .inline-dest-card {
+                    flex: 0 0 220px;
+                    height: 280px;
+                    position: relative;
+                    border-radius: 20px;
+                    overflow: hidden;
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+                    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+                }
+                .inline-dest-card:hover {
+                    transform: translateY(-8px);
+                    box-shadow: 0 15px 30px rgba(0,0,0,0.12);
+                }
+                .inline-dest-card img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                .inline-dest-overlay {
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-end;
+                    padding: 20px;
+                    color: #fff;
+                }
+                .inline-dest-overlay h5 {
+                    margin: 0;
+                    font-weight: 800;
+                    font-size: 18px;
+                }
+                .inline-dest-overlay span {
+                    font-size: 12px;
+                    opacity: 0.8;
+                }
+            </style>
+
+            <div class="inline-dest-wrapper">
+                @foreach($popularDestinations as $dest)
+                <a href="{{ route('hotels.index', ['city_code' => $dest['code'], 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}" class="inline-dest-card">
+                    <img src="{{ $dest['image'] }}" alt="{{ $dest['name'] }}">
+                    <div class="inline-dest-overlay">
+                        <h5>{{ $dest['name'] }}</h5>
+                        <span>{{ $dest['desc'] }} · From ₹{{ $dest['price'] }}</span>
                     </div>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <div class="dest-card" style="height: 340px;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/d/da/Taj_Mahal%2C_Agra%2C_India_edit2.jpg" alt="Agra">
-                        <div class="dest-card-overlay">
-                            <h5>Agra</h5>
-                            <span>Heritage & Wonder · Starting ₹3,500</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6">
-                    <div class="dest-card" style="height: 340px;">
-                        <img src="https://images.unsplash.com/photo-1506038634487-60a69ae4b7b1?w=600&auto=format&fit=crop&q=80" alt="Kerala">
-                        <div class="dest-card-overlay">
-                            <h5>Kerala</h5>
-                            <span>Backwaters & Ayurveda · Starting ₹8,400</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6">
-                    <div class="dest-card">
-                        <img src="https://images.unsplash.com/photo-1524230572899-a752b3835840?w=600&auto=format&fit=crop&q=80" alt="Ladakh">
-                        <div class="dest-card-overlay">
-                            <h5>Ladakh</h5>
-                            <span>Mountains & Adventure · Starting ₹12,999</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6">
-                    <div class="dest-card">
-                        <img src="https://images.unsplash.com/photo-1585123334904-845d60e97b29?w=600&auto=format&fit=crop&q=80" alt="Delhi">
-                        <div class="dest-card-overlay">
-                            <h5>Delhi</h5>
-                            <span>Capital & History · Starting ₹2,800</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6">
-                    <div class="dest-card">
-                        <img src="https://images.unsplash.com/photo-1566552881560-0be862a7c445?w=600&auto=format&fit=crop&q=80" alt="Mumbai">
-                        <div class="dest-card-overlay">
-                            <h5>Mumbai</h5>
-                            <span>City of Dreams · Starting ₹4,200</span>
-                        </div>
-                    </div>
-                </div>
+                </a>
+                @endforeach
             </div>
         </div>
     </section>
@@ -708,106 +718,41 @@
             </div>
 
             <div class="row g-4">
+                @foreach($hotels as $hotel)
                 <div class="col-lg-3 col-md-6">
-                    <div class="card-premium">
-                        <div class="card-img-wrap">
-                            <img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=500&auto=format&fit=crop&q=80" alt="Taj Palace">
-                            <span class="card-img-overlay-badge"><i class="fas fa-crown me-1" style="color:var(--primary)"></i> Luxury</span>
-                            <div class="card-img-overlay-heart"><i class="far fa-heart"></i></div>
-                        </div>
-                        <div class="card-body-premium">
-                            <div class="d-flex align-items-center gap-2 mb-2">
-                                <span class="rating-pill"><i class="fas fa-star" style="font-size:10px"></i> 4.9</span>
-                                <span style="font-size:12px;color:var(--gray-300)">480 reviews</span>
+                    <div class="card-premium hvr-float h-100">
+                        <a href="{{ route('hotel.details', ['hotel_code' => $hotel['code'], 'checkIn' => date('Y-m-d', strtotime('+7 days')), 'checkOut' => date('Y-m-d', strtotime('+8 days'))]) }}" class="text-decoration-none">
+                            <div class="card-img-wrap">
+                                <img src="{{ $hotel['main_image'] }}" alt="{{ $hotel['name'] }}">
+                                <span class="card-img-overlay-badge"><i class="fas fa-crown me-1" style="color:var(--primary)"></i> Luxury</span>
+                                <div class="card-img-overlay-heart"><i class="far fa-heart"></i></div>
                             </div>
-                            <h6 class="card-title-premium">Taj Palace, New Delhi</h6>
-                            <p class="card-location"><i class="fas fa-map-marker-alt"></i> Diplomatic Enclave, Delhi</p>
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div>
-                                    <span class="price-tag-crossed">₹32,000</span>
-                                    <span class="price-tag">₹24,500</span>
-                                    <div class="price-per-night">per night</div>
+                            <div class="card-body-premium text-navy">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="rating-pill"><i class="fas fa-star" style="font-size:10px"></i> {{ $hotel['rating'] ?? 4.5 }}</span>
+                                    <span style="font-size:12px;color:var(--gray-300)">{{ rand(100, 999) }} reviews</span>
                                 </div>
-                                <span class="discount-badge">24% OFF</span>
+                                <h6 class="card-title-premium">{{ $hotel['name'] }}</h6>
+                                <p class="card-location"><i class="fas fa-map-marker-alt"></i> {{ $hotel['address'] ?? 'India' }}</p>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <span class="price-tag-crossed">₹{{ number_format($hotel['price'] * 1.25) }}</span>
+                                        <span class="price-tag">₹{{ number_format($hotel['price']) }}</span>
+                                        <div class="price-per-night">per night</div>
+                                    </div>
+                                    <button class="btn btn-sm btn-navy rounded-pill px-3 fw-bold">Select</button>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-6">
-                    <div class="card-premium">
-                        <div class="card-img-wrap">
-                            <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&auto=format&fit=crop&q=80" alt="The Leela">
-                            <span class="card-img-overlay-badge"><i class="fas fa-star me-1" style="color:var(--secondary)"></i> 5 Star</span>
-                            <div class="card-img-overlay-heart"><i class="far fa-heart"></i></div>
-                        </div>
-                        <div class="card-body-premium">
-                            <div class="d-flex align-items-center gap-2 mb-2">
-                                <span class="rating-pill"><i class="fas fa-star" style="font-size:10px"></i> 4.8</span>
-                                <span style="font-size:12px;color:var(--gray-300)">320 reviews</span>
-                            </div>
-                            <h6 class="card-title-premium">The Leela Goa</h6>
-                            <p class="card-location"><i class="fas fa-map-marker-alt"></i> Cavelossim, South Goa</p>
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div>
-                                    <span class="price-tag-crossed">₹38,000</span>
-                                    <span class="price-tag">₹28,500</span>
-                                    <div class="price-per-night">per night</div>
-                                </div>
-                                <span class="discount-badge">25% OFF</span>
-                            </div>
-                        </div>
+                @endforeach
+                
+                @if(count($hotels) == 0)
+                    <div class="col-12 text-center py-5">
+                        <div class="text-muted fw-bold">Currently updating our top rated collection. Please check back later!</div>
                     </div>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <div class="card-premium">
-                        <div class="card-img-wrap">
-                            <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=500&auto=format&fit=crop&q=80" alt="Oberoi Udaivilas">
-                            <span class="card-img-overlay-badge"><i class="fas fa-gem me-1" style="color:var(--secondary)"></i> Premium</span>
-                            <div class="card-img-overlay-heart"><i class="far fa-heart"></i></div>
-                        </div>
-                        <div class="card-body-premium">
-                            <div class="d-flex align-items-center gap-2 mb-2">
-                                <span class="rating-pill"><i class="fas fa-star" style="font-size:10px"></i> 4.9</span>
-                                <span style="font-size:12px;color:var(--gray-300)">265 reviews</span>
-                            </div>
-                            <h6 class="card-title-premium">Oberoi Udaivilas, Udaipur</h6>
-                            <p class="card-location"><i class="fas fa-map-marker-alt"></i> Pichola, Udaipur</p>
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div>
-                                    <span class="price-tag-crossed">₹55,000</span>
-                                    <span class="price-tag">₹42,000</span>
-                                    <div class="price-per-night">per night</div>
-                                </div>
-                                <span class="discount-badge">23% OFF</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <div class="card-premium">
-                        <div class="card-img-wrap">
-                            <img src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=500&auto=format&fit=crop&q=80" alt="ITC Grand">
-                            <span class="card-img-overlay-badge"><i class="fas fa-fire me-1" style="color:var(--red)"></i> Trending</span>
-                            <div class="card-img-overlay-heart"><i class="far fa-heart"></i></div>
-                        </div>
-                        <div class="card-body-premium">
-                            <div class="d-flex align-items-center gap-2 mb-2">
-                                <span class="rating-pill"><i class="fas fa-star" style="font-size:10px"></i> 4.7</span>
-                                <span style="font-size:12px;color:var(--gray-300)">580 reviews</span>
-                            </div>
-                            <h6 class="card-title-premium">ITC Grand Chola, Chennai</h6>
-                            <p class="card-location"><i class="fas fa-map-marker-alt"></i> Guindy, Chennai</p>
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div>
-                                    <span class="price-tag-crossed">₹18,000</span>
-                                    <span class="price-tag">₹13,500</span>
-                                    <div class="price-per-night">per night</div>
-                                </div>
-                                <span class="discount-badge">25% OFF</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                @endif
             </div>
         </div>
     </section>
@@ -1002,33 +947,56 @@
     <section class="py-5" style="background:var(--white);">
         <div class="container">
             <h2 class="main-title mb-4">Popular Flight Routes</h2>
-            <div class="row g-3">
-                @php
-                $routes = [
-                    ['from' => 'Delhi', 'to' => 'Mumbai', 'price' => '4,250'],
-                    ['from' => 'Bangalore', 'to' => 'Delhi', 'price' => '5,100'],
-                    ['from' => 'Mumbai', 'to' => 'Goa', 'price' => '3,400'],
-                    ['from' => 'Delhi', 'to' => 'Kolkata', 'price' => '4,800'],
-                    ['from' => 'Chennai', 'to' => 'Hyderabad', 'price' => '3,200'],
-                    ['from' => 'Mumbai', 'to' => 'Delhi', 'price' => '4,500'],
-                    ['from' => 'Bangalore', 'to' => 'Mumbai', 'price' => '3,900'],
-                    ['from' => 'Delhi', 'to' => 'Jaipur', 'price' => '2,800'],
-                ];
-                @endphp
-                @foreach($routes as $route)
-                <div class="col-lg-3 col-md-4 col-6">
-                    <a href="/flights" class="d-block p-3 rounded-3 border" style="border-color:var(--gray-100)!important;transition:var(--transition-fast);" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--gray-100)'">
-                        <div class="d-flex align-items-center gap-3">
-                            <div style="width:36px;height:36px;border-radius:50%;background:rgba(0,168,225,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                <i class="fas fa-plane text-blue" style="font-size:14px;"></i>
-                            </div>
-                            <div>
-                                <div class="fw-700" style="font-size:13px;">{{ $route['from'] }} → {{ $route['to'] }}</div>
-                                <div style="font-size:12px;color:var(--gray-300);">From <span class="fw-700 text-navy">₹{{ $route['price'] }}</span></div>
-                            </div>
+            <style>
+                .inline-route-wrapper {
+                    display: flex;
+                    overflow-x: auto;
+                    gap: 15px;
+                    padding: 10px 0 25px;
+                    scroll-behavior: smooth;
+                    -webkit-overflow-scrolling: touch;
+                }
+                .inline-route-wrapper::-webkit-scrollbar {
+                    height: 6px;
+                }
+                .inline-route-wrapper::-webkit-scrollbar-thumb {
+                    background: #e2e8f0;
+                    border-radius: 10px;
+                }
+                .inline-route-card {
+                    flex: 0 0 260px;
+                    background: #fff;
+                    border: 1px solid #f1f5f9;
+                    border-radius: 20px;
+                    padding: 20px;
+                    text-decoration: none;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+                    transition: all 0.3s ease;
+                }
+                .inline-route-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+                    border-color: var(--primary);
+                }
+            </style>
+
+            <div class="inline-route-wrapper">
+                @foreach($popularRoutes as $route)
+                <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => $route->origin, 'destination' => $route->destination, 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}" class="inline-route-card">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div style="width:40px;height:40px;border-radius:10px;background:rgba(0,168,225,0.1);display:flex;align-items:center;justify-content:center;">
+                            <i class="fas fa-plane text-primary"></i>
                         </div>
-                    </a>
-                </div>
+                        <div class="fw-800 text-navy" style="font-size:15px;">{{ $route->origin_name }} <i class="fas fa-arrow-right mx-1 small opacity-50"></i> {{ $route->destination_name }}</div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-end">
+                        <div class="text-muted x-small fw-bold">One Way</div>
+                        <div class="text-end">
+                            <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;">Starting from</div>
+                            <div class="fw-900 text-primary fs-5">₹{{ number_format($route->price) }}</div>
+                        </div>
+                    </div>
+                </a>
                 @endforeach
             </div>
         </div>

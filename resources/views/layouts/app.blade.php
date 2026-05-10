@@ -508,21 +508,35 @@
                         <i class="fas fa-hotel"></i>
                         <span>Hotels in India</span>
                     </div>
-                    <div class="grid-body">
                         <div class="link-col">
-                            <a href="#">Jaipur</a><a href="#">Goa</a><a href="#">Delhi</a><a href="#">Udaipur</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'JAI', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Jaipur</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'GOI', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Goa</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'DEL', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Delhi</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'UDR', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Udaipur</a>
                         </div>
                         <div class="link-col">
-                            <a href="#">Mumbai</a><a href="#">Bangalore</a><a href="#">Rishikesh</a><a href="#">Agra</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'BOM', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Mumbai</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'BLR', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Bangalore</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'DED', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Rishikesh</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'AGR', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Agra</a>
                         </div>
                         <div class="link-col">
-                            <a href="#">Chennai</a><a href="#">Kasauli</a><a href="#">Kolkata</a><a href="#">Pune</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'MAA', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Chennai</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'IXC', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Kasauli</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'CCU', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Kolkata</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'PNQ', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Pune</a>
                         </div>
                         <div class="link-col">
-                            <a href="#">Manali</a><a href="#">Lonavala</a><a href="#">Shimla</a><a href="#">Munnar</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'KUU', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Manali</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'PNQ', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Lonavala</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'SLV', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Shimla</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'COK', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Munnar</a>
                         </div>
                         <div class="link-col">
-                            <a href="#">Ayodhya</a><a href="#">Gulmarg</a><a href="#">Leh</a><a href="#">Hyderabad</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'AYJ', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Ayodhya</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'SXR', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Gulmarg</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'IXL', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Leh</a>
+                            <a href="{{ route('hotels.index', ['city_code' => 'HYD', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Hyderabad</a>
                         </div>
                     </div>
                 </div>
@@ -535,19 +549,24 @@
                     </div>
                     <div class="grid-body">
                         <div class="link-col">
-                            <a href="#">Delhi Mumbai</a><a href="#">Bangalore Delhi</a>
+                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'DEL', 'destination' => 'BOM', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Delhi Mumbai</a>
+                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'BLR', 'destination' => 'DEL', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Bangalore Delhi</a>
                         </div>
                         <div class="link-col">
-                            <a href="#">Mumbai Goa</a><a href="#">Chennai Hyderabad</a>
+                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'BOM', 'destination' => 'GOI', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Mumbai Goa</a>
+                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'MAA', 'destination' => 'HYD', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Chennai Hyderabad</a>
                         </div>
                         <div class="link-col">
-                            <a href="#">Kolkata Delhi</a><a href="#">Dubai Mumbai</a>
+                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'CCU', 'destination' => 'DEL', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Kolkata Delhi</a>
+                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'DXB', 'destination' => 'BOM', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Dubai Mumbai</a>
                         </div>
                         <div class="link-col">
-                            <a href="#">Delhi London</a><a href="#">Mumbai New York</a>
+                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'DEL', 'destination' => 'LHR', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Delhi London</a>
+                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'BOM', 'destination' => 'JFK', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Mumbai New York</a>
                         </div>
                         <div class="link-col">
-                            <a href="#">Bangalore Singapore</a><a href="#">Delhi Dubai</a>
+                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'BLR', 'destination' => 'SIN', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Bangalore Singapore</a>
+                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'DEL', 'destination' => 'DXB', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Delhi Dubai</a>
                         </div>
                     </div>
                 </div>
@@ -560,6 +579,7 @@
                     </div>
                     <div class="grid-body">
                         <div class="link-col">
+                            <a href="/payment" class="text-primary fw-bold"><i class="fas fa-credit-card me-1"></i> Payment Test</a>
                             <a href="{{ route('partner.login') }}">Partner Login</a>
                             <a href="/admin/login" class="text-muted">Admin Access</a>
                         </div>

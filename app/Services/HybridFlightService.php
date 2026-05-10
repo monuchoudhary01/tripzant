@@ -92,6 +92,19 @@ class HybridFlightService
             return $a->price <=> $b->price;
         });
 
+        // --- Baggage Filtering ---
+        if (isset($params['baggage']) && $params['baggage'] !== '') {
+            $requiredBags = (int)$params['baggage'];
+            $allResults = array_values(array_filter($allResults, function($f) use ($requiredBags) {
+                // If weight is numeric, compare. If it's a string like "15 KG", extract number.
+                $bagVal = is_object($f) ? ($f->baggage ?? 0) : ($f['baggage'] ?? 0);
+                if (is_string($bagVal)) {
+                    $bagVal = (int) filter_var($bagVal, FILTER_SANITIZE_NUMBER_INT);
+                }
+                return $bagVal >= $requiredBags;
+            }));
+        }
+
         $finalResponse = [
             'success' => true,
             'total' => count($allResults),
@@ -100,7 +113,6 @@ class HybridFlightService
             'meta' => $metadata,
             'dictionaries' => $metadata['dictionaries'] ?? [],
             'raw_data' => array_map(function($f) {
-                // Return the full unified flight array so controllers have all fields for mock-REST wrapping
                 return is_object($f) ? $f->toArray() : $f;
             }, $allResults)
         ];

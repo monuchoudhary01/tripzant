@@ -170,6 +170,13 @@ class SeatSelectionController extends Controller
         $reference = $request->input('reference');
         $booking   = null;
 
+        // Fetch Enabled Payment Gateways
+        $paymentSettings = \App\Models\GlobalSetting::where('group', 'payments')->get()->pluck('value', 'key');
+        $enabledGateways = [
+            'stripe' => ($paymentSettings['payment_stripe_enabled'] ?? '0') == '1',
+            'mpgs'   => ($paymentSettings['payment_mpgs_enabled'] ?? '0') == '1',
+        ];
+
         if (str_starts_with($reference ?? '', 'TEMP-')) {
             $pendingData = session('pending_traveler_booking', []);
 
@@ -208,6 +215,7 @@ class SeatSelectionController extends Controller
                 'flight'     => $legs[0] ?? [],
                 'legs'       => $legs,
                 'reference'  => $reference,
+                'enabledGateways' => $enabledGateways,
             ]);
         }
 
@@ -269,7 +277,8 @@ class SeatSelectionController extends Controller
             'passengers' => array_values($passengers),
             'flight'     => $flight,
             'legs'       => $legs,
-            'reference'  => $booking->booking_reference
+            'reference'  => $booking->booking_reference,
+            'enabledGateways' => $enabledGateways,
         ]);
     }
 }

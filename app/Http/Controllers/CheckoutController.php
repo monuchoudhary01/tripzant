@@ -8,6 +8,7 @@ use App\Services\AuditLogService;
 use App\Services\PricingService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use App\Services\BookingService;
 
 class CheckoutController extends Controller
 {
@@ -205,36 +206,103 @@ class CheckoutController extends Controller
 
             $email     = $travelers[0]['email'] ?? (auth()->user()->email ?? null);
             $type      = $pendingData['type'] ?? 'flight';
+            $gateway   = $request->input('gateway', 'stripe');
 
-            session(['pending_generic_booking' => [
+            $bookingData = [
                 'type'         => $type,
                 'total_amount' => $totalAmount,
                 'travelers'    => $travelers,
                 'addons'       => $addons,
-                'seats_by_leg' => $seats, // Save the full structure too
+                'seats_by_leg' => $seats,
                 'item_data'    => $pendingData['item_data'] ?? null,
                 'reference'    => $reference,
-            ]]);
+                'gateway'      => $gateway,
+                'user_id'      => auth()->id(),
+                'currency'     => ($gateway === 'mpgs') ? 'LKR' : 'INR'
+            ];
 
-            $stripe  = app(\App\Services\StripeService::class);
-            $session = $stripe->createCheckoutSession([
-                'item_name'   => 'Flight Booking — Tripzant',
-                'amount'      => $totalAmount,
-                'email'       => $email,
-                'success_url' => route('checkout.success') . '?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url'  => url()->previous(),
-                'metadata'    => ['type' => $type, 'user_id' => auth()->id()],
+            session(['pending_generic_booking' => $bookingData]);
+
+            // Create a pending booking in DB for tracking/webhook
+            Booking::create([
+                'user_id' => auth()->id(),
+                'booking_reference' => $reference,
+                'type' => $type,
+                'total_amount' => $totalAmount,
+                'currency' => $bookingData['currency'],
+                'status' => 'pending',
+                'api_booking_details' => json_encode($bookingData)
             ]);
 
-            if (isset($session->url)) {
-                return response()->json(['success' => true, 'redirect' => $session->url]);
-            }
+            if ($gateway === 'mpgs') {
+                $mpgs = app(\App\Services\MpgsService::class);
+                $session = $mpgs->createCheckoutSession([
+                    'order_id' => $reference,
+                    'amount'   => $totalAmount,
+                    'currency' => 'LKR',
+                ]);
 
-            throw new \Exception($session['message'] ?? 'Stripe session creation failed.');
+                if (isset($session['session']['id'])) {
+                    return response()->json([
+                        'success' => true,
+                        'redirect' => route('checkout.mpgs', ['reference' => $reference])
+                    ]);
+                }
+
+                throw new \Exception($session['message'] ?? 'Commercial Bank session creation failed.');
+            } else {
+                $stripe  = app(\App\Services\StripeService::class);
+                $session = $stripe->createCheckoutSession([
+                    'item_name'   => 'Flight Booking — Tripzant',
+                    'amount'      => $totalAmount,
+                    'email'       => $email,
+                    'success_url' => route('checkout.success') . '?session_id={CHECKOUT_SESSION_ID}&reference=' . $reference,
+                    'cancel_url'  => url()->previous(),
+                    'metadata'    => ['type' => $type, 'user_id' => auth()->id(), 'reference' => $reference],
+                ]);
+
+                if (isset($session->url)) {
+                    return response()->json(['success' => true, 'redirect' => $session->url]);
+                }
+
+                throw new \Exception($session['message'] ?? 'Stripe session creation failed.');
+            }
 
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
+    }
+
+    public function showMpgsCheckout(Request $request)
+    {
+        $reference = $request->query('reference');
+        $sessionData = session('pending_generic_booking');
+
+        if (!$sessionData || $sessionData['reference'] !== $reference) {
+            return redirect()->route('flights.index')->with('error', 'Booking session not found.');
+        }
+
+        $mpgs = app(\App\Services\MpgsService::class);
+        $session = $mpgs->createCheckoutSession([
+            'order_id' => $reference,
+            'amount'   => $sessionData['total_amount'],
+            'currency' => 'LKR',
+        ]);
+
+        if (!isset($session['session']['id'])) {
+            return redirect()->back()->with('error', 'Could not initialize payment gateway.');
+        }
+
+        $paymentSettings = \App\Models\GlobalSetting::where('group', 'payments')->get()->pluck('value', 'key');
+        $merchantId = $paymentSettings['payment_mpgs_merchant_id'] ?? config('payments.mpgs.merchant_id');
+
+        return view('payment.mpgs-checkout', [
+            'order_id'   => $reference,
+            'amount'     => $sessionData['total_amount'],
+            'currency'   => 'LKR',
+            'session'    => $session,
+            'merchant_id' => $merchantId
+        ]);
     }
 
     public function process(Request $request)
@@ -308,52 +376,67 @@ class CheckoutController extends Controller
 
     public function success(Request $request)
     {
+        $reference = $request->query('reference');
         $sessionData = session('pending_generic_booking');
+
+        // If session lost, recover from DB
+        if (!$sessionData && $reference) {
+            $booking = Booking::where('booking_reference', $reference)->first();
+            if ($booking) {
+                $sessionData = json_decode($booking->api_booking_details, true);
+            }
+        }
+
         if (!$sessionData) {
             return redirect()->route('home')->with('error', 'Session expired.');
         }
 
-        $type = $sessionData['type'];
-        $totalAmount = $sessionData['total_amount'];
-        $travelers = $sessionData['travelers'] ?? [];
+        $gateway = $sessionData['gateway'] ?? 'stripe';
+        $transactionId = $request->query('session_id') ?? $request->query('resultIndicator') ?? ('TXN-' . uniqid());
 
-        // Create Booking
-        $booking = Booking::create([
-            'user_id' => Auth::id(),
-            'booking_reference' => strtoupper($type) . '-' . strtoupper(bin2hex(random_bytes(4))),
-            'type' => $type,
-            'total_amount' => $totalAmount,
-            'currency' => 'INR',
-            'status' => 'confirmed',
-            'api_booking_details' => json_encode($sessionData)
-        ]);
-
-        // Save each traveler as a BookingItem so seat-selection can load the manifest
-        foreach ($travelers as $index => $traveler) {
-            \App\Models\BookingItem::create([
-                'booking_id' => $booking->id,
-                'item_name' => ($traveler['first_name'] ?? 'Traveler') . ' ' . ($traveler['last_name'] ?? ($index + 1)),
-                'item_type' => 'traveler',
-                'amount' => 0,
-                'details' => json_encode($traveler)
-            ]);
+        // Use BookingService to complete the booking
+        $bookingService = app(BookingService::class);
+        
+        // Find existing pending booking
+        $booking = Booking::where('booking_reference', $sessionData['reference'] ?? '')->first();
+        
+        if ($booking && $booking->status === 'confirmed') {
+            return redirect()->route('booking.confirmation', ['reference' => $booking->booking_reference]);
         }
 
-        // Create Payment Record
-        \App\Models\Payment::create([
-            'user_id' => Auth::id(),
-            'booking_id' => $booking->id,
-            'transaction_id' => $request->query('session_id', 'STRIPE-' . uniqid()),
-            'amount' => $totalAmount,
-            'currency' => 'INR',
-            'gateway' => 'stripe',
-            'status' => 'paid',
-            'gateway_response' => json_encode($request->all())
-        ]);
+        if ($booking) {
+            // Update existing
+            $booking->update(['status' => 'confirmed']);
+            
+            // Create items and payment
+            foreach ($sessionData['travelers'] ?? [] as $index => $traveler) {
+                \App\Models\BookingItem::updateOrCreate(
+                    ['booking_id' => $booking->id, 'item_name' => ($traveler['first_name'] ?? 'Traveler') . ' ' . ($traveler['last_name'] ?? ($index + 1))],
+                    ['item_type' => 'traveler', 'amount' => 0, 'details' => json_encode($traveler)]
+                );
+            }
+
+            \App\Models\Payment::updateOrCreate(
+                ['transaction_id' => $transactionId],
+                [
+                    'user_id' => Auth::id() ?: ($booking->user_id),
+                    'booking_id' => $booking->id,
+                    'amount' => $booking->total_amount,
+                    'currency' => $booking->currency,
+                    'gateway' => $gateway,
+                    'status' => 'paid',
+                    'gateway_response' => json_encode($request->all())
+                ]
+            );
+        } else {
+            // Fallback to service if something went wrong with pending record
+            $booking = $bookingService->completeBooking($sessionData, $transactionId, $gateway, $request->all());
+        }
 
         session()->forget('pending_generic_booking');
+        session()->forget('pending_traveler_booking');
 
         return redirect()->route('booking.confirmation', ['reference' => $booking->booking_reference])
-                         ->with('success', 'Payment Successful!');
+                         ->with('success', 'Payment Successful via ' . strtoupper($gateway) . '!');
     }
 }

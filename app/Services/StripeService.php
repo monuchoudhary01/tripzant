@@ -9,7 +9,11 @@ class StripeService
 {
     public function __construct()
     {
-        Stripe::setApiKey(config('services.stripe.secret'));
+        // Read from database first (admin panel), fallback to .env
+        $settings   = \App\Models\GlobalSetting::where('group', 'payments')->get()->pluck('value', 'key');
+        $secretKey  = $settings['payment_stripe_secret_key'] ?? config('services.stripe.secret');
+
+        Stripe::setApiKey($secretKey);
     }
 
     /**

@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IataController;
 use App\Http\Controllers\B2bAgentController;
 use App\Http\Controllers\CorporateController;
+use App\Http\Controllers\StripeWebhookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -117,6 +118,7 @@ Route::get('/hotels/checkout', [HotelController::class, 'checkout'])->middleware
 Route::post('/hotels/book', [HotelController::class, 'book'])->middleware('auth')->name('hotel.book');
 Route::post('/hotels/coupon/apply', [HotelController::class, 'applyCoupon'])->middleware('auth')->name('hotel.coupon.apply');
 Route::get('/hotels/payment', [HotelController::class, 'showPaymentGateway'])->middleware('auth')->name('hotel.payment');
+Route::get('/hotels/payment/mpgs', [HotelController::class, 'showMpgsCheckout'])->middleware('auth')->name('hotel.payment.mpgs');
 Route::get('/hotels/payment/process', [HotelController::class, 'processPayment'])->middleware('auth')->name('hotel.payment.process');
 Route::get('/hotels/confirmation', [HotelController::class, 'showConfirmation'])->middleware('auth')->name('hotel.confirmation');
 
@@ -206,7 +208,9 @@ Route::post('/checkout/init-split', [App\Http\Controllers\CheckoutController::cl
 Route::post('/checkout/save-travelers', [App\Http\Controllers\CheckoutController::class, 'saveTravelers'])->name('checkout.save-travelers');
 Route::post('/checkout/process', [App\Http\Controllers\CheckoutController::class, 'process'])->name('checkout.process');
 Route::get('/checkout/success', [App\Http\Controllers\CheckoutController::class, 'success'])->name('checkout.success');
+Route::get('/checkout/mpgs', [App\Http\Controllers\CheckoutController::class, 'showMpgsCheckout'])->name('checkout.mpgs');
 Route::post('/booking/initiate-payment', [App\Http\Controllers\CheckoutController::class, 'initiatePayment'])->name('booking.initiate-payment');
+Route::post('/webhooks/stripe', [StripeWebhookController::class, 'handle'])->name('webhook.stripe');
 
 Route::get('/seat-selection', [App\Http\Controllers\SeatSelectionController::class, 'index'])->name('seat.selection');
 Route::get('/add-ons', [App\Http\Controllers\SeatSelectionController::class, 'customize'])->name('add.ons');
@@ -217,6 +221,19 @@ Route::get('/booking-confirmation/whatsapp', [App\Http\Controllers\BookingFinali
 Route::get('/payment', function () {
     return view('payment');
 })->name('payment');
+
+// Payment Gateway Integration Testing Routes
+Route::prefix('test-payments')->group(function() {
+    Route::get('/mpgs', [\App\Http\Controllers\PaymentController::class, 'testMpgs'])->name('test.mpgs');
+    Route::get('/stripe', [\App\Http\Controllers\PaymentController::class, 'testStripe'])->name('test.stripe');
+    
+    // Callbacks
+    Route::get('/mpgs/callback', [\App\Http\Controllers\PaymentController::class, 'mpgsCallback'])->name('mpgs.callback');
+    Route::get('/mpgs/cancel', [\App\Http\Controllers\PaymentController::class, 'mpgsCancel'])->name('mpgs.cancel');
+    
+    Route::get('/success', [\App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
+    Route::get('/cancel', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
+});
 
 // Tours & Packages
 Route::prefix('tours')->name('tours.')->group(function () {

@@ -11,6 +11,31 @@ use Illuminate\Support\Facades\DB;
 
 class HotelBookingController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/hotel/book",
+     *     tags={"Hotels"},
+     *     summary="Book a Hotel",
+     *     description="Create a hotel booking for the authenticated user",
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"hotel_code","room_type","check_in","check_out","guests","rate_key","holder_name","holder_surname","email"},
+     *             @OA\Property(property="hotel_code", type="string"),
+     *             @OA\Property(property="room_type", type="string"),
+     *             @OA\Property(property="check_in", type="string", format="date"),
+     *             @OA\Property(property="check_out", type="string", format="date"),
+     *             @OA\Property(property="guests", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="rate_key", type="string"),
+     *             @OA\Property(property="holder_name", type="string"),
+     *             @OA\Property(property="holder_surname", type="string"),
+     *             @OA\Property(property="email", type="string", format="email")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Booking successful")
+     * )
+     */
     public function book(Request $request)
     {
         if (!Auth::check()) {

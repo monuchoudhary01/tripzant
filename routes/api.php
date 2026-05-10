@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\FlightController;
 use App\Http\Controllers\Api\HotelController;
 use App\Http\Controllers\Api\HotelBookingController;
 use App\Http\Controllers\Api\MoneyTransferController;
+use App\Http\Controllers\Api\PaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,6 +39,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/flights/bookings', [FlightController::class, 'bookings']);
         Route::post('/hotel/book', [HotelBookingController::class, 'book']);
         Route::get('/hotels/bookings', [HotelController::class, 'bookings']);
+
+        // Payment
+        Route::post('/payment/initiate', [PaymentController::class, 'initiate']);
+        Route::post('/payment/success', [PaymentController::class, 'success'])->name('api.payment.success');
+        Route::get('/payment/cancel', [PaymentController::class, 'cancel'])->name('api.payment.cancel');
     });
 
     // Other APIs (Legacy/Utility)

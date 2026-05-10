@@ -183,6 +183,12 @@
                         </div>
                     </div>
 
+                    <div class="mb-4">
+                        <a href="{{ request()->fullUrlWithQuery(['mode' => 'map']) }}" class="btn btn-navy w-100 rounded-pill py-3 fw-800 d-flex align-items-center justify-content-center gap-2 hover-up shadow-sm">
+                            <i class="fas fa-map-marked-alt text-warning"></i> EXPLORE ON MAP
+                        </a>
+                    </div>
+
                     <div class="h-filter-card">
                         <span class="h-filter-title">Price Per Night (₹ <span id="priceLabel">25,000</span>)</span>
                         <input type="range" class="form-range mb-2 filter-trigger" id="priceRange" min="1000" max="50000" step="500" value="25000">

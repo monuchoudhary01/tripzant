@@ -1074,8 +1074,6 @@ header .container {
 }
 
 .misty-radio input:checked+.m-radio-dot {
-  border-color: #008cff;
-  background: #008cff;
   box-shadow: 0 0 10px rgba(0, 140, 255, 0.3);
 }
 
@@ -1210,33 +1208,40 @@ header .container {
 
 /* Fares Section */
 .fares-title {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 900;
   color: #0b3d61;
-  margin-bottom: 15px;
+  margin-bottom: 0px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+  letter-spacing: 1px;
 }
 
 .fares-title span {
   color: #00d2ff;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .misty-fare-row {
   display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+}
+
+.misty-fare-row::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
 }
 
 .m-fare-item {
-  flex: 1;
-  min-width: 220px;
+  flex: 0 0 auto;
+  min-width: 150px;
   background: #fff;
   border: 1px solid #e2e8f0;
-  padding: 16px 20px;
-  border-radius: 18px;
+  padding: 8px 12px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
@@ -1244,38 +1249,39 @@ header .container {
 
 .m-fare-item:hover {
   border-color: #3b82f6;
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(59, 130, 246, 0.1);
 }
 
 .m-fare-item.active {
   background: #f0f7ff;
   border-color: #2563eb;
   border-width: 1.5px;
-  box-shadow: 0 8px 30px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.12);
 }
 
 .m-fare-name {
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 800;
   color: #000;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   position: relative;
 }
 
 .m-pop {
-  font-size: 9px;
+  font-size: 8px;
   background: #00d2ff;
   color: #fff;
-  padding: 2px 6px;
+  padding: 2px 4px;
   border-radius: 4px;
   margin-left: 5px;
 }
 
 .m-fare-info {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--gray-500);
-  font-weight: 500;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 /* Large Search Button */

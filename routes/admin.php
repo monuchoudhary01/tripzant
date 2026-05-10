@@ -56,6 +56,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::post('/settings/markup/advanced', [SystemSettingsController::class, 'storeAdvancedMarkup'])->name('settings.markup.advanced.store');
         Route::delete('/settings/markup/advanced/{id}', [SystemSettingsController::class, 'deleteAdvancedMarkup'])->name('settings.markup.advanced.delete');
         Route::post('/settings/api-configs', [SystemSettingsController::class, 'updateApiConfig'])->name('settings.api-configs.update');
+        Route::post('/settings/payments', [SystemSettingsController::class, 'updatePayments'])->name('settings.payments.update');
+        Route::post('/settings/smtp', [SystemSettingsController::class, 'updateSmtp'])->name('settings.smtp.update');
+        Route::post('/settings/markups', [SystemSettingsController::class, 'updateMarkups'])->name('settings.markups.update');
+        Route::post('/settings/api-credentials', [SystemSettingsController::class, 'updateApiCredentials'])->name('settings.api-credentials.update');
+        Route::post('/settings/swagger/regenerate', [SystemSettingsController::class, 'regenerateSwagger'])->name('settings.swagger.regenerate');
 
         Route::get('/notifications', function () { return view('admin.notifications'); })->name('notifications');
         Route::get('/broadcasts', function () { return view('admin.broadcasts'); })->name('broadcasts');

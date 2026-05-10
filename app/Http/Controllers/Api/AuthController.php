@@ -194,6 +194,22 @@ class AuthController extends Controller
         return response()->json(['success' => false, 'message' => 'Invalid OTP.'], 401);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/password/forgot",
+     *     tags={"Authentication"},
+     *     summary="Forgot Password",
+     *     description="Request an OTP for password reset",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email"},
+     *             @OA\Property(property="email", type="string", format="email", example="user@example.com")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="OTP sent successfully")
+     * )
+     */
     public function forgotPassword(Request $request)
     {
         $request->validate(['email' => 'required|email']);
@@ -209,6 +225,24 @@ class AuthController extends Controller
         return response()->json(['success' => true, 'message' => 'OTP sent successfully.']);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/password/reset",
+     *     tags={"Authentication"},
+     *     summary="Reset Password",
+     *     description="Reset password using OTP",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email","otp","password"},
+     *             @OA\Property(property="email", type="string", format="email"),
+     *             @OA\Property(property="otp", type="string"),
+     *             @OA\Property(property="password", type="string", format="password")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Password reset successful")
+     * )
+     */
     public function resetPassword(Request $request)
     {
         $request->validate([

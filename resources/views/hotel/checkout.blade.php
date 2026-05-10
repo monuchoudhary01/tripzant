@@ -347,17 +347,43 @@
                         Payment Method
                     </div>
                     <div class="premium-card p-4">
-                        <div class="d-flex gap-4">
-                            <div class="flex-grow-1 p-4 rounded-4 border-2 border-primary border bg-primary-subtle d-flex align-items-center gap-4">
-                                <div class="bg-primary text-white p-3 rounded-3"><i class="fas fa-credit-card fa-2x"></i></div>
-                                <div>
-                                    <h6 class="fw-900 mb-1">Online Secure Payment</h6>
-                                    <p class="mb-0 text-muted small fw-600">Credit Card, Debit Card, UPI, Netbanking</p>
-                                </div>
+                        <div class="mb-0">
+                            <h6 class="fw-900 text-muted mb-3 fs-11 uppercase" style="letter-spacing: 2px;">SELECT PAYMENT GATEWAY</h6>
+                            <div class="d-flex flex-column gap-2">
+                                @if($enabledGateways['stripe'])
+                                <label class="payment-method-card p-3 border rounded-4 d-flex align-items-center gap-3 bg-white cursor-pointer w-100 mb-0" id="gw-stripe">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="radio" name="gateway" value="stripe" checked>
+                                    </div>
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" height="20">
+                                    <span class="fw-900 small text-navy ms-auto">STRIPE SECURE</span>
+                                </label>
+                                @endif
+
+                                @if($enabledGateways['mpgs'])
+                                <label class="payment-method-card p-3 border rounded-4 d-flex align-items-center gap-3 bg-white cursor-pointer w-100 mb-0" id="gw-mpgs">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="radio" name="gateway" value="mpgs" {{ !$enabledGateways['stripe'] ? 'checked' : '' }}>
+                                    </div>
+                                    <img src="{{ asset('assets/img/payment/commercial_bank.png') }}" height="25">
+                                    <span class="fw-900 small text-navy ms-auto">COMMERCIAL BANK</span>
+                                </label>
+                                @endif
+
+                                @if(!$enabledGateways['stripe'] && !$enabledGateways['mpgs'])
+                                    <div class="alert alert-warning py-2 small fw-bold mb-0">No payment gateway enabled. Contact admin.</div>
+                                @endif
+                                
                                 <input type="hidden" name="payment_method" value="online">
                             </div>
                         </div>
                     </div>
+
+                    <style>
+                        .payment-method-card { transition: 0.2s; border: 1.5px solid #e2e8f0 !important; cursor: pointer; }
+                        .payment-method-card:hover { border-color: #2563eb !important; background: #f8fafc; }
+                        .payment-method-card:has(input:checked) { border-color: #2563eb !important; background: #eff6ff; box-shadow: 0 0 0 1px #2563eb; }
+                    </style>
 
                 </div>
 

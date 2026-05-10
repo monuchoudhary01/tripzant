@@ -35,10 +35,45 @@ class FlightController extends Controller
             $departureDate = is_array($dates) ? ($dates[0] ?? date('Y-m-d')) : $dates;
             $returnDate = null;
         } else {
-            $origin = $request->input('origin', 'DEL');
-            $destination = $request->input('destination', 'BOM');
-            $departureDate = $request->input('departure_date', date('Y-m-d', strtotime('+7 days')));
+            $origin = $request->input('origin');
+            if (is_array($origin)) $origin = $origin[0] ?? 'DEL';
+            else $origin = $origin ?? 'DEL';
+
+            // Extract IATA code if in "City (IATA)" format
+            if (preg_match('/\(([A-Z]{3})\)/', $origin, $matches)) {
+                $origin = $matches[1];
+            }
+
+            $destination = $request->input('destination');
+            if (is_array($destination)) $destination = $destination[0] ?? 'BOM';
+            else $destination = $destination ?? 'BOM';
+
+            // Extract IATA code if in "City (IATA)" format
+            if (preg_match('/\(([A-Z]{3})\)/', $destination, $matches)) {
+                $destination = $matches[1];
+            }
+
+            $departureDate = $request->input('departure_date');
+            if (is_array($departureDate)) $departureDate = $departureDate[0] ?? date('Y-m-d', strtotime('+7 days'));
+            else $departureDate = $departureDate ?? date('Y-m-d', strtotime('+7 days'));
+
+            // Standardize Date Format (Handle "Wed, 20 May" or "2026-05-20")
+            if ($departureDate && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $departureDate)) {
+                try {
+                    $departureDate = date('Y-m-d', strtotime($departureDate));
+                } catch (\Exception $e) {
+                    $departureDate = date('Y-m-d', strtotime('+7 days'));
+                }
+            }
+
             $returnDate = $request->input('return_date');
+            if ($returnDate && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $returnDate) && $returnDate !== 'Add Return') {
+                try {
+                    $returnDate = date('Y-m-d', strtotime($returnDate));
+                } catch (\Exception $e) {
+                    $returnDate = null;
+                }
+            }
         }
         
         $cabinInput = $request->input('cabin_class', 'ECONOMY');
@@ -232,7 +267,7 @@ class FlightController extends Controller
 
         $bankOffers = \App\Models\BankOffer::where('is_active', true)->orderBy('sort_order')->get();
 
-        $view = view('flight-listing', [
+        $viewData = [
             'flights' => $allFlightsSorted,
             'params' => $params,
             'isRoundTrip' => $isRoundTrip,
@@ -260,7 +295,16 @@ class FlightController extends Controller
             'isGroupBooking' => ($params['adults'] + $params['children'] >= 10),
             'totalPassengers' => $params['adults'] + $params['children'],
             'initialMaxBudget' => $maxBudget
-        ]);
+        ];
+
+        if ($multiCity) {
+            $viewData['numSegments'] = count($originArr);
+            $viewData['multiCityOrigins'] = $originArr;
+            $viewData['multiCityDestinations'] = $destinationArr;
+            $viewData['multiCityDates'] = $departureDateArr;
+        }
+
+        $view = view('flight-listing', $viewData);
 
         AuditLogService::log('Flight', 'Search', "Flight search from {$origin} to {$destination}", $params);
 

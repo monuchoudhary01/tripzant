@@ -207,6 +207,84 @@
                 }
             }
         },
+        "/password/forgot": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Forgot Password",
+                "description": "Request an OTP for password reset",
+                "operationId": "2a1b15935bc6aaec88107cef54a680f4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP sent successfully"
+                    }
+                }
+            }
+        },
+        "/password/reset": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Reset Password",
+                "description": "Reset password using OTP",
+                "operationId": "583c81b550c52da53f5f9c9de3c21c56",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "otp",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "otp": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset successful"
+                    }
+                }
+            }
+        },
         "/flights/search": {
             "get": {
                 "tags": [
@@ -279,6 +357,14 @@
                             "type": "boolean",
                             "default": false
                         }
+                    },
+                    {
+                        "name": "baggage",
+                        "in": "query",
+                        "description": "Minimum baggage weight (KG)",
+                        "schema": {
+                            "type": "integer"
+                        }
                     }
                 ],
                 "responses": {
@@ -313,6 +399,52 @@
                 }
             }
         },
+        "/flights/book": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "Book a Flight",
+                "description": "Create a flight booking for the authenticated user",
+                "operationId": "9608ee10c67f93487109270f4b799fea",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "flight_id",
+                                    "passengers"
+                                ],
+                                "properties": {
+                                    "flight_id": {
+                                        "type": "string",
+                                        "example": "12345"
+                                    },
+                                    "passengers": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Booking successful"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/flights/bookings": {
             "get": {
                 "tags": [
@@ -324,6 +456,82 @@
                 "responses": {
                     "200": {
                         "description": "List of bookings"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/hotel/book": {
+            "post": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "Book a Hotel",
+                "description": "Create a hotel booking for the authenticated user",
+                "operationId": "4a1508448339809778bf674ec32d529a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "hotel_code",
+                                    "room_type",
+                                    "check_in",
+                                    "check_out",
+                                    "guests",
+                                    "rate_key",
+                                    "holder_name",
+                                    "holder_surname",
+                                    "email"
+                                ],
+                                "properties": {
+                                    "hotel_code": {
+                                        "type": "string"
+                                    },
+                                    "room_type": {
+                                        "type": "string"
+                                    },
+                                    "check_in": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "check_out": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "guests": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "rate_key": {
+                                        "type": "string"
+                                    },
+                                    "holder_name": {
+                                        "type": "string"
+                                    },
+                                    "holder_surname": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Booking successful"
                     }
                 },
                 "security": [
@@ -452,6 +660,295 @@
                     }
                 ]
             }
+        },
+        "/get-exchange-rate": {
+            "get": {
+                "tags": [
+                    "Money Transfer"
+                ],
+                "summary": "Get Exchange Rate",
+                "operationId": "629ac3a2b2c228120bd0883c1f968df0",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "USD"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "INR"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exchange rate result"
+                    }
+                }
+            }
+        },
+        "/get-providers": {
+            "get": {
+                "tags": [
+                    "Money Transfer"
+                ],
+                "summary": "Get Transfer Providers",
+                "operationId": "a2cfe42c51ef981cd90b25b4a0e54ba8",
+                "parameters": [
+                    {
+                        "name": "from_country",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "US"
+                        }
+                    },
+                    {
+                        "name": "from_currency",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "USD"
+                        }
+                    },
+                    {
+                        "name": "to_country",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "IN"
+                        }
+                    },
+                    {
+                        "name": "to_currency",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "INR"
+                        }
+                    },
+                    {
+                        "name": "amount",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "example": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of providers"
+                    }
+                }
+            }
+        },
+        "/create-transfer": {
+            "post": {
+                "tags": [
+                    "Money Transfer"
+                ],
+                "summary": "Create a Money Transfer",
+                "operationId": "072ec1b04a3e851c68fdd19e55b053f7",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id",
+                                    "type",
+                                    "source_currency",
+                                    "source_amount",
+                                    "target_currency",
+                                    "target_amount",
+                                    "exchange_rate",
+                                    "recipient_details"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "integer"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "wallet_to_wallet",
+                                            "wallet_to_bank",
+                                            "international"
+                                        ]
+                                    },
+                                    "source_currency": {
+                                        "type": "string"
+                                    },
+                                    "source_amount": {
+                                        "type": "number"
+                                    },
+                                    "target_currency": {
+                                        "type": "string"
+                                    },
+                                    "target_amount": {
+                                        "type": "number"
+                                    },
+                                    "exchange_rate": {
+                                        "type": "number"
+                                    },
+                                    "recipient_details": {
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Transfer created successfully"
+                    }
+                }
+            }
+        },
+        "/webhook/payment-status": {
+            "post": {
+                "tags": [
+                    "Money Transfer"
+                ],
+                "summary": "Payment Webhook",
+                "description": "Webhook endpoint for payment status updates",
+                "operationId": "30980eb00713d79cc6b746352da1edb3",
+                "responses": {
+                    "200": {
+                        "description": "Received"
+                    }
+                }
+            }
+        },
+        "/payment/initiate": {
+            "post": {
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Initialize Payment (Mobile App)",
+                "description": "Create a payment session for Stripe or MPGS (Commercial Bank)",
+                "operationId": "c03375ef12159bfa368107598caa599e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "total_amount",
+                                    "gateway",
+                                    "travelers"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "example": "flight"
+                                    },
+                                    "total_amount": {
+                                        "type": "number",
+                                        "example": 5000
+                                    },
+                                    "gateway": {
+                                        "type": "string",
+                                        "enum": [
+                                            "stripe",
+                                            "mpgs"
+                                        ]
+                                    },
+                                    "travelers": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "item_data": {
+                                        "type": "object"
+                                    },
+                                    "reference": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Payment session created"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/payment/success": {
+            "post": {
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Confirm Payment (Mobile App)",
+                "description": "Verify payment status and confirm the booking record",
+                "operationId": "a54e7ddeaa3726396dfc918148e6f4ba",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reference"
+                                ],
+                                "properties": {
+                                    "reference": {
+                                        "type": "string",
+                                        "example": "API-ABC123"
+                                    },
+                                    "transaction_id": {
+                                        "type": "string"
+                                    },
+                                    "gateway": {
+                                        "type": "string",
+                                        "enum": [
+                                            "stripe",
+                                            "mpgs"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Booking confirmed"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "tags": [
@@ -466,6 +963,14 @@
         {
             "name": "Hotels",
             "description": "API Endpoints for Hotel Search and Booking"
+        },
+        {
+            "name": "Money Transfer",
+            "description": "Money Transfer"
+        },
+        {
+            "name": "Payment",
+            "description": "Payment"
         }
     ]
 }

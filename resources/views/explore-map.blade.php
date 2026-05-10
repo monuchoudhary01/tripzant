@@ -22,14 +22,15 @@
     }
 
     .map-filter-bar {
-        height: 50px;
+        height: 60px;
         background: #fff;
         border-bottom: 1px solid #e2e8f0;
         display: flex;
         align-items: center;
         padding: 0 24px;
-        gap: 20px;
+        gap: 16px;
         z-index: 998;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
 
     /* Top Search Bar */
@@ -105,6 +106,18 @@
         display: flex;
         flex: 1;
         position: relative;
+        overflow: hidden;
+    }
+
+    .map-sidebar {
+        width: var(--map-sidebar-width);
+        background: #fff;
+        border-right: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        z-index: 999;
+        height: 100%;
+        transition: all 0.3s ease;
     }
 
     /* Responsive Fixes */
@@ -150,17 +163,19 @@
             position: fixed;
             bottom: 0;
             left: 0;
-            height: 70vh;
+            height: 75vh;
             width: 100%;
             transform: translateY(100%);
             transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             border-top-left-radius: 24px;
             border-top-right-radius: 24px;
-            border-right: none;
+            border-right: none !important;
             border-top: 1px solid #e2e8f0;
-            box-shadow: 0 -15px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 -15px 40px rgba(0,0,0,0.15);
             z-index: 10001;
             background: #fff;
+            display: flex;
+            flex-direction: column;
         }
 
         .map-sidebar.mobile-open {
@@ -245,15 +260,17 @@
 
     .listing-card {
         border: 1.5px solid #f1f5f9;
-        border-radius: 16px;
+        border-radius: 20px;
         margin-bottom: 16px;
-        padding: 12px;
+        padding: 16px;
         display: flex;
-        gap: 12px;
+        flex-direction: column;
+        gap: 0;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
+        background: #fff;
     }
 
     .listing-card:hover {
@@ -354,21 +371,50 @@
 }
 
     .filter-pill {
-        padding: 6px 12px;
+        padding: 8px 16px;
         border-radius: 50px;
         border: 1.5px solid #e2e8f0;
-        font-size: 11px;
-        font-weight: 800;
-        color: #64748b;
+        font-size: 12px;
+        font-weight: 700;
+        color: #475569;
         cursor: pointer;
-        transition: 0.2s;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
     }
-    .filter-pill:hover { border-color: #008cff; color: #008cff; background: #f0f7ff; }
-    .filter-pill.active { background: #008cff; color: #fff; border-color: #008cff; box-shadow: 0 4px 10px rgba(0,140,255,0.2); }
+    .filter-pill:hover { 
+        border-color: #008cff; 
+        color: #008cff; 
+        background: #f0f7ff;
+        transform: translateY(-1px);
+    }
+    .filter-pill.active { 
+        background: #008cff; 
+        color: #fff; 
+        border-color: #008cff; 
+        box-shadow: 0 4px 12px rgba(0,140,255,0.25); 
+    }
 
-    .custom-range::-webkit-slider-thumb { background: #008cff; border: 3px solid #fff; box-shadow: 0 0 10px rgba(0,140,255,0.3); }
-    .custom-range::-moz-range-thumb { background: #008cff; border: 3px solid #fff; }
+    .custom-range::-webkit-slider-thumb { 
+        background: #008cff; 
+        border: 3px solid #fff; 
+        box-shadow: 0 0 10px rgba(0,140,255,0.3);
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        -webkit-appearance: none;
+        border-radius: 50%;
+    }
+    .custom-range::-moz-range-thumb { 
+        background: #008cff; 
+        border: 3px solid #fff;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        border-radius: 50%;
     }
 
     .custom-price-marker.active {
@@ -495,12 +541,12 @@
             </div>
             <div class="search-input-group" style="position: relative;">
                 <i class="fas fa-plane-departure"></i>
-                <input type="text" name="origin" id="originInput" placeholder="From" value="{{ $origin ?? 'DEL' }}" autocomplete="off" style="background: transparent; border: none; outline: none; font-size: 14px; font-weight: 700; color: #1e293b; width: 100%;">
+                <input type="text" name="origin" id="originInput" placeholder="From" value="{{ $origin ?? '' }}" autocomplete="off" style="background: transparent; border: none; outline: none; font-size: 14px; font-weight: 700; color: #1e293b; width: 100%;">
                 <div id="originResults" class="autocomplete-results d-none"></div>
             </div>
             <div class="search-input-group" style="position: relative;">
                 <i class="fas fa-plane-arrival"></i>
-                <input type="text" name="destination" id="destinationInput" placeholder="To" value="{{ $destination ?? 'Anywhere' }}" autocomplete="off" style="background: transparent; border: none; outline: none; font-size: 14px; font-weight: 700; color: #1e293b; width: 100%;">
+                <input type="text" name="destination" id="destinationInput" placeholder="To" value="{{ $destination ?? '' }}" autocomplete="off" style="background: transparent; border: none; outline: none; font-size: 14px; font-weight: 700; color: #1e293b; width: 100%;">
                 <div id="destinationResults" class="autocomplete-results d-none"></div>
             </div>
             <div class="search-input-group">
@@ -552,45 +598,6 @@
         </form>
     </div>
 
-    <!-- Horizontal Filter Bar -->
-    <div class="map-filter-bar">
-        <!-- Sort By -->
-        <div class="dropdown">
-            <button class="btn btn-sm border fw-bold text-navy dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" id="sortLabel" style="background:#f8fafc; font-size:12px;">
-                Sort: <span class="text-primary">Cheapest</span>
-            </button>
-            <ul class="dropdown-menu border-0 shadow-lg rounded-4">
-                <li><a class="dropdown-item fw-bold small" href="#" onclick="sortByFilter('price', 'Cheapest')">Price (Lowest)</a></li>
-                <li><a class="dropdown-item fw-bold small" href="#" onclick="sortByFilter('departure', 'Departure')">Departure Time</a></li>
-            </ul>
-        </div>
-
-        <!-- Budget Dropdown -->
-        <div class="dropdown">
-            <button class="btn btn-sm border fw-bold text-navy dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" id="budgetLabel" style="background:#f8fafc; font-size:12px;" onclick="event.stopPropagation()">
-                Budget: <span class="text-primary" id="budgetValue">₹50,000</span>
-            </button>
-            <div class="dropdown-menu p-4 border-0 shadow-2xl rounded-4" style="min-width: 250px;">
-                <label class="x-small fw-900 text-muted mb-3 d-block uppercase">MAX BUDGET</label>
-                <input type="range" class="form-range custom-range mb-2" id="budgetRange" min="2000" max="100000" step="500" value="50000" oninput="applyMapFilters()">
-                <div class="d-flex justify-content-between small fw-bold text-muted">
-                    <span>₹2k</span>
-                    <span>₹100k</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Stops -->
-        <div class="d-flex align-items-center gap-2">
-            <span class="x-small fw-900 text-muted me-1">STOPS:</span>
-            <div class="filter-pill active py-1 px-3" style="font-size:11px;" onclick="toggleStopFilter('all', this)">All</div>
-            <div class="filter-pill py-1 px-3" style="font-size:11px;" onclick="toggleStopFilter('0', this)">Non-stop</div>
-            <div class="filter-pill py-1 px-3" style="font-size:11px;" onclick="toggleStopFilter('1', this)">1+ Stop</div>
-        </div>
-        
-        <!-- Reset -->
-        <button class="btn btn-link btn-sm p-0 ms-auto text-primary fw-bold text-decoration-none" style="font-size:12px;" onclick="resetFilters()">Reset All</button>
-    </div>
 
     <!-- Mobile Toggle -->
     <button class="mobile-toggle-btn" onclick="toggleMobileSidebar()">
@@ -603,18 +610,18 @@
         <div class="map-sidebar" id="mapSidebar">
             <div class="sidebar-handle" onclick="toggleMobileSidebar()"></div>
             <div class="sidebar-tabs">
-                <div class="sidebar-tab active" id="tab-flights" onclick="switchTab('flights')">
+              <?php /*  <div class="sidebar-tab active" id="tab-flights" onclick="switchTab('flights')">
                     <i class="fas fa-plane"></i>
                     <span>Flights</span>
                 </div>
-                <div class="sidebar-tab" id="tab-hotels" onclick="switchTab('hotels')">
+                 <div class="sidebar-tab" id="tab-hotels" onclick="switchTab('hotels')">
                     <i class="fas fa-hotel"></i>
                     <span>Hotels</span>
                 </div>
                 <div class="sidebar-tab" id="tab-tours" onclick="switchTab('tours')">
                     <i class="fas fa-camera-retro"></i>
                     <span>Tours</span>
-                </div>
+                </div> */ ?>
             </div>
 
             <div class="sidebar-scroll-area">
@@ -758,18 +765,54 @@
             const logoUrl = item.airline_code ? `https://imgak.mmtcdn.com/flights/assets/media/dt/common/icons/${item.airline_code}.png` : item.image;
             
             card.innerHTML = `
-                <div class="position-relative">
-                    <img src="${logoUrl}" class="listing-image" alt="${item.title}" style="width:50px; height:50px; padding:5px; background:#fff; border:1px solid #eee;">
-                </div>
-                <div class="listing-info">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <h6 class="listing-title" style="font-size:13px;">${item.title}</h6>
-                        <span class="listing-rating"><i class="fas fa-star"></i> ${item.rating}</span>
+                <div class="w-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="bg-white rounded-3 shadow-sm d-flex align-items-center justify-content-center" style="width:32px; height:32px; border:1px solid #f1f5f9;">
+                                <img src="${logoUrl}" alt="${item.airline_name}" style="width:20px; height:20px; object-fit:contain;">
+                            </div>
+                            <div class="d-flex flex-column">
+                                <div class="fw-800 text-navy" style="font-size:12px; line-height:1.2;">${item.airline_name || 'Airline'}</div>
+                                <div class="text-muted fw-bold" style="font-size:9px;">${item.type === 'flight' ? 'Flight' : (item.type === 'hotel' ? 'Hotel' : 'Tour')}</div>
+                            </div>
+                        </div>
+                        <div class="listing-price" style="font-size:18px; letter-spacing:-0.5px;">${item.price}</div>
                     </div>
-                    <div class="listing-meta"><i class="fas fa-plane-departure me-1"></i> ${item.meta}</div>
-                    <div class="listing-price-row">
-                        <div class="listing-price">${item.price}</div>
-                        <button class="btn btn-sm btn-navy px-3 rounded-pill fw-bold" style="font-size:10px;" onclick="showFlightDetails('${item.id}', event)">VIEW</button>
+                    
+                    ${item.type === 'flight' ? `
+                    <div class="d-flex align-items-center justify-content-between bg-light rounded-4 p-3 mb-3" style="background: #f8fafc !important; border: 1px solid #f1f5f9;">
+                        <div class="text-start">
+                            <div class="fw-900 text-navy" style="font-size:15px;">${item.departure_time || '--:--'}</div>
+                            <div class="text-muted fw-800" style="font-size:10px; letter-spacing:0.5px;">${item.origin_code || 'ORG'}</div>
+                        </div>
+                        
+                        <div class="flex-grow-1 px-3">
+                            <div class="position-relative d-flex align-items-center justify-content-center" style="height:20px;">
+                                <div style="height:1.5px; background:linear-gradient(90deg, #e2e8f0 0%, #cbd5e1 50%, #e2e8f0 100%); width:100%;"></div>
+                                <i class="fas fa-plane text-primary bg-light px-2 position-absolute" style="font-size:11px; background:#f8fafc !important;"></i>
+                            </div>
+                            <div class="text-center text-muted fw-800 mt-1" style="font-size:9px; letter-spacing:0.3px;">
+                                ${item.duration ? item.duration.replace('PT','').replace('H','h ').replace('M','m').toLowerCase() : (item.is_direct ? 'Non-stop' : '1+ Stop')}
+                            </div>
+                        </div>
+                        
+                        <div class="text-end">
+                            <div class="fw-900 text-navy" style="font-size:15px;">${item.arrival_time || '--:--'}</div>
+                            <div class="text-muted fw-800" style="font-size:10px; letter-spacing:0.5px;">${item.dest_code || 'DST'}</div>
+                        </div>
+                    </div>
+                    ` : `
+                    <div class="mb-3">
+                        <img src="${item.image}" class="rounded-4 w-100" style="height:120px; object-fit:cover;">
+                    </div>
+                    `}
+                    
+                    <div class="d-flex justify-content-between align-items-center pt-1">
+                        <div class="text-muted fw-bold d-flex align-items-center gap-1" style="font-size:10px;">
+                            <i class="fas fa-calendar-check text-primary opacity-50"></i> 
+                            ${item.meta.includes('|') ? item.meta.split('|')[0] : item.meta}
+                        </div>
+                        <button class="btn btn-sm btn-navy px-4 rounded-pill fw-900 shadow-sm" style="font-size:10px; background:#1e293b; border:none; height:32px;" onclick="showFlightDetails('${item.id}', event)">SELECT</button>
                     </div>
                 </div>
             `;
@@ -1041,20 +1084,10 @@
             return;
         }
 
-        const modal = new bootstrap.Modal(document.getElementById('flightDetailsModal'));
-        const content = document.getElementById('flightDetailsContent');
-        content.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 fw-bold text-muted">Loading itinerary...</p></div>';
-        modal.show();
-
-        const getTime = (at) => {
-            if (!at || !at.includes('T')) return '--:--';
-            return at.split('T')[1].substring(0, 5);
-        };
-
-        const getDuration = (dur) => {
-            if (!dur) return '';
-            return dur.replace('PT', '').replace('H', 'h ').replace('M', 'm').toLowerCase();
-        };
+        Swal.fire({
+            title: 'Fetching Fare Details...',
+            didOpen: () => { Swal.showLoading(); }
+        });
 
         fetch(`/flights/details?id=${gdsId}`)
             .then(res => res.json())
@@ -1064,54 +1097,151 @@
                 const offer = data.data;
                 const dict = data.dictionaries || {};
                 const itineraries = offer.itineraries || [];
+                const priceObj = offer.price || { base: 0, total: 0, currency: 'INR' };
+                const baseFare = parseFloat(priceObj.base || 0);
+                const totalFare = parseFloat(priceObj.total || 0);
+                const taxAndFees = totalFare - baseFare;
+                const currency = priceObj.currency || 'INR';
+                const travelerCount = (offer.travelerPricings ? offer.travelerPricings.length : 1);
                 
-                let html = '';
-                itineraries.forEach((it, itIdx) => {
-                    const segments = it.segments || [];
-                    html += `
-                        <div class="mb-4">
-                            <h6 class="fw-900 text-navy mb-3 border-bottom pb-2">
-                                <i class="fas fa-plane-departure me-2 text-primary"></i> ${itIdx === 0 ? 'Onward Journey' : 'Return Journey'}
-                            </h6>
-                            ${segments.map(s => {
-                                const carrier = (dict.carriers && dict.carriers[s.carrierCode]) ? dict.carriers[s.carrierCode] : (s.carrierCode || 'Airline');
-                                return `
-                                    <div class="itinerary-segment p-3 rounded-4 mb-3" style="background:#f8fafc; border: 1px solid #e2e8f0;">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div class="fw-900 text-navy">${carrier}</div>
-                                                <span class="badge bg-light text-muted border">${s.carrierCode || '??'}-${s.number || '000'}</span>
-                                            </div>
-                                            <div class="text-primary fw-900 small">${getDuration(s.duration || it.duration)}</div>
+                // Prepared HTML Sections
+                let itineraryHtml = itineraries.map((it, itIdx) => `
+                    <div class="journey-leg mb-5 last-child-no-margin">
+                        <h6 class="fw-900 x-small text-muted mb-4 uppercase" style="letter-spacing:1.5px;">
+                            <i class="fas ${itIdx === 0 ? 'fa-plane-departure' : 'fa-plane-arrival'} me-2"></i>
+                            ${itIdx === 0 ? 'Onward Journey' : 'Return Journey'}
+                        </h6>
+                        ${(it.segments || []).map((s, sIdx) => {
+                            const carrier = (dict.carriers && dict.carriers[s.carrierCode]) ? dict.carriers[s.carrierCode] : s.carrierCode;
+                            const fare = (offer.travelerPricings && offer.travelerPricings[0] && offer.travelerPricings[0].fareDetailsBySegment) ? 
+                                         (offer.travelerPricings[0].fareDetailsBySegment[sIdx] || offer.travelerPricings[0].fareDetailsBySegment[0]) : {};
+                            const baggage = fare.includedCheckedBags ? (fare.includedCheckedBags.weight || fare.includedCheckedBags.quantity) + (fare.includedCheckedBags.weightUnit || ' Qty') : '15 KG';
+                            const depTime = s.departure && s.departure.at ? (s.departure.at.includes('T') ? s.departure.at.split('T')[1].substring(0,5) : s.departure.at.split(' ')[1].substring(0,5)) : '--:--';
+                            const arrTime = s.arrival && s.arrival.at ? (s.arrival.at.includes('T') ? s.arrival.at.split('T')[1].substring(0,5) : s.arrival.at.split(' ')[1].substring(0,5)) : '--:--';
+
+                            return `
+                                <div class="segment-card p-3 rounded-4 mb-3" style="background:#f8fafc; border: 1px solid #e2e8f0;">
+                                    <div class="d-flex align-items-center gap-3 mb-4">
+                                        <div class="bg-white rounded-3 p-2 shadow-sm border d-flex align-items-center justify-content-center" style="width:45px; height:45px;">
+                                            <span class="fw-900 text-primary fs-5">${s.carrierCode ? s.carrierCode.substring(0,2) : '??'}</span>
                                         </div>
-                                        <div class="row align-items-center text-center g-0">
-                                            <div class="col-4 text-start">
-                                                <div class="fw-900 fs-5 text-navy">${getTime(s.departure.at)}</div>
-                                                <div class="fw-800 text-muted small">${s.departure.iataCode}</div>
-                                            </div>
-                                            <div class="col-4 position-relative">
-                                                <div style="height:2px; background:linear-gradient(90deg, var(--primary) 0%, #e2e8f0 100%); width:80%; margin:0 auto;"></div>
-                                                <i class="fas fa-plane text-primary position-absolute top-50 start-50 translate-middle bg-white px-1" style="font-size:12px;"></i>
-                                            </div>
-                                            <div class="col-4 text-end">
-                                                <div class="fw-900 fs-5 text-navy">${getTime(s.arrival.at)}</div>
-                                                <div class="fw-800 text-muted small">${s.arrival.iataCode}</div>
-                                            </div>
+                                        <div>
+                                            <div class="fw-900 text-navy">${carrier || 'Airline'}</div>
+                                            <div class="x-small text-muted fw-800">${s.carrierCode || '??'}-${s.number || '000'} <span class="mx-2">•</span> ${fare.cabin || 'ECONOMY'} (${fare.class || 'Y'})</div>
                                         </div>
                                     </div>
-                                `;
-                            }).join('')}
+                                    <div class="row align-items-center">
+                                        <div class="col-4">
+                                            <div class="fw-900 fs-4 text-navy lh-1">${depTime}</div>
+                                            <div class="x-small text-navy fw-800 mt-2">${(s.departure && s.departure.at) ? new Date(s.departure.at).toLocaleDateString('en-GB', {weekday:'short', day:'2-digit', month:'short'}) : ''}</div>
+                                            <div class="x-small text-muted fw-700 mt-1">${s.departure ? (s.departure.iataCode + ', Terminal ' + (s.departure.terminal || '1')) : '???'}</div>
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <div class="x-small text-muted fw-900 mb-2">${it.duration ? it.duration.replace('PT','').toLowerCase() : ''}</div>
+                                            <div class="position-relative d-flex align-items-center justify-content-center">
+                                                <div style="height:2px; background:#cbd5e1; width:100%;"></div>
+                                                <i class="fas fa-plane text-primary position-absolute bg-white px-2" style="font-size:12px;"></i>
+                                            </div>
+                                            <div class="x-small fw-800 text-success mt-2">Non-Stop</div>
+                                        </div>
+                                        <div class="col-4 text-end">
+                                            <div class="fw-900 fs-4 text-navy lh-1">${arrTime}</div>
+                                            <div class="x-small text-navy fw-800 mt-2">${(s.arrival && s.arrival.at) ? new Date(s.arrival.at).toLocaleDateString('en-GB', {weekday:'short', day:'2-digit', month:'short'}) : ''}</div>
+                                            <div class="x-small text-muted fw-700 mt-1">${s.arrival ? (s.arrival.iataCode + ', Terminal ' + (s.arrival.terminal || '1')) : '???'}</div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                                        <div class="d-flex gap-4">
+                                            <div class="x-small fw-800 text-muted"><i class="fas fa-suitcase me-1 text-success"></i> ${baggage}</div>
+                                            <div class="x-small fw-800 text-muted"><i class="fas fa-briefcase me-1 text-primary"></i> 7 KG Cabin</div>
+                                        </div>
+                                        <div class="x-small fw-900 text-primary">Operated by ${carrier || 'Airline'}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `).join('');
+
+                const fareHtml = `
+                    <div class="p-4">
+                        <h5 class="fw-900 text-navy mb-4 fs-6">Fare Details (${travelerCount} Traveler)</h5>
+                        <table class="table table-borderless align-middle mb-0">
+                            <tbody>
+                                <tr><td class="text-muted fw-700">Base Fare</td><td class="text-end fw-900 text-navy">${currency} ${baseFare.toLocaleString()}</td></tr>
+                                <tr><td class="text-muted fw-700">Taxes & Surcharges</td><td class="text-end fw-900 text-navy">${currency} ${taxAndFees.toLocaleString()}</td></tr>
+                                <tr class="border-top"><td class="fw-900 text-navy fs-5 pt-3">Total Fare</td><td class="text-end fw-900 text-primary fs-3 pt-3">${currency} ${totalFare.toLocaleString()}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                const cancelHtml = `
+                    <div class="p-4 text-center">
+                        <div class="p-4 rounded-4 bg-danger bg-opacity-10 mb-4" style="border: 2px dashed #ef4444;">
+                            <i class="fas fa-times-circle text-danger fs-1 mb-3"></i>
+                            <h4 class="fw-900 text-danger mb-2">NON-REFUNDABLE FARE</h4>
+                            <p class="text-muted fw-700 small mb-0">Cancellation and Date change penalties apply based on airline policy.</p>
                         </div>
-                    `;
+                    </div>
+                `;
+
+                Swal.fire({
+                    title: '',
+                    html: `
+                        <div class="text-start mmt-modal-wrapper overflow-hidden pb-4" style="font-family: 'Inter', sans-serif; background: #f4f7f9; min-height: 500px;">
+                            <div class="custom-modal-header d-flex align-items-center justify-content-between px-4" style="background: #0a223d; padding-top: 15px;">
+                                <div class="d-flex overflow-auto no-scrollbar">
+                                    <div class="px-4 py-3 fw-900 small cursor-pointer premium-tab active" id="tab-itinerary" onclick="switchDetailTab('itinerary')">FLIGHT DETAILS</div>
+                                    <div class="px-4 py-3 fw-900 small cursor-pointer premium-tab" id="tab-fare" onclick="switchDetailTab('fare')">FARE SUMMARY</div>
+                                    <div class="px-4 py-3 fw-900 small cursor-pointer premium-tab" id="tab-cancel" onclick="switchDetailTab('cancel')">CANCELLATION</div>
+                                </div>
+                            </div>
+                            <div class="px-3 mt-4">
+                                <div id="content-itinerary" class="detail-content rounded-4 border-0 shadow-sm bg-white overflow-hidden animate__animated animate__fadeIn">
+                                    <div class="p-4">${itineraryHtml}</div>
+                                </div>
+                                <div id="content-fare" class="detail-content d-none rounded-4 bg-white shadow-sm overflow-hidden animate__animated animate__fadeIn">
+                                    ${fareHtml}
+                                </div>
+                                <div id="content-cancel" class="detail-content d-none rounded-4 bg-white shadow-sm overflow-hidden animate__animated animate__fadeIn">
+                                    ${cancelHtml}
+                                </div>
+                            </div>
+                            <div class="px-3 mt-4">
+                                <a href="/checkout?type=flight&id=${gdsId}" class="btn btn-primary rounded-pill w-100 fw-900 py-3 shadow-lg">
+                                    PROCEED TO BOOK THIS FLIGHT <i class="fas fa-arrow-right ms-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <style>
+                            .premium-tab { color: rgba(255,255,255,0.6); border-bottom: 3px solid transparent; white-space: nowrap; transition: 0.3s; }
+                            .premium-tab:hover { color: #fff; }
+                            .premium-tab.active { color: #fff; border-bottom-color: #2563eb; }
+                            .swal2-html-container { padding: 0 !important; margin: 0 !important; }
+                            .swal2-close { color: #fff !important; font-size: 24px; top: 10px; right: 10px; transition: 0.3s; }
+                            .swal2-close:hover { transform: rotate(90deg); color: #ff6b00 !important; }
+                        </style>
+                    `,
+                    showCloseButton: true,
+                    showConfirmButton: false,
+                    width: '900px',
+                    background: '#f4f7f9',
                 });
 
-                if (html === '') html = '<div class="text-center py-4 text-muted fw-bold">Itinerary details not available for this flight.</div>';
-                content.innerHTML = html;
+                window.switchDetailTab = function(tab) {
+                    document.querySelectorAll('.premium-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.detail-content').forEach(c => c.classList.add('d-none'));
+                    const targetTab = document.getElementById('tab-' + tab);
+                    if (targetTab) targetTab.classList.add('active');
+                    const targetContent = document.getElementById('content-' + tab);
+                    if (targetContent) targetContent.classList.remove('d-none');
+                };
             })
             .catch(err => {
-                content.innerHTML = `<div class="alert alert-danger rounded-4 fw-bold p-4"><i class="fas fa-exclamation-triangle me-2"></i> ${err.message}</div>`;
+                Swal.fire('Error', err.message || 'Failed to fetch details', 'error');
             });
-    }
+    };
 
     document.addEventListener('click', (e) => {
         const dropdown = document.getElementById('mmtTravelerDropdown');
@@ -1132,23 +1262,7 @@
     });
 </script>
 
-<!-- Flight Details Modal -->
-<div class="modal fade" id="flightDetailsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
-            <div class="modal-header border-0 px-4 pt-4 bg-primary bg-opacity-10">
-                <h5 class="fw-900 text-navy mb-0"><i class="fas fa-info-circle me-2 text-primary"></i> Flight Itinerary</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4" id="flightDetailsContent">
-                <!-- Content injected via JS -->
-            </div>
-            <div class="modal-footer border-0 p-4 pt-0">
-                <button type="button" class="btn btn-navy rounded-pill w-100 fw-900 shadow-sm" data-bs-dismiss="modal">CLOSE DETAILS</button>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Flight Details Modal Removed - Now using premium Swal view matching main flights page -->
 
 <!-- Fare Monitor Tracker Modal (User requested ID) -->
 <div class="modal fade" id="fareMonitorAlarmModal" tabindex="-1" aria-hidden="true">

@@ -241,22 +241,38 @@ class BookingFinalizeController extends Controller
     {
         $reference = $request->input('reference');
         if (!$reference) return redirect()->route('flights.index')->with('error', 'Booking reference missing.');
-        $booking = Booking::with('items')->where('booking_reference', $reference)->first();
+        
+        $booking = Booking::where('booking_reference', $reference)->first();
         if (!$booking) return redirect()->route('flights.index')->with('error', 'Booking not found.');
         if ($booking->user_id && $booking->user_id != auth()->id()) return abort(403, 'Unauthorized access.');
 
-        list($flight, $legs) = $this->extractAndNormalizeFlight($booking);
-        $pnrs = [];
-        $existingFlightBookings = DB::table('flight_bookings')->where('booking_id', $booking->id)->get();
-        foreach ($existingFlightBookings as $idx => $fb) $pnrs[$idx] = $fb->pnr;
-        if (empty($pnrs)) $pnrs[0] = 'N/A';
+        $type = $booking->booking_type ?? ($booking->type ?? 'flight');
 
-        $paxList = \DB::table('passengers')->where('booking_id', $booking->id)->get();
+        if ($type === 'hotel') {
+            $details = is_string($booking->api_booking_details) ? json_decode($booking->api_booking_details, true) : $booking->api_booking_details;
+            $details = $details ?? (is_string($booking->booking_details) ? json_decode($booking->booking_details, true) : $booking->booking_details);
+            
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('hotel.voucher-pdf', [
+                'booking' => $booking,
+                'details' => $details
+            ]);
+            return $pdf->download('Hotel-Voucher-'.$reference.'.pdf');
+        } else {
+            // Flight Logic
+            $booking->load('items');
+            list($flight, $legs) = $this->extractAndNormalizeFlight($booking);
+            $pnrs = [];
+            $existingFlightBookings = DB::table('flight_bookings')->where('booking_id', $booking->id)->get();
+            foreach ($existingFlightBookings as $idx => $fb) $pnrs[$idx] = $fb->pnr;
+            if (empty($pnrs)) $pnrs[0] = 'N/A';
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('booking-confirmation-pdf', [
-            'booking' => $booking, 'pnr' => $pnrs[0], 'pnrs' => $pnrs, 'flight' => $flight, 'legs' => $legs, 'dbPassengers' => $paxList
-        ]);
-        return $pdf->download('E-Ticket-'.$reference.'.pdf');
+            $paxList = \DB::table('passengers')->where('booking_id', $booking->id)->get();
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('booking-confirmation-pdf', [
+                'booking' => $booking, 'pnr' => $pnrs[0], 'pnrs' => $pnrs, 'flight' => $flight, 'legs' => $legs, 'dbPassengers' => $paxList
+            ]);
+            return $pdf->download('E-Ticket-'.$reference.'.pdf');
+        }
     }
 
     public function sendWhatsappTicket(Request $request)

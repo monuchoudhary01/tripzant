@@ -412,11 +412,14 @@
                     </label>
                 </div>
                 <div class="d-flex align-items-center gap-3">
-                    <button class="m-mode-btn {{ !request('max_budget') ? 'active' : '' }}" onclick="switchFlightMode('date', this)">
+                    <button class="m-mode-btn {{ (!request('max_budget') && !request('baggage')) ? 'active' : '' }}" onclick="switchFlightMode('date', this)">
                         <i class="fas fa-calendar-alt"></i> Search by dates
                     </button>
                     <button class="m-mode-btn {{ request('max_budget') ? 'active' : '' }}" onclick="switchFlightMode('budget', this)">
                         <i class="fas fa-money-bill-wave"></i> Search by budget
+                    </button>
+                    <button class="m-mode-btn {{ request('baggage') ? 'active' : '' }}" onclick="switchFlightMode('baggage', this)">
+                        <i class="fas fa-suitcase-rolling"></i> Search by baggage
                     </button>
                 </div>
             </div>
@@ -564,6 +567,25 @@
                         <div class="d-flex align-items-center gap-1 bg-white px-3 py-1 rounded-pill border shadow-sm">
                             <span class="fw-900 text-primary" style="font-size: 14px;">₹</span>
                             <input type="number" id="globalMaxBudget" class="border-0 fw-900 text-navy p-0" value="{{ request('max_budget', 20000) }}" step="500" style="outline: none; width: 80px; font-size: 15px; background: transparent;">
+                        </div>
+                    </div>
+
+                    <!-- Baggage Input Integrated Here -->
+                    <div class="ms-auto d-flex align-items-center gap-3 {{ !request('baggage') ? 'd-none' : '' }} animate__animated animate__fadeIn" id="baggageModifierRow" style="padding-right: 10px;">
+                        <span class="fw-900 text-success uppercase" style="font-size: 9px; letter-spacing: 1px;">BAGGAGE ALLOWANCE:</span>
+                        <div class="d-flex align-items-center gap-1 bg-white px-3 py-1 rounded-pill border border-success shadow-sm">
+                            <select id="globalMaxBaggage" class="border-0 fw-900 text-navy p-0 cursor-pointer" style="outline: none; font-size: 12px; background: transparent;">
+                                <option value="" {{ !request('baggage') ? 'selected' : '' }}>Any Baggage</option>
+                                <option value="5" {{ request('baggage') == '5' ? 'selected' : '' }}>5 KG</option>
+                                <option value="7" {{ request('baggage') == '7' ? 'selected' : '' }}>7 KG</option>
+                                <option value="10" {{ request('baggage') == '10' ? 'selected' : '' }}>10 KG</option>
+                                <option value="15" {{ request('baggage') == '15' ? 'selected' : '' }}>15 KG</option>
+                                <option value="20" {{ request('baggage') == '20' ? 'selected' : '' }}>20 KG</option>
+                                <option value="25" {{ request('baggage') == '25' ? 'selected' : '' }}>25 KG</option>
+                                <option value="30" {{ request('baggage') == '30' ? 'selected' : '' }}>30 KG (2x15)</option>
+                                <option value="35" {{ request('baggage') == '35' ? 'selected' : '' }}>35 KG (2x17.5)</option>
+                                <option value="40" {{ request('baggage') == '40' ? 'selected' : '' }}>40 KG (2x20)</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -2196,6 +2218,17 @@
 
     function proceedToNextLeg() {
         console.log("Proceeding to Next Leg...");
+        
+        let currentActive = 0;
+        document.querySelectorAll('.mc-leg-container').forEach((c, idx) => {
+            if(!c.classList.contains('d-none')) currentActive = idx;
+        });
+
+        if (currentActive < mcNumSegments - 1) {
+            switchMultiCityLeg(currentActive + 1);
+            return;
+        }
+
         let nextIncomplete = -1;
         for(let i=0; i<mcNumSegments; i++) {
             if(!selectedMCFlights[i]) {
@@ -3358,10 +3391,15 @@
         el.classList.add('active');
 
         const budgetRow = document.getElementById('budgetModifierRow');
-        if (mode === 'budget') {
+        const baggageRow = document.getElementById('baggageModifierRow');
+        
+        if (budgetRow) budgetRow.classList.add('d-none');
+        if (baggageRow) baggageRow.classList.add('d-none');
+
+        if (mode === 'budget' && budgetRow) {
             budgetRow.classList.remove('d-none');
-        } else {
-            budgetRow.classList.add('d-none');
+        } else if (mode === 'baggage' && baggageRow) {
+            baggageRow.classList.remove('d-none');
         }
     }
 
@@ -3575,9 +3613,15 @@
             }
         }
         
-        if (currentFlightMode === 'budget') {
+        const activeModeBtn = document.querySelector('.m-mode-btn.active');
+        const modeText = activeModeBtn ? activeModeBtn.innerText.toLowerCase() : '';
+        
+        if (modeText.includes('budget')) {
             const maxBudget = document.getElementById('globalMaxBudget').value;
             url.searchParams.set('max_budget', maxBudget);
+        } else if (modeText.includes('baggage')) {
+            const baggage = document.getElementById('globalMaxBaggage').value;
+            if (baggage) url.searchParams.set('baggage', baggage);
         }
         
         const fareType = document.querySelector('input[name="fare"]:checked')?.value || 'regular';

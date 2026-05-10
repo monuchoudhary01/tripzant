@@ -385,20 +385,56 @@
                     <!-- Dynamic Log -->
                 </div>
 
+                <div class="d-flex justify-content-between pt-3 border-top mt-2 mb-4">
+                    <span class="fw-900 text-navy">Final Settlement</span>
+                    <span class="fw-900 text-primary fs-4" id="totalDisplay">₹0</span>
+                </div>
+
                 <div class="text-end mb-3">
                     <a href="javascript:void(0)" onclick="window.showFareRules('Indigo', '6E-2134')" class="x-small text-primary fw-bold text-decoration-none border-bottom border-dashed border-primary">VIEW FARE RULES</a>
                 </div>
 
-                <div class="border-top pt-4">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <span class="fw-900 text-navy">GRAND TOTAL</span>
-                        <h2 class="fw-900 text-primary mb-0" id="totalDisplay">₹0</h2>
+                    <!-- Payment Method Selection -->
+                    <div class="mb-4">
+                        <h6 class="fw-900 text-muted mb-3 fs-12 uppercase" style="letter-spacing: 2px;">SELECT PAYMENT METHOD</h6>
+                        <div class="payment-options-grid d-flex flex-column gap-2">
+                            @if($enabledGateways['stripe'])
+                            <div class="payment-method-card p-3 border rounded-4 d-flex align-items-center gap-3 bg-white cursor-pointer" onclick="selectGateway('stripe')" id="gw-stripe">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="radio" name="gateway" value="stripe" id="radio-stripe" checked>
+                                </div>
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" height="20">
+                                <span class="fw-900 small text-navy ms-auto">STRIPE SECURE</span>
+                            </div>
+                            @endif
+
+                            @if($enabledGateways['mpgs'])
+                            <div class="payment-method-card p-3 border rounded-4 d-flex align-items-center gap-3 bg-white cursor-pointer" onclick="selectGateway('mpgs')" id="gw-mpgs">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="radio" name="gateway" value="mpgs" id="radio-mpgs" {{ !$enabledGateways['stripe'] ? 'checked' : '' }}>
+                                </div>
+                                <img src="{{ asset('assets/img/payment/commercial_bank.png') }}" height="25">
+                                <span class="fw-900 small text-navy ms-auto">COMMERCIAL BANK</span>
+                            </div>
+                            @endif
+
+                            @if(!$enabledGateways['stripe'] && !$enabledGateways['mpgs'])
+                                <div class="alert alert-warning py-2 small fw-bold">No payment gateway enabled. Contact admin.</div>
+                            @endif
+                        </div>
                     </div>
-                    <button class="btn-checkout-pro" onclick="toPayment()">
+
+                    <button class="btn-checkout-pro" onclick="toPayment()" {{ (!$enabledGateways['stripe'] && !$enabledGateways['mpgs']) ? 'disabled' : '' }}>
                         PAY & CONFIRM BOOKING <i class="fas fa-lock ms-2"></i>
                     </button>
                     <p class="text-center mt-3 text-muted x-small italic fw-bold">Transaction Secured by Tripzant Gateway</p>
                 </div>
+
+                <style>
+                    .payment-method-card { transition: 0.2s; border: 1.5px solid #e2e8f0 !important; cursor: pointer; }
+                    .payment-method-card:hover { border-color: var(--trip-blue) !important; background: #f8fafc; }
+                    .payment-method-card.active { border-color: var(--trip-blue) !important; background: #eff6ff; box-shadow: 0 0 0 1px var(--trip-blue); }
+                </style>
             </div>
         </div>
     </div>
@@ -431,6 +467,7 @@
 
         renderBaggageGrid();
         updateFare();
+        if (selectedGateway) selectGateway(selectedGateway);
     }
 
     // --- Dynamic Baggage Config from Flight API Data ---
@@ -506,10 +543,10 @@
 
     function selectMeal(name, price) {
         state.meal = {name, price};
-        const cards = document.querySelectorAll('.meal-card');
-        cards.forEach(c => c.classList.remove('active'));
-        if(name === 'Veg Premium') cards[0].classList.add('active');
-        else cards[1].classList.add('active');
+        document.querySelectorAll('.meal-card').forEach(c => {
+            const title = c.querySelector('h6').innerText;
+            c.classList.toggle('active', title === name);
+        });
         updateFare();
     }
 
@@ -598,12 +635,26 @@
         document.getElementById('totalDisplay').innerText = `₹${(baseFlightTotal + seatTotal + extraTotal).toLocaleString()}`;
     }
 
+    let selectedGateway = '{{ $enabledGateways['stripe'] ? 'stripe' : ($enabledGateways['mpgs'] ? 'mpgs' : '') }}';
+
+    function selectGateway(gw) {
+        selectedGateway = gw;
+        document.querySelectorAll('.payment-method-card').forEach(c => c.classList.remove('active'));
+        document.getElementById('gw-' + gw).classList.add('active');
+        document.getElementById('radio-' + gw).checked = true;
+    }
+
     async function toPayment() {
+        if (!selectedGateway) {
+            Swal.fire({ icon: 'warning', title: 'Payment Method', text: 'Please select a payment method.' });
+            return;
+        }
+
         localStorage.setItem('selected_addons', JSON.stringify(state));
 
         const btn = document.querySelector('.btn-checkout-pro');
         const orig = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Connecting to Payment...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Connecting to ' + selectedGateway.toUpperCase() + '...';
         btn.disabled = true;
 
         try {
@@ -624,7 +675,8 @@
                     reference: "{{ $reference }}",
                     total_amount: totalAmount,
                     addons: state,
-                    seats: seatsMulti
+                    seats: seatsMulti,
+                    gateway: selectedGateway
                 })
             });
 

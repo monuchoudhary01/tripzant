@@ -86,7 +86,7 @@
                 </button>
 
                 <div class="mt-4 text-center">
-                    <img src="https://help.shippo.com/hc/article_attachments/360046522332/payment-logos.png" height="30" style="opacity:0.5; filter: grayscale(1);">
+                    <img src="{{ asset('assets/img/payment/Logos-02.jpg') }}" height="30" style="opacity:0.8; filter: grayscale(0.5);">
                 </div>
             </form>
         </div>

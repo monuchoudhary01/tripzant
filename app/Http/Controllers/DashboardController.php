@@ -31,14 +31,43 @@ class DashboardController extends Controller
         return view('dashboard.index', compact('stats', 'recentBookings', 'user'));
     }
 
-    public function bookings()
+    public function bookings(Request $request)
     {
-        // Try with flightBooking relationship if exists
-        $query = Booking::where('user_id', Auth::id())->latest();
-        if (method_exists(Booking::class, 'flightBooking')) {
-            $query->with('flightBooking');
+        $userId = Auth::id();
+        $query = Booking::where('user_id', $userId)->latest();
+
+        // 1. Filter by Reference / ID / Keyword
+        if ($request->filled('q')) {
+            $searchTerm = $request->q;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('booking_reference', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('id', 'like', '%' . $searchTerm . '%');
+            });
         }
-        $bookings = $query->get();
+
+        // 2. Filter by Type (Flight/Hotel)
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        // 3. Filter by Status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // 4. Filter by Date Range
+        if ($request->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->from);
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->to);
+        }
+
+        if (method_exists(Booking::class, 'flightBooking')) {
+            $query->with(['flightBooking', 'passengers']);
+        }
+
+        $bookings = $query->paginate(15);
         return view('dashboard.bookings', compact('bookings'));
     }
 

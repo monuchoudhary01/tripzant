@@ -32,6 +32,7 @@ class FlightController extends Controller
      *     @OA\Parameter(name="return_date", in="query", required=false, @OA\Schema(type="string", format="date", example="2024-12-15"), description="Return date for Round-Trip"),
      *     @OA\Parameter(name="trip", in="query", @OA\Schema(type="string", enum={"oneway", "round"}, default="oneway"), description="Trip type"),
      *     @OA\Parameter(name="multi_city", in="query", @OA\Schema(type="boolean", default=false), description="Set true for Multi-City"),
+     *     @OA\Parameter(name="baggage", in="query", @OA\Schema(type="integer"), description="Minimum baggage weight (KG)"),
      *     @OA\Response(response=200, description="List of flights")
      * )
      */
@@ -55,7 +56,8 @@ class FlightController extends Controller
             'infants' => $request->input('infants', 0),
             'cabin_class' => $request->input('cabin_class', 'ECONOMY'),
             'trip_type' => $tripType,
-            'multi_city' => $multiCity
+            'multi_city' => $multiCity,
+            'baggage' => $request->input('baggage')
         ];
 
         $allFlightsSorted = [];
@@ -76,7 +78,8 @@ class FlightController extends Controller
                         'adults' => $params['adults'],
                         'children' => $params['children'],
                         'infants' => $params['infants'],
-                        'cabin' => $params['cabin_class']
+                        'cabin' => $params['cabin_class'],
+                        'baggage' => $params['baggage']
                     ];
                     
                     $res = $this->hybridFlightService->search($legParams);
@@ -104,7 +107,8 @@ class FlightController extends Controller
                 'adults' => $params['adults'],
                 'children' => $params['children'],
                 'infants' => $params['infants'],
-                'cabin' => $params['cabin_class']
+                'cabin' => $params['cabin_class'],
+                'baggage' => $params['baggage']
             ];
             $searchRes = $this->hybridFlightService->search($onwardParams);
             $onwardFlights = $searchRes['data'] ?? [];
@@ -189,6 +193,24 @@ class FlightController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/flights/book",
+     *     tags={"Flights"},
+     *     summary="Book a Flight",
+     *     description="Create a flight booking for the authenticated user",
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"flight_id","passengers"},
+     *             @OA\Property(property="flight_id", type="string", example="12345"),
+     *             @OA\Property(property="passengers", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Booking successful")
+     * )
+     */
     public function book(Request $request)
     {
         // Reuse logic from FlightController@book

@@ -32,8 +32,8 @@ class ExploreController extends Controller
             return null;
         };
 
-        $originRaw = $request->input('origin', 'DEL');
-        $origin = $getIata($originRaw) ?: 'DEL';
+        $originRaw = $request->input('origin');
+        $origin = $originRaw ? ($getIata($originRaw) ?: null) : null;
         
         $destRaw = $request->input('destination');
         $destination = ($destRaw && $destRaw !== 'Anywhere') ? $getIata($destRaw) : null;
@@ -54,7 +54,7 @@ class ExploreController extends Controller
         $airportCoords = $this->getAirportCoords();
         $originCoords = $airportCoords[$origin] ?? $airportCoords['DEL'];
 
-        if ($destination) {
+        if ($origin && $destination) {
             // Specific Search: Use Hybrid Service to match /flights parity
             $searchParams = [
                 'from' => $origin,
@@ -81,26 +81,27 @@ class ExploreController extends Controller
                     'type' => 'flight',
                     'title' => ($flight['airline_name'] ?? 'Flight') . ' to ' . $this->getCityName($dest),
                     'airline_code' => $flight['airline_code'] ?? '6E',
+                    'airline_name' => $flight['airline_name'] ?? 'Airline',
                     'dest_code' => $dest,
+                    'origin_code' => $origin,
                     'meta' => date('d M H:i', strtotime($flight['departure_at'] ?? $departureDate)) . ' | ' . ($flight['airline_name'] ?? ''),
                     'price' => '₹' . number_format($flight['price'] ?? 0, 0),
                     'price_raw' => $flight['price'] ?? 0,
                     'departure_at' => $flight['departure_at'] ?? $departureDate,
+                    'arrival_at' => $flight['arrival_at'] ?? null,
+                    'departure_time' => isset($flight['departure_at']) ? date('H:i', strtotime($flight['departure_at'])) : '--:--',
+                    'arrival_time' => isset($flight['arrival_at']) ? date('H:i', strtotime($flight['arrival_at'])) : '--:--',
+                    'duration' => $flight['duration'] ?? '',
+                    'stops' => $flight['stops'] ?? 0,
                     'image' => $this->getCityImage($dest),
                     'lat' => $coords['lat'],
                     'lng' => $coords['lng'],
-                    'rating' => '4.' . rand(5, 9),
-                    'is_direct' => true
+                    'is_direct' => ($flight['stops'] ?? 0) == 0
                 ];
             }
         } else {
-            // Inspiration Search: Anywhere from Jaipur
-            $result = $this->flightService->inspirationSearch($origin, $maxPrice);
+            $result = $origin ? $this->flightService->inspirationSearch($origin, $maxPrice) : ['success' => false];
             $rawInspirations = $result['success'] ? $result['data'] : [];
-
-            if (empty($rawInspirations)) {
-                $rawInspirations = $this->getMockInspirations($origin);
-            }
 
             foreach ($rawInspirations as $index => $item) {
                 $dest = $item['destination'] ?? 'BOM';
@@ -118,8 +119,7 @@ class ExploreController extends Controller
                     'price' => '₹' . number_format($item['price']['total'] ?? rand(5000, 25000), 0),
                     'image' => $this->getCityImage($dest),
                     'lat' => $coords['lat'],
-                    'lng' => $coords['lng'],
-                    'rating' => '4.' . rand(5, 9)
+                    'lng' => $coords['lng']
                 ];
             }
         }

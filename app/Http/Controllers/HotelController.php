@@ -46,9 +46,20 @@ class HotelController extends Controller
      */
     public function index(Request $request)
     {
+        $checkIn = $request->checkin ?? ($request->checkIn ?? date('Y-m-d', strtotime('+7 days')));
+        $checkOut = $request->checkout ?? ($request->checkOut ?? date('Y-m-d', strtotime('+8 days')));
+
+        // Standardize Date Format
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $checkIn)) {
+            $checkIn = date('Y-m-d', strtotime($checkIn));
+        }
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $checkOut)) {
+            $checkOut = date('Y-m-d', strtotime($checkOut));
+        }
+
         $params = [
-            'checkIn'         => $request->checkin ?? ($request->checkIn ?? date('Y-m-d', strtotime('+7 days'))),
-            'checkOut'        => $request->checkout ?? ($request->checkOut ?? date('Y-m-d', strtotime('+8 days'))),
+            'checkIn'         => $checkIn,
+            'checkOut'        => $checkOut,
             'destinationCode' => $request->city_code ?? 'DXB',
             'adults'          => $request->adults ?? 2,
             'children'        => $request->children ?? 0,
@@ -61,6 +72,28 @@ class HotelController extends Controller
         $message = $results['message'] ?? null;
 
         AuditLogService::log('Hotel', 'Search', "Hotel search in {$params['destinationCode']}", $params);
+
+        if ($request->mode === 'map') {
+            $formatted = [];
+            $coords = ['BKK' => [13.75, 100.51], 'DXB' => [25.2, 55.27], 'DEL' => [28.61, 77.21]];
+            $c = $coords[$params['destinationCode']] ?? [28.6, 77.2];
+            foreach($hotels as $h) {
+                $formatted[] = [
+                    'id' => $h['code'], 'type' => 'hotels', 'title' => $h['name'],
+                    'price' => '₹' . number_format($h['minRate'] ?? 0, 0), 'rating' => $h['categoryCode'][0] ?? 4,
+                    'image' => $h['main_image'], 'lat' => $h['latitude'] ?? ($c[0] + rand(-50,50)/1000),
+                    'lng' => $h['longitude'] ?? ($c[1] + rand(-50,50)/1000), 'location' => $h['destinationName'] ?? ''
+                ];
+            }
+            return view('explore-map-hotel', [
+                'dynamicHotels' => json_encode($formatted), 'dynamicFlights' => json_encode([]),
+                'dynamicTours' => json_encode([]), 'flights' => [], 'origin' => 'DEL',
+                'destination' => $params['destinationCode'], 'departure_date' => $params['checkIn'],
+                'return_date' => $params['checkOut'], 'adults' => $params['adults'],
+                'children' => $params['children'], 'rooms' => $params['rooms'],
+                'originCoords' => json_encode(['lat' => $c[0], 'lng' => $c[1]]), 'activeTab' => 'hotels'
+            ]);
+        }
 
         return view('hotel.results', compact('hotels', 'params', 'error', 'message'));
     }
@@ -156,7 +189,13 @@ class HotelController extends Controller
                 $q->whereNull('expiry_date')->orWhere('expiry_date', '>=', date('Y-m-d'));
             })->get();
 
-        return view('hotel.checkout', compact('booking', 'rate', 'params', 'coupons'));
+        $paymentSettings = \App\Models\GlobalSetting::where('group', 'payments')->get()->pluck('value', 'key');
+        $enabledGateways = [
+            'stripe' => ($paymentSettings['payment_stripe_enabled'] ?? '0') === '1',
+            'mpgs'   => ($paymentSettings['payment_mpgs_enabled'] ?? '0') === '1',
+        ];
+
+        return view('hotel.checkout', compact('booking', 'rate', 'params', 'coupons', 'enabledGateways'));
     }
 
     /**
@@ -182,29 +221,37 @@ class HotelController extends Controller
 
         $paymentMethod = $request->input('payment_method', 'online');
 
-        // 1. Handle Online Payment Flow (Stripe)
+        // 1. Handle Online Payment Flow (Stripe or MPGS)
         if ($paymentMethod === 'online') {
+            $gateway = $request->input('gateway', 'stripe');
+            
             // Store booking data in session for retrieval after payment
             session(['pending_hotel_booking' => $request->all()]);
 
-            $stripe = app(\App\Services\StripeService::class);
-            $session = $stripe->createCheckoutSession([
-                'item_name'   => 'Hotel Booking: ' . $request->input('hotel_name'),
-                'amount'      => $totalFare,
-                'email'       => $request->input('email') ?? $user->email,
-                'success_url' => route('hotel.payment.process') . '?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url'  => route('hotel.checkout') . '?error=Payment cancelled',
-                'metadata'    => [
-                    'booking_type' => 'hotel',
-                    'hotel_name'   => $request->input('hotel_name')
-                ]
-            ]);
+            if ($gateway === 'mpgs') {
+                $reference = 'H-' . strtoupper(bin2hex(random_bytes(4)));
+                session(['pending_hotel_reference' => $reference]);
+                return redirect()->route('hotel.payment.mpgs', ['reference' => $reference]);
+            } else {
+                $stripe = app(\App\Services\StripeService::class);
+                $session = $stripe->createCheckoutSession([
+                    'item_name'   => 'Hotel Booking: ' . $request->input('hotel_name'),
+                    'amount'      => $totalFare,
+                    'email'       => $request->input('email') ?? $user->email,
+                    'success_url' => route('hotel.payment.process') . '?session_id={CHECKOUT_SESSION_ID}&gateway=stripe',
+                    'cancel_url'  => route('hotel.checkout') . '?error=Payment cancelled',
+                    'metadata'    => [
+                        'booking_type' => 'hotel',
+                        'hotel_name'   => $request->input('hotel_name')
+                    ]
+                ]);
 
-            if (isset($session->url)) {
-                return redirect()->away($session->url);
+                if (isset($session->url)) {
+                    return redirect()->away($session->url);
+                }
+
+                return back()->with('error', 'Stripe session creation failed: ' . ($session['message'] ?? 'Unknown error'));
             }
-
-            return back()->with('error', 'Stripe session creation failed: ' . ($session['message'] ?? 'Unknown error'));
         }
 
         // 2. Handle Wallet Deduction (B2B Only)
@@ -381,6 +428,43 @@ class HotelController extends Controller
     }
 
     /**
+     * Show MPGS Checkout Page for Hotels
+     */
+    public function showMpgsCheckout(Request $request)
+    {
+        $reference = $request->query('reference');
+        $params    = session('pending_hotel_booking');
+
+        if (!$params || session('pending_hotel_reference') !== $reference) {
+            return redirect()->route('hotels.index')->with('error', 'Booking session not found.');
+        }
+
+        $totalFare = (float) ($params['final_total'] ?? $params['total_fare']);
+
+        $mpgs = app(\App\Services\MpgsService::class);
+        $session = $mpgs->createCheckoutSession([
+            'order_id' => $reference,
+            'amount'   => $totalFare,
+            'currency' => 'LKR',
+        ]);
+
+        if (!isset($session['session']['id'])) {
+            return redirect()->back()->with('error', 'Could not initialize payment gateway.');
+        }
+
+        $paymentSettings = \App\Models\GlobalSetting::where('group', 'payments')->get()->pluck('value', 'key');
+        $merchantId = $paymentSettings['payment_mpgs_merchant_id'] ?? config('payments.mpgs.merchant_id');
+
+        return view('hotel.mpgs-checkout', [
+            'order_id'    => $reference,
+            'amount'      => $totalFare,
+            'currency'    => 'LKR',
+            'session'     => $session,
+            'merchant_id' => $merchantId
+        ]);
+    }
+
+    /**
      * Process Simulated Online Payment & Complete Booking
      */
     public function processPayment(Request $request)
@@ -388,6 +472,18 @@ class HotelController extends Controller
         $params = session('pending_hotel_booking');
         if (!$params) {
             return redirect()->route('hotels.index')->with('error', 'Booking session expired.');
+        }
+
+        // Verify Gateway Response
+        $gateway = $request->input('gateway');
+        if ($gateway === 'stripe') {
+            if (!$request->has('session_id')) {
+                return redirect()->route('hotel.checkout')->with('error', 'Stripe payment verification failed.');
+            }
+        } elseif ($gateway === 'mpgs') {
+            if (!$request->has('resultIndicator')) {
+                return redirect()->route('hotel.checkout')->with('error', 'MPGS payment verification failed.');
+            }
         }
 
         $user      = Auth::user();

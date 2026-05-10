@@ -16,11 +16,16 @@ class HotelService
 
     public function __construct()
     {
-        $this->baseUrl = config('services.hotelbeds.env') === 'production' 
+        // Read credentials from database (global_settings), fallback to config/.env
+        $settings = \App\Models\GlobalSetting::where('group', 'api_credentials')->get()->pluck('value', 'key');
+        
+        $env = $settings['hotelbeds_api_env'] ?? config('services.hotelbeds.env', 'test');
+        $this->baseUrl = ($env === 'production') 
                         ? 'https://api.hotelbeds.com/hotel-api/1.0' 
                         : 'https://api.test.hotelbeds.com/hotel-api/1.0';
-        $this->apiKey = config('services.hotelbeds.key');
-        $this->secret = config('services.hotelbeds.secret');
+        
+        $this->apiKey = $settings['hotelbeds_api_key'] ?? config('services.hotelbeds.key');
+        $this->secret = $settings['hotelbeds_api_secret'] ?? config('services.hotelbeds.secret');
     }
 
     protected function getHeaders()
@@ -89,14 +94,26 @@ class HotelService
                 ->post("{$this->baseUrl}/hotels", $payload);
 
             if ($response->failed()) {
-                Log::error('HotelBeds Search Error', ['res' => $response->json()]);
-                return ['hotels' => ['hotels' => []], 'is_mock' => false, 'error' => true, 'message' => 'HotelBeds API Error'];
+                Log::error('HotelBeds Search Error', [
+                    'status' => $response->status(),
+                    'res' => $response->body(),
+                    'payload' => $payload,
+                    'headers' => $this->getHeaders()
+                ]);
+
+                // Fallback to Mock Data in Test Env if Quota Exceeded
+                $env = \App\Models\GlobalSetting::where('key', 'hotelbeds_api_env')->first()->value ?? 'test';
+                if ($env === 'test' || $response->status() == 403) {
+                    return $this->getMockSearch($destinationCode);
+                }
+
+                return ['hotels' => ['hotels' => []], 'is_mock' => false, 'error' => true, 'message' => 'HotelBeds API Error: ' . ($response->json('error.message') ?? 'Connection failed')];
             }
 
             $data = $response->json();
             $hotels = $data['hotels']['hotels'] ?? [];
             $formatted = [];
-            $markupPct = (float) config('tripzant.markups.b2c', 10);
+            $markupPct = $this->getMarkupPct();
 
             foreach ($hotels as $h) {
                 $net = $h['minRate'] ?? 0;
@@ -110,6 +127,8 @@ class HotelService
                     'code' => $h['code'],
                     'name' => $h['name'],
                     'main_image' => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?fit=crop&w=800&q=80',
+                    'price' => $sell,
+                    'rating' => isset($h['categoryCode']) ? (int) substr($h['categoryCode'], 0, 1) : 4,
                     'facilities' => array_map(function($f) { return $f['description'] ?? $f; }, $h['facilities'] ?? []),
                     'rooms' => array_map(function($r) use ($markupPct, $h) {
                         return [
@@ -174,11 +193,15 @@ class HotelService
             $hAvail = $availResponse->json()['hotels']['hotels'][0] ?? null;
             $hContent = $contentResponse->json()['hotel'] ?? null;
 
-            if (!$hAvail) {
+            if ($availResponse->failed()) {
+                $env = \App\Models\GlobalSetting::where('key', 'hotelbeds_api_env')->first()->value ?? 'test';
+                if ($env === 'test' || $availResponse->status() == 403) {
+                    return $this->getMockDetails($hotelCode);
+                }
                 return ['content' => [], 'availability' => []];
             }
 
-            $markupPct = (float) config('tripzant.markups.b2c', 10);
+            $markupPct = $this->getMarkupPct();
             
             // Format Availability
             $avail = ['rooms' => []];
@@ -253,12 +276,15 @@ class HotelService
                 ->post("{$this->baseUrl}/checkrates", $payload);
 
             if ($response->failed()) {
+                if (strpos($rateKey, 'MOCK') !== false) {
+                    return $this->getMockCheckRate($rateKey);
+                }
                 return ['error' => true, 'message' => 'Rate expired.'];
             }
 
             $data = $response->json();
             $hotel = $data['hotel'];
-            $markupPct = (float) config('tripzant.markups.b2c', 10);
+            $markupPct = $this->getMarkupPct();
 
             return [
                 'hotel' => [
@@ -351,5 +377,183 @@ class HotelService
             \Log::error('HotelBeds Book Exception: ' . $e->getMessage());
             return ['error' => true, 'message' => $e->getMessage()];
         }
+    }
+
+    protected function getMarkupPct()
+    {
+        return (float) (\App\Models\GlobalSetting::where('key', 'default_b2c_markup')->first()->value ?? 10);
+    }
+
+    /**
+     * Return Realistic Mock Data for UI Testing
+     */
+    protected function getMockSearch($destCode)
+    {
+        $mockHotels = [
+            [
+                'code' => 'MOCK1',
+                'name' => 'Burj Al Arab Jumeirah (Mock)',
+                'main_image' => 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?fit=crop&w=800&q=80',
+                'facilities' => ['Private Beach', 'Infinity Pool', 'Luxury Spa', '24/7 Butler'],
+                'minRate' => 25000.00,
+                'price' => 25000.00,
+                'rating' => 5,
+                'categoryCode' => '5EST',
+                'destinationName' => 'Dubai',
+                'latitude' => 25.1413,
+                'longitude' => 55.1852,
+                'rooms' => [
+                    [
+                        'name' => 'Royal Suite',
+                        'rates' => [['rateKey' => 'MOCK_RK_1', 'net' => 22000, 'sellingRate' => 25000, 'currency' => 'INR', 'boardName' => 'Breakfast Included', 'hotelCode' => 'MOCK1']]
+                    ]
+                ]
+            ],
+            [
+                'code' => 'MOCK2',
+                'name' => 'Atlantis The Palm (Mock)',
+                'main_image' => 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?fit=crop&w=800&q=80',
+                'facilities' => ['Waterpark', 'Underwater Suites', 'Aquarium', 'Club'],
+                'minRate' => 18000.00,
+                'price' => 18000.00,
+                'rating' => 5,
+                'categoryCode' => '5EST',
+                'destinationName' => 'Dubai',
+                'latitude' => 25.1304,
+                'longitude' => 55.1171,
+                'rooms' => [
+                    [
+                        'name' => 'Ocean View Room',
+                        'rates' => [['rateKey' => 'MOCK_RK_2', 'net' => 16000, 'sellingRate' => 18000, 'currency' => 'INR', 'boardName' => 'All Inclusive', 'hotelCode' => 'MOCK2']]
+                    ]
+                ]
+            ],
+            [
+                'code' => 'MOCK3',
+                'name' => 'The Address Downtown (Mock)',
+                'main_image' => 'https://images.unsplash.com/photo-1517841905240-472988babdf9?fit=crop&w=800&q=80',
+                'facilities' => ['Burj Khalifa View', 'Pool', 'Fine Dining'],
+                'minRate' => 12500.00,
+                'price' => 12500.00,
+                'rating' => 5,
+                'categoryCode' => '4EST',
+                'destinationName' => 'Dubai',
+                'latitude' => 25.1972,
+                'longitude' => 55.2744,
+                'rooms' => [
+                    [
+                        'name' => 'Executive Room',
+                        'rates' => [['rateKey' => 'MOCK_RK_3', 'net' => 11000, 'sellingRate' => 12500, 'currency' => 'INR', 'boardName' => 'Bed & Breakfast', 'hotelCode' => 'MOCK3']]
+                    ]
+                ]
+            ]
+        ];
+
+        return [
+            'hotels' => ['hotels' => $mockHotels],
+            'is_mock' => true,
+            'message' => 'Showing Simulated Results (API Quota Exceeded)'
+        ];
+    }
+
+    /**
+     * Return Realistic Mock Details
+     */
+    protected function getMockDetails($hotelCode)
+    {
+        $basePrice = 12500;
+        if ($hotelCode === 'MOCK1') $basePrice = 25000;
+        if ($hotelCode === 'MOCK2') $basePrice = 18000;
+
+        $hotelContent = [
+            'code' => $hotelCode,
+            'name' => ($hotelCode === 'MOCK1' ? 'Burj Al Arab Jumeirah (Mock)' : ($hotelCode === 'MOCK2' ? 'Atlantis The Palm (Mock)' : 'Grand Millennium Dubai (Mock)')),
+            'description' => ['content' => 'Experience world-class service and luxury. This 5-star property offers spacious rooms, premium dining, and breathtaking views.'],
+            'address' => ['content' => 'Sheikh Zayed Road, Exit 36, Dubai'],
+            'main_image' => 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?fit=crop&w=1200&q=80',
+            'images' => [
+                ['path' => 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?fit=crop&w=1200&q=80'],
+                ['path' => 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?fit=crop&w=1200&q=80']
+            ],
+            'facilities' => ['Free WiFi', 'Swimming Pool', 'Spa', 'Fitness Center', 'Parking'],
+            'categoryName' => '5 Star Hotel'
+        ];
+
+        $avail = [
+            'rooms' => [
+                [
+                    'code' => 'STD',
+                    'name' => 'Standard Room (Mock)',
+                    'rates' => [
+                        [
+                            'rateKey' => 'MOCK_RK_' . $hotelCode . '_STD',
+                            'net' => $basePrice * 0.88,
+                            'sellingRate' => $basePrice,
+                            'currency' => 'INR',
+                            'boardName' => 'Room Only',
+                            'hotelCode' => $hotelCode
+                        ]
+                    ]
+                ],
+                [
+                    'code' => 'DLX',
+                    'name' => 'Premium Suite (Mock)',
+                    'rates' => [
+                        [
+                            'rateKey' => 'MOCK_RK_' . $hotelCode . '_DLX',
+                            'net' => ($basePrice * 1.5) * 0.88,
+                            'sellingRate' => $basePrice * 1.5,
+                            'currency' => 'INR',
+                            'boardName' => 'Bed & Breakfast',
+                            'hotelCode' => $hotelCode
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        return [
+            'content' => $hotelContent,
+            'availability' => $avail,
+            'is_mock' => true
+        ];
+    }
+
+    /**
+     * Return Mock Rate Data for Checkout
+     */
+    protected function getMockCheckRate($rateKey)
+    {
+        // Extract hotel code and room type from key if possible
+        $sellingRate = 12500.00; 
+        
+        if (strpos($rateKey, 'MOCK1') !== false) $sellingRate = 25000.00;
+        elseif (strpos($rateKey, 'MOCK2') !== false) $sellingRate = 18000.00;
+
+        if (strpos($rateKey, '_DLX') !== false) {
+            $sellingRate = $sellingRate * 1.5;
+        }
+
+        return [
+            'hotel' => [
+                'code' => 'MOCK_HOTEL',
+                'name' => 'Grand Millennium Dubai (Mock)',
+                'rooms' => [
+                    [
+                        'name' => (strpos($rateKey, '_DLX') !== false ? 'Premium Suite (Mock)' : 'Standard Room (Mock)'),
+                        'rates' => [
+                            [
+                                'rateKey' => $rateKey,
+                                'net' => $sellingRate * 0.88,
+                                'sellingRate' => $sellingRate,
+                                'currency' => 'INR',
+                                'boardName' => (strpos($rateKey, '_DLX') !== false ? 'Bed & Breakfast' : 'Room Only'),
+                                'hotelCode' => 'MOCK_HOTEL'
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
     }
 }
