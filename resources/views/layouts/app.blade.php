@@ -271,7 +271,7 @@
                          <div class="festive-icon-wrap animate__animated animate__swing animate__infinite">
                             <i class="fas fa-qrcode"></i>
                          </div>
-                        <span class="fw-900">EVENT QR</span>
+                        <span class="fw-900">EVENT</span>
                     </a>
 
                     <!-- More Dropdown -->
@@ -379,7 +379,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg text-center p-4" style="border-radius: 30px; background: linear-gradient(135deg, #ffffff 0%, #fef9c3 100%);">
                 <div class="modal-header border-0 pb-0 justify-content-center">
-                    <h4 class="fw-900 text-navy mb-0">Symphony in the Stratosphere</h4>
+                    <h4 class="fw-900 text-navy mb-0">Melbourne Sri Lankan New Year Event</h4>
                 </div>
                 <div class="modal-body py-4">
                     <!-- Very Large QR Code in Middle -->
@@ -797,55 +797,8 @@
     </script>
 
     <script>
-        // Under Construction Popup
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!sessionStorage.getItem('constructionSeen')) {
-                Swal.fire({
-                    title: '<span style="color:var(--navy); font-family:Outfit; font-weight:900;">TripZant.com is Under Construction</span>',
-                    html: `
-                        <div style="text-align: center; padding: 10px;">
-                            <div class="d-flex align-items-center justify-content-center gap-5 mb-4">
-                                <img src="/img/logo.svg" height="80">
-                                <div style="width: 2px; height: 60px; background: #e2e8f0;"></div>
-                                <img src="/img/iata-logo.svg" height="80">
-                            </div>
-                            <p style="color: #64748b; font-size: 16px; line-height: 1.6;">
-                                We are currently building a premium travel experience for you. 
-                                Our engineers are working hard to integrate live GDS pricing and global hotel networks.
-                            </p>
-                            <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin-top: 20px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 8px;">
-                                <div>
-                                    <strong style="color: var(--navy);">🚀 Official Launch:</strong> 
-                                    <span style="color: var(--primary); font-weight: 700;">Coming Live in 1 Month!</span>
-                                </div>
-                                <div style="border-top: 1px solid #e2e8f0; pt-2; margin-top: 5px; padding-top: 8px;">
-                                    <p style="margin:0; font-weight: 600; color: #1e293b; font-size: 14px;">For immediate bookings, please contact:</p>
-                                    <h5 style="color: var(--primary); font-weight: 800; margin-top: 5px; letter-spacing: 1px;"><i class="fas fa-phone-alt me-2"></i>0468259656</h5>
-                                </div>
-                            </div>
-                        </div>
-                    `,
-                    icon: 'info',
-                    iconColor: '#0076f7',
-                    confirmButtonText: 'Explore Preview',
-                    confirmButtonColor: '#002f55',
-                    width: 700,
-                    allowOutsideClick: false,
-                    showClass: {
-                        popup: 'animate__animated animate__fadeInDown'
-                    },
-                    hideClass: {
-                        popup: 'animate__animated animate__fadeOutUp'
-                    },
-                    customClass: {
-                        popup: 'rounded-4 border-0 shadow-lg',
-                        title: 'fs-3',
-                    }
-                }).then(() => {
-                    sessionStorage.setItem('constructionSeen', 'true');
-                });
-            }
-        });
+        // Under Construction Popup removed
+
 
         // Header scroll effect
         window.addEventListener('scroll', function() {

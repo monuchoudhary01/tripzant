@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-use Laravel\Sanctum\HasApiTokens;
+// use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable;
 
     protected static function boot()
     {
@@ -27,6 +27,7 @@ class User extends Authenticatable
         });
     }
 
+    const ROLE_SUPER_ADMIN = 'super-admin';
     const ROLE_ADMIN = 'admin';
     const ROLE_USER = 'user';
     const ROLE_AGENT = 'agent';
@@ -71,6 +72,7 @@ class User extends Authenticatable
 
         switch ($roleSlug) {
             case self::ROLE_ADMIN: return '/admin-dashboard';
+            case self::ROLE_SUPER_ADMIN: return '/admin-dashboard';
             case self::ROLE_AGENT: return '/agent-dashboard';
             case self::ROLE_IATA: return '/iata-dashboard';
             case self::ROLE_HOTEL_PARTNER: return '/hotel-dashboard';

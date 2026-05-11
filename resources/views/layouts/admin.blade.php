@@ -260,6 +260,10 @@
                 <a href="{{ route('admin.users.requests') }}" class="admin-nav-link {{ request()->is('admin/users/requests') ? 'active' : '' }}">
                     <i class="bx bx-handshake"></i> Requests
                 </a>
+
+                <a href="{{ route('admin.event-leads.index') }}" class="admin-nav-link {{ request()->is('admin/event-leads*') ? 'active' : '' }}" style="{{ !request()->is('admin/event-leads*') ? 'color: #ff3e1d !important; font-weight: 800;' : '' }}">
+                    <i class="bx bx-user-voice" style="color: #ff3e1d;"></i> Customer Leads
+                </a>
                 
                 <span class="admin-nav-label">Inventory Control</span>
                 <a href="/admin/flights" class="admin-nav-link {{ request()->is('admin/flights') ? 'active' : '' }}">

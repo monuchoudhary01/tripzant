@@ -6,8 +6,8 @@
 <div class="container-fluid p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-900 text-navy mb-0">Event Leads</h2>
-            <p class="text-muted small mb-0">Tracking visitors from the Symphony in the Stratosphere Event 2026</p>
+            <h2 class="fw-900 text-navy mb-0">Customer Leads</h2>
+            <p class="text-muted small mb-0">Tracking visitors and registrations from marketing events</p>
         </div>
         <div class="bg-primary-light text-primary px-4 py-2 rounded-pill fw-bold">
             Total Leads: {{ count($leads) }}
@@ -33,7 +33,7 @@
                             <td class="ps-4 small fw-bold text-muted">{{ $lead->created_at->format('d M Y, h:i A') }}</td>
                             <td>
                                 <h6 class="fw-bold text-navy mb-0">{{ $lead->name }}</h6>
-                                <span class="badge bg-light text-navy x-small">Melbourne Event</span>
+                                <span class="badge bg-success text-white x-small">Melbourne Event</span>
                             </td>
                             <td>
                                 <div class="fw-bold small">{{ $lead->email }}</div>

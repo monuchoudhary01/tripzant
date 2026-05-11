@@ -34,9 +34,9 @@ class RestrictToPanelMiddleware
 
             // 2. Define Panel Prefixes and required roles
             $panelMapping = [
-                '/admin-dashboard'      => User::ROLE_ADMIN,
-                '/admin'                => User::ROLE_ADMIN,
-                '/accounting'           => [User::ROLE_ADMIN, User::ROLE_ACCOUNTING],
+                '/admin-dashboard'      => [User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN],
+                '/admin'                => [User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN],
+                '/accounting'           => [User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN, User::ROLE_ACCOUNTING],
                 '/agent-dashboard'      => User::ROLE_AGENT,
                 '/iata-dashboard'       => User::ROLE_IATA,
                 '/amadeus-dashboard'    => User::ROLE_AMADEUS_PARTNER,
@@ -46,15 +46,15 @@ class RestrictToPanelMiddleware
                 '/tourbuilder-dashboard'=> User::ROLE_TOUR_BUILDER,
                 '/cargo-dashboard'      => User::ROLE_CARGO,
                 '/cargo-agent'          => [User::ROLE_AGENT, User::ROLE_CARGO],
-                '/cargo-hub'            => [User::ROLE_ADMIN, User::ROLE_CARGO],
-                '/dashboard'            => [User::ROLE_USER, User::ROLE_ADMIN],
+                '/cargo-hub'            => [User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN, User::ROLE_CARGO],
+                '/dashboard'            => [User::ROLE_USER, User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN],
                 '/user-cargo'           => [User::ROLE_USER, User::ROLE_CARGO],
                 '/partner'              => User::ROLE_TOUR_BUILDER,
                 '/agent'                => User::ROLE_IATA,
                 '/affiliate-dashboard'  => User::ROLE_AFFILIATE,
-                '/investor'             => [User::ROLE_INVESTOR, User::ROLE_ADMIN],
-                '/visa'                 => [User::ROLE_VISA_PROVIDER, User::ROLE_ADMIN],
-                '/local-provider'       => [User::ROLE_LOCAL_PROVIDER, User::ROLE_ADMIN],
+                '/investor'             => [User::ROLE_INVESTOR, User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN],
+                '/visa'                 => [User::ROLE_VISA_PROVIDER, User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN],
+                '/local-provider'       => [User::ROLE_LOCAL_PROVIDER, User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN],
             ];
 
             // 3. Check if user is accessing a panel and if they are authorized

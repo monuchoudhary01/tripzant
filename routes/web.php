@@ -258,7 +258,7 @@ Route::get('/agent/hotel-bookings', function () { return view('agent-hotel-booki
 Route::get('/agent/hotel-bookings', function () { return view('agent-hotel-bookings'); })->name('agent.hotel.bookings');
 
 // 1. Individual (B2C) Dashboard
-Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'role:user,admin'])->group(function () {
+Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'role:user,admin,super-admin'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('index');
     Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
     Route::post('/profile/update', [DashboardController::class, 'updateProfile'])->name('profile.update');

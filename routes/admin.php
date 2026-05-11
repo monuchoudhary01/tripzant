@@ -21,7 +21,7 @@ use App\Http\Controllers\Admin\AccountingController;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'role:admin,super-admin'])->group(function () {
     
     // 1. Main Dashboard
     Route::get('/admin-dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
@@ -141,7 +141,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 });
 
 // 3. Dedicated Accounting Panel (Admin + Accounting Specialist)
-Route::middleware(['auth', 'role:admin,accounting'])->prefix('accounting')->name('accounting.')->group(function () {
+Route::middleware(['auth', 'role:admin,super-admin,accounting'])->prefix('accounting')->name('accounting.')->group(function () {
     Route::get('/dashboard', [AccountingController::class, 'dashboard'])->name('dashboard');
     Route::get('/', [AccountingController::class, 'dashboard']); // Alias
     Route::get('/ledger', [AccountingController::class, 'ledger'])->name('ledger');

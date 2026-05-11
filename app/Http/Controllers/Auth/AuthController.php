@@ -96,9 +96,9 @@ class AuthController extends Controller
         // Check Role
         $isAuthorized = ($user->role === $expectedRole);
         
-        // Special case: Only Super Admin (role_id 1) can access admin portal
+        // Special case: Both Admin and Super Admin can access admin portal
         if ($expectedRole === 'admin') {
-            if ($user->role === 'admin') {
+            if ($user->role === 'admin' || $user->role === 'super-admin') {
                 $isAuthorized = true;
             } else {
                 $isAuthorized = false;
@@ -136,6 +136,7 @@ class AuthController extends Controller
     private function getRedirectUrl($role)
     {
         switch ($role) {
+            case 'super-admin':
             case 'admin': return '/admin-dashboard';
             case 'user': return '/dashboard';
             case 'agent': return '/agent-dashboard';
