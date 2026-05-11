@@ -17,8 +17,9 @@ use App\Http\Controllers\StripeWebhookController;
 |--------------------------------------------------------------------------
 */
 
-// Home
+// Home & Deals
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/deals', [HomeController::class, 'deals'])->name('deals.index');
 
 // Flight + Hotel Bundle
 Route::get('/flight-hotel', [App\Http\Controllers\FlightHotelController::class, 'index'])->name('flight-hotel.index');

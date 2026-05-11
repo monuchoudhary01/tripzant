@@ -57,10 +57,24 @@ class HotelController extends Controller
             $checkOut = date('Y-m-d', strtotime($checkOut));
         }
 
+        $cityMap = [
+            'BOM' => 'Mumbai', 'DEL' => 'Delhi', 'BLR' => 'Bangalore', 'MAA' => 'Chennai',
+            'CCU' => 'Kolkata', 'HYD' => 'Hyderabad', 'DXB' => 'Dubai', 'SIN' => 'Singapore',
+            'JAI' => 'Jaipur', 'GOI' => 'Goa', 'AMD' => 'Ahmedabad', 'LKO' => 'Lucknow',
+            'PNQ' => 'Pune', 'SXR' => 'Srinagar', 'IXC' => 'Chandigarh', 'LHR' => 'London',
+            'JFK' => 'New York', 'COK' => 'Kochi', 'AYJ' => 'Ayodhya', 'IXL' => 'Leh',
+            'AGR' => 'Agra', 'UDR' => 'Udaipur', 'DED' => 'Rishikesh', 'SLV' => 'Shimla',
+            'KUU' => 'Manali'
+        ];
+
+        $destCode = $request->city_code ?? ($request->destinationCode ?? 'DEL');
+        $destName = $request->city ?? ($cityMap[$destCode] ?? $destCode);
+
         $params = [
             'checkIn'         => $checkIn,
             'checkOut'        => $checkOut,
-            'destinationCode' => $request->city_code ?? 'DXB',
+            'destinationCode' => $destCode,
+            'destinationName' => $destName,
             'adults'          => $request->adults ?? 2,
             'children'        => $request->children ?? 0,
             'rooms'           => $request->rooms ?? 1,
@@ -75,7 +89,15 @@ class HotelController extends Controller
 
         if ($request->mode === 'map') {
             $formatted = [];
-            $coords = ['BKK' => [13.75, 100.51], 'DXB' => [25.2, 55.27], 'DEL' => [28.61, 77.21]];
+            $coords = [
+                'BKK' => [13.75, 100.51], 
+                'DXB' => [25.2, 55.27], 
+                'DEL' => [28.61, 77.21],
+                'JAI' => [26.91, 75.78],
+                'GOI' => [15.29, 73.98],
+                'BOM' => [19.07, 72.87],
+                'BLR' => [12.97, 77.59]
+            ];
             $c = $coords[$params['destinationCode']] ?? [28.6, 77.2];
             foreach($hotels as $h) {
                 $formatted[] = [
@@ -85,7 +107,7 @@ class HotelController extends Controller
                     'lng' => $h['longitude'] ?? ($c[1] + rand(-50,50)/1000), 'location' => $h['destinationName'] ?? ''
                 ];
             }
-            return view('explore-map-hotel', [
+            return view('explore-map', [
                 'dynamicHotels' => json_encode($formatted), 'dynamicFlights' => json_encode([]),
                 'dynamicTours' => json_encode([]), 'flights' => [], 'origin' => 'DEL',
                 'destination' => $params['destinationCode'], 'departure_date' => $params['checkIn'],
@@ -120,6 +142,13 @@ class HotelController extends Controller
 
         AuditLogService::log('Hotel', 'Details', "Viewed hotel: {$hotelCode} for {$adults} adults, {$children} children");
 
+        $destName = $data['content']['address']['content'] ?? ($data['content']['destinationName'] ?? 'City Center');
+        // Extract city from address if it's long
+        if (strpos($destName, ',') !== false) {
+            $parts = explode(',', $destName);
+            $destName = trim(end($parts));
+        }
+
         return view('hotel.details', [
             'hotelContent' => $data['content'],
             'hotelAvail'   => $data['availability'],
@@ -128,7 +157,9 @@ class HotelController extends Controller
                 'checkOut' => $checkOut,
                 'adults'   => $adults,
                 'children' => $children,
-                'rooms'    => $request->input('rooms', 1)
+                'rooms'    => $request->input('rooms', 1),
+                'destinationName' => $destName,
+                'destinationCode' => $data['content']['destinationCode'] ?? ''
             ],
         ]);
     }

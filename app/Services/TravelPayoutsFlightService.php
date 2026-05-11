@@ -16,6 +16,18 @@ class TravelPayoutsFlightService
         $this->marker = config('services.travelpayouts.marker');
     }
 
+    public function autocomplete($term, $locale = 'en', $types = ['city', 'airport'])
+    {
+        $response = Http::when(app()->isLocal(), fn($r) => $r->withoutVerifying())
+            ->get("https://autocomplete.travelpayouts.com/places2", [
+                'term' => $term,
+                'locale' => $locale,
+                'types' => $types
+            ]);
+
+        return $response->json();
+    }
+
     public function search($params)
     {
         $origin = $params['from'] ?? 'DEL';
@@ -250,5 +262,32 @@ class TravelPayoutsFlightService
             'MY' => 'Mytrip', 'GG' => 'Gotogate', 'TR' => 'Trip.com'
         ];
         return $airlines[$code] ?? $code;
+    }
+
+    public function getCalendarRange($params, $months = 4)
+    {
+        $origin = $params['from'] ?? 'DEL';
+        $destination = $params['to'] ?? 'DXB';
+        $startDate = $params['date'] ?? date('Y-m-d');
+        
+        $allCalendarData = [];
+        
+        for ($i = 0; $i < $months; $i++) {
+            $currentMonth = date('Y-m', strtotime("$startDate +$i months"));
+            
+            $response = Http::when(app()->isLocal(), fn($r) => $r->withoutVerifying())->get("https://api.travelpayouts.com/v1/prices/calendar", [
+                'origin' => $origin,
+                'destination' => $destination,
+                'token' => $this->token,
+                'currency' => 'INR',
+                'depart_date' => $currentMonth
+            ]);
+            
+            if ($response->successful() && isset($response['data'])) {
+                $allCalendarData = array_merge($allCalendarData, $response['data']);
+            }
+        }
+        
+        return $allCalendarData;
     }
 }

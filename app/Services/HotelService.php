@@ -389,61 +389,105 @@ class HotelService
      */
     protected function getMockSearch($destCode)
     {
+        $cityNames = [
+            'DXB' => 'Dubai',
+            'JAI' => 'Jaipur',
+            'GOI' => 'Goa',
+            'DEL' => 'Delhi',
+            'BOM' => 'Mumbai',
+            'BLR' => 'Bangalore',
+            'MAA' => 'Chennai',
+            'CCU' => 'Kolkata',
+            'HYD' => 'Hyderabad',
+            'PNQ' => 'Pune',
+            'SXR' => 'Srinagar',
+            'IXC' => 'Chandigarh',
+            'COK' => 'Kochi',
+            'AYJ' => 'Ayodhya',
+            'IXL' => 'Leh',
+            'AGR' => 'Agra',
+            'UDR' => 'Udaipur',
+            'DED' => 'Rishikesh',
+            'SLV' => 'Shimla',
+            'KUU' => 'Manali'
+        ];
+
+        $cityName = $cityNames[$destCode] ?? $destCode;
+
         $mockHotels = [
             [
                 'code' => 'MOCK1',
-                'name' => 'Burj Al Arab Jumeirah (Mock)',
+                'name' => 'The Grand Heritage ' . $cityName,
                 'main_image' => 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?fit=crop&w=800&q=80',
-                'facilities' => ['Private Beach', 'Infinity Pool', 'Luxury Spa', '24/7 Butler'],
-                'minRate' => 25000.00,
-                'price' => 25000.00,
+                'facilities' => ['Premium Spa', 'Infinity Pool', 'Luxury Dining', '24/7 Butler'],
+                'minRate' => 12000.00,
+                'price' => 12000.00,
                 'rating' => 5,
                 'categoryCode' => '5EST',
-                'destinationName' => 'Dubai',
-                'latitude' => 25.1413,
-                'longitude' => 55.1852,
+                'destinationName' => $cityName,
+                'latitude' => 28.61,
+                'longitude' => 77.20,
                 'rooms' => [
                     [
                         'name' => 'Royal Suite',
-                        'rates' => [['rateKey' => 'MOCK_RK_1', 'net' => 22000, 'sellingRate' => 25000, 'currency' => 'INR', 'boardName' => 'Breakfast Included', 'hotelCode' => 'MOCK1']]
+                        'rates' => [['rateKey' => 'MOCK_RK_' . $destCode . '_1', 'net' => 10000, 'sellingRate' => 12000, 'currency' => 'INR', 'boardName' => 'Breakfast Included', 'hotelCode' => 'MOCK1']]
                     ]
                 ]
             ],
             [
                 'code' => 'MOCK2',
-                'name' => 'Atlantis The Palm (Mock)',
+                'name' => $cityName . ' Regency & Spa',
                 'main_image' => 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?fit=crop&w=800&q=80',
-                'facilities' => ['Waterpark', 'Underwater Suites', 'Aquarium', 'Club'],
-                'minRate' => 18000.00,
-                'price' => 18000.00,
-                'rating' => 5,
-                'categoryCode' => '5EST',
-                'destinationName' => 'Dubai',
-                'latitude' => 25.1304,
-                'longitude' => 55.1171,
+                'facilities' => ['City View', 'Executive Lounge', 'Fitness Center'],
+                'minRate' => 8500.00,
+                'price' => 8500.00,
+                'rating' => 4,
+                'categoryCode' => '4EST',
+                'destinationName' => $cityName,
+                'latitude' => 28.62,
+                'longitude' => 77.21,
                 'rooms' => [
                     [
-                        'name' => 'Ocean View Room',
-                        'rates' => [['rateKey' => 'MOCK_RK_2', 'net' => 16000, 'sellingRate' => 18000, 'currency' => 'INR', 'boardName' => 'All Inclusive', 'hotelCode' => 'MOCK2']]
+                        'name' => 'Deluxe City View',
+                        'rates' => [['rateKey' => 'MOCK_RK_' . $destCode . '_2', 'net' => 7500, 'sellingRate' => 8500, 'currency' => 'INR', 'boardName' => 'Room Only', 'hotelCode' => 'MOCK2']]
                     ]
                 ]
             ],
             [
                 'code' => 'MOCK3',
-                'name' => 'The Address Downtown (Mock)',
+                'name' => 'Riverside Retreat ' . $cityName,
                 'main_image' => 'https://images.unsplash.com/photo-1517841905240-472988babdf9?fit=crop&w=800&q=80',
-                'facilities' => ['Burj Khalifa View', 'Pool', 'Fine Dining'],
-                'minRate' => 12500.00,
-                'price' => 12500.00,
-                'rating' => 5,
+                'facilities' => ['Nature Trail', 'Organic Kitchen', 'Yoga Deck'],
+                'minRate' => 6200.00,
+                'price' => 6200.00,
+                'rating' => 4,
                 'categoryCode' => '4EST',
-                'destinationName' => 'Dubai',
-                'latitude' => 25.1972,
-                'longitude' => 55.2744,
+                'destinationName' => $cityName,
+                'latitude' => 28.63,
+                'longitude' => 77.22,
                 'rooms' => [
                     [
-                        'name' => 'Executive Room',
-                        'rates' => [['rateKey' => 'MOCK_RK_3', 'net' => 11000, 'sellingRate' => 12500, 'currency' => 'INR', 'boardName' => 'Bed & Breakfast', 'hotelCode' => 'MOCK3']]
+                        'name' => 'Eco Garden Room',
+                        'rates' => [['rateKey' => 'MOCK_RK_' . $destCode . '_3', 'net' => 5500, 'sellingRate' => 6200, 'currency' => 'INR', 'boardName' => 'Bed & Breakfast', 'hotelCode' => 'MOCK3']]
+                    ]
+                ]
+            ],
+            [
+                'code' => 'MOCK4',
+                'name' => 'The Urban Oasis ' . $cityName,
+                'main_image' => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?fit=crop&w=800&q=80',
+                'facilities' => ['Rooftop Bar', 'Business Center', 'Valet Parking'],
+                'minRate' => 9800.00,
+                'price' => 9800.00,
+                'rating' => 5,
+                'categoryCode' => '5EST',
+                'destinationName' => $cityName,
+                'latitude' => 28.64,
+                'longitude' => 77.23,
+                'rooms' => [
+                    [
+                        'name' => 'Executive Suite',
+                        'rates' => [['rateKey' => 'MOCK_RK_' . $destCode . '_4', 'net' => 8800, 'sellingRate' => 9800, 'currency' => 'INR', 'boardName' => 'Full Board', 'hotelCode' => 'MOCK4']]
                     ]
                 ]
             ]
@@ -452,7 +496,7 @@ class HotelService
         return [
             'hotels' => ['hotels' => $mockHotels],
             'is_mock' => true,
-            'message' => 'Showing Simulated Results (API Quota Exceeded)'
+            'message' => 'Showing Simulated Results for ' . $cityName . ' (API Quota Exceeded)'
         ];
     }
 

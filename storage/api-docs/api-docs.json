@@ -285,6 +285,60 @@
                 }
             }
         },
+        "/flights/calendar": {
+            "get": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "Flight Price Calendar (4 Months)",
+                "description": "Get flight prices for each date for the next 4 months",
+                "operationId": "9f547c6bc4a34912c1fdcc8eb7da238f",
+                "parameters": [
+                    {
+                        "name": "origin",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "DEL"
+                        }
+                    },
+                    {
+                        "name": "destination",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "BOM"
+                        }
+                    },
+                    {
+                        "name": "departure_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-05-13"
+                        }
+                    },
+                    {
+                        "name": "months",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 4
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Price calendar data"
+                    }
+                }
+            }
+        },
         "/flights/search": {
             "get": {
                 "tags": [
@@ -661,6 +715,53 @@
                 ]
             }
         },
+        "/locations/autocomplete": {
+            "get": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Location Autocomplete",
+                "description": "Search for cities and airports based on a term",
+                "operationId": "21234885d3d7cf39bd25867aaf09c819",
+                "parameters": [
+                    {
+                        "name": "term",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Ja"
+                        }
+                    },
+                    {
+                        "name": "locale",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "en"
+                        }
+                    },
+                    {
+                        "name": "types[]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "example": "city"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of locations"
+                    }
+                }
+            }
+        },
         "/get-exchange-rate": {
             "get": {
                 "tags": [
@@ -963,6 +1064,10 @@
         {
             "name": "Hotels",
             "description": "API Endpoints for Hotel Search and Booking"
+        },
+        {
+            "name": "Locations",
+            "description": "Locations"
         },
         {
             "name": "Money Transfer",

@@ -2,6 +2,255 @@
 
 @section('title', "Trip Zant — Book Flights, Hotels, Homestays & More")
 
+@section('styles')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
+<style>
+    .dest-carousel-container, .route-carousel-container, .offers-carousel-container { position: relative; padding: 0 40px; }
+    
+    /* Offer Card Styles */
+    /* Vertical Premium Offer Card */
+    .offer-card {
+        background: #fff;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        gap: 0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .offer-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: var(--primary);
+    }
+    .offer-img-wrap {
+        width: 100%;
+        height: 160px;
+        flex-shrink: 0;
+        border-radius: 16px 16px 0 0;
+        overflow: hidden;
+        position: relative;
+    }
+    .offer-img-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        background: #f1f5f9;
+        transition: transform 0.6s ease;
+    }
+    .offer-category-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 8px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #fff;
+        background: rgba(10, 48, 95, 0.8);
+        backdrop-filter: blur(4px);
+        padding: 3px 10px;
+        border-radius: 50px;
+        z-index: 1;
+    }
+    .offer-content {
+        padding: 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .offer-title {
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--navy);
+        margin-bottom: 6px;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .offer-desc {
+        font-size: 12px;
+        color: #64748b;
+        margin-bottom: 15px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .offer-footer {
+        border-top: 1px dashed #e2e8f0;
+        padding-top: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    /* Category Filters */
+    .filter-wrapper {
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 10px 0;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .filter-wrapper::-webkit-scrollbar { display: none; }
+    
+    .offer-filter {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #64748b;
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: none;
+    }
+    .offer-filter:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: #f1f5f9;
+    }
+    .offer-filter.active {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(10, 48, 95, 0.2);
+    }
+    .offer-filter i { font-size: 14px; }
+
+    .promo-pill {
+        background: #fef9c3;
+        color: #854d0e;
+        border: 1px dashed #facc15;
+        font-size: 10px;
+        font-weight: 900;
+        padding: 3px 8px;
+        border-radius: 6px;
+    }
+    }
+    .offer-desc {
+        font-size: 12px;
+        color: #64748b;
+        margin-bottom: 12px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .offer-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: auto;
+    }
+    .promo-pill {
+        background: #f8fafc;
+        border: 1.5px dashed #cbd5e1;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--navy);
+    }
+    .view-offer-btn {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--primary);
+        text-decoration: none;
+    }
+    .owl-nav button {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
+        background: #fff !important;
+        border-radius: 50% !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        color: var(--navy) !important;
+        transition: all 0.3s ease !important;
+        z-index: 10;
+    }
+    .owl-nav button:hover {
+        background: var(--primary) !important;
+        color: #fff !important;
+        box-shadow: 0 8px 20px rgba(0,118,247,0.3) !important;
+    }
+    .owl-nav .owl-prev { left: -20px; }
+    .owl-nav .owl-next { right: -20px; }
+    .owl-nav button span { font-size: 24px; line-height: 1; }
+    
+    .inline-dest-card {
+        height: 280px;
+        position: relative;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        display: block;
+    }
+    .inline-dest-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.12);
+    }
+    .inline-dest-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .inline-dest-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 20px;
+        color: #fff;
+    }
+    .inline-dest-overlay h5 {
+        margin: 0;
+        font-weight: 800;
+        font-size: 18px;
+    }
+    .inline-dest-overlay span {
+        font-size: 12px;
+        opacity: 0.8;
+    }
+
+    .inline-route-card {
+        background: #fff;
+        border: 1px solid #f1f5f9;
+        border-radius: 20px;
+        padding: 20px;
+        text-decoration: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        transition: all 0.3s ease;
+        display: block;
+    }
+    .inline-route-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        border-color: var(--primary);
+    }
+</style>
+@endsection
+
 @section('content')
     <x-ai-travel-assistant />
 
@@ -129,35 +378,42 @@
             <div class="calendar-scroll-wrap overflow-auto pb-4">
                 <div class="calendar-row d-flex gap-3">
                     @php
-                    $months = [
-                        ['name' => 'Jan', 'price' => '4,200', 'status' => 'medium', 'festival' => '🎉 New Year', 'desc' => 'Global celebrations and winter peaks.'],
-                        ['name' => 'Feb', 'price' => '3,900', 'status' => 'low', 'festival' => '❤️ Valentine', 'desc' => 'Perfect for romantic getaways.'],
-                        ['name' => 'Mar', 'price' => '4,500', 'status' => 'medium', 'festival' => '🎨 Holi', 'desc' => 'Festival of colors in India.'],
-                        ['name' => 'Apr', 'price' => '5,100', 'status' => 'high', 'festival' => '🐣 Easter', 'desc' => 'Spring peak travel season.'],
-                        ['name' => 'May', 'price' => '5,800', 'status' => 'high', 'festival' => '🏖️ Summer Start', 'desc' => 'Beginning of summer vacations.'],
-                        ['name' => 'Jun', 'price' => '6,200', 'status' => 'high', 'festival' => '☀️ Mid Summer', 'desc' => 'Highest pricing for many routes.'],
-                        ['name' => 'Jul', 'price' => '4,800', 'status' => 'medium', 'festival' => '🎭 Arts Fest', 'desc' => 'Local cultural events.'],
-                        ['name' => 'Aug', 'price' => '4,300', 'status' => 'medium', 'festival' => '🇮🇳 Independence', 'desc' => 'Holiday weekend travel.'],
-                        ['name' => 'Sep', 'price' => '3,200', 'status' => 'low', 'festival' => '🏔️ Off-Season', 'desc' => 'Best time for budget travelers.'],
-                        ['name' => 'Oct', 'price' => '5,400', 'status' => 'high', 'festival' => '🪔 Diwali', 'desc' => 'Major festival peak in India.'],
-                        ['name' => 'Nov', 'price' => '4,100', 'status' => 'medium', 'festival' => '🥧 Thanksgiving', 'desc' => 'Global holiday rush.'],
-                        ['name' => 'Dec', 'price' => '7,500', 'status' => 'high', 'festival' => '🎄 Christmas', 'desc' => 'Global peak holiday pricing.'],
-                    ];
+                    $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    $months = [];
+                    foreach($monthNames as $index => $name) {
+                        $fullMonthName = date('F', mktime(0, 0, 0, $index + 1, 10));
+                        // Find festival for this month
+                        $fest = \App\Models\Festival::where('month', 'like', '%' . $fullMonthName . '%')
+                                    ->orWhere('month', 'like', '%' . $name . '%')
+                                    ->first();
+                        
+                        // Default values if no festival in DB
+                        $festName = $fest ? $fest->icon . ' ' . $fest->name : '🏔️ Exploring';
+                        $price = rand(3000, 8000); // In real app, fetch from trends table
+                        $status = ($price < 4000) ? 'low' : (($price < 6000) ? 'medium' : 'high');
+                        
+                        $months[] = [
+                            'name' => $name,
+                            'price' => number_format($price),
+                            'status' => $status,
+                            'festival' => $festName,
+                            'desc' => $fest ? $fest->description : 'Discover amazing destinations this month.'
+                        ];
+                    }
                     @endphp
                     @foreach($months as $m)
                     <a href="{{ route('travel.trends') }}?month={{ $m['name'] }}" class="text-decoration-none">
                         <div class="month-card card-premium flex-shrink-0 text-center p-3 hvr-grow" 
-                             style="width: 160px; {{ $m['name'] == 'Sep' ? 'border: 2px solid var(--green);' : '' }}"
+                             style="width: 160px; {{ $m['status'] == 'low' ? 'border: 2px solid var(--green);' : '' }}"
                              data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $m['desc'] }}">
-                            @if($m['name'] == 'Sep')
-                                <div class="badge bg-success position-absolute top-0 start-50 translate-middle rounded-pill x-small px-3" style="z-index: 10;">CHEAPEST</div>
-                            @endif
-                            <h6 class="fw-900 text-navy mb-1">{{ $m['name'] }}</h6>
-                            <div class="d-flex align-items-center justify-content-center gap-1 mb-2">
-                                 <div class="price-dot bg-{{ $m['status'] == 'low' ? 'success' : ($m['status'] == 'medium' ? 'warning' : 'danger') }}" style="width:8px; height:8px; border-radius:50%;"></div>
-                                 <span class="fw-800 text-navy small">₹{{ $m['price'] }}</span>
+                            <div class="fw-800 text-navy mb-2">{{ $m['name'] }}</div>
+                            <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
+                                <span class="dot {{ $m['status'] == 'low' ? 'green' : ($m['status'] == 'medium' ? 'yellow' : 'red') }}"></span>
+                                <span class="fw-900 text-navy fs-6">₹{{ $m['price'] }}</span>
                             </div>
-                            <div class="festival-tag py-1 px-2 rounded-pill bg-light text-navy x-small fw-bold border" style="font-size:10px;">{{ $m['festival'] }}</div>
+                            <div class="badge rounded-pill bg-light text-navy border py-2 px-3 w-100" style="font-size: 10px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ $m['festival'] }}
+                            </div>
                         </div>
                     </a>
                     @endforeach
@@ -245,53 +501,66 @@
         </div>
     </section>
 
-    <!-- ====== EXCLUSIVE OFFERS ====== -->
-    <section class="py-4 TS-5 reveal stagger-children">
+    <!-- ====== HANDPICKED OFFERS (DYNAMIC) ====== -->
+    <section class="py-5" style="background:#fcfdff;">
         <div class="container">
-            <div class="section-head">
+            <div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
                 <div>
-                    <h2 class="main-title">Handpicked Offers</h2>
-                    <p class="section-subtitle">Curated deals you won't find anywhere else</p>
+                    <h2 class="main-title mb-1" style="font-size: 28px;">Exclusive Offers</h2>
+                    <p class="text-muted small fw-bold mb-0 opacity-75">Handpicked deals for your next big journey</p>
                 </div>
-                <a href="/offers" class="view-all-link">View All <i class="fas fa-arrow-right"></i></a>
+                <div class="filter-wrapper">
+                    <div class="d-flex gap-2 align-items-center">
+                        <button class="offer-filter active" data-filter="all"><i class="fas fa-th-large"></i> All</button>
+                        <button class="offer-filter" data-filter="Flights"><i class="fas fa-plane"></i> Flights</button>
+                        <button class="offer-filter" data-filter="Hotels"><i class="fas fa-hotel"></i> Hotels</button>
+                        <button class="offer-filter" data-filter="Homestays"><i class="fas fa-home"></i> Homestays</button>
+                        <button class="offer-filter" data-filter="Cabs"><i class="fas fa-taxi"></i> Cabs</button>
+                        <button class="offer-filter" data-filter="Trains"><i class="fas fa-train"></i> Trains</button>
+                        <button class="offer-filter" data-filter="Holidays"><i class="fas fa-umbrella-beach"></i> Holidays</button>
+                        <button class="offer-filter" data-filter="Insurance"><i class="fas fa-shield-alt"></i> Insurance</button>
+                        <button class="offer-filter" data-filter="eSIM"><i class="fas fa-sim-card"></i> eSIM</button>
+                        <button class="offer-filter" data-filter="Bank Offer"><i class="fas fa-university"></i> Bank Offers</button>
+                        
+                        <a href="{{ route('deals.index') }}" class="btn btn-sm btn-navy rounded-pill px-4 ms-3 shadow-sm d-none d-md-flex align-items-center gap-2">
+                            View All <i class="fas fa-arrow-right small"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-md-none mb-3 text-center">
+                <a href="{{ route('deals.index') }}" class="btn btn-sm btn-navy rounded-pill px-5 shadow-sm">
+                    View All Deals <i class="fas fa-arrow-right ms-1"></i>
+                </a>
             </div>
 
-            <!-- Offer category tabs -->
-            <div class="d-flex gap-2 mb-4 flex-wrap">
-                <button class="btn btn-sm px-4 py-2 fw-700 rounded-pill shadow-sm" style="background:linear-gradient(135deg, var(--primary), var(--primary-dark));color:#fff;font-size:12px;">All Offers</button>
-                <button class="btn btn-sm px-4 py-2 fw-600 rounded-pill glow-hover" style="background:var(--white);color:var(--gray-400);font-size:12px;border:1px solid var(--gray-100);">Flights</button>
-                <button class="btn btn-sm px-4 py-2 fw-600 rounded-pill glow-hover" style="background:var(--white);color:var(--gray-400);font-size:12px;border:1px solid var(--gray-100);">Hotels</button>
-                <button class="btn btn-sm px-4 py-2 fw-600 rounded-pill glow-hover" style="background:var(--white);color:var(--gray-400);font-size:12px;border:1px solid var(--gray-100);">Homestays</button>
-                <button class="btn btn-sm px-4 py-2 fw-600 rounded-pill glow-hover" style="background:var(--white);color:var(--gray-400);font-size:12px;border:1px solid var(--gray-100);">Bank Offers</button>
-            </div>
-
-            <div class="row g-4">
-                <div class="col-lg-4 col-md-6">
-                    <x-offer-card
-                        title="Flat 25% Off on Domestic Flights"
-                        category="Flights"
-                        desc="Save big on your next domestic trip. Use code EASI25 at checkout."
-                        image="https://images.unsplash.com/photo-1544016768-982d1554f0b9?w=600&auto=format&fit=crop&q=80"
-                        discount="25% OFF"
-                    />
-                </div>
-                <div class="col-lg-4 col-md-6">
-                    <x-offer-card
-                        title="Luxury Hotel Stays from ₹2,999"
-                        category="Hotels"
-                        desc="5-star hotels at 3-star prices. Book premium stays across India."
-                        image="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop&q=80"
-                        discount="Up to 40% OFF"
-                    />
-                </div>
-                <div class="col-lg-4 col-md-6">
-                    <x-offer-card
-                        title="Weekend Homestay Special"
-                        category="Homestays"
-                        desc="Cozy villas and cottages in the hills. Perfect weekend getaway deals."
-                        image="https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=600&auto=format&fit=crop&q=80"
-                        discount="₹999 OFF"
-                    />
+            <div class="offers-carousel-container">
+                <div class="owl-carousel owl-theme" id="offersSlider">
+                    @foreach($offers as $offer)
+                    <div class="item" data-category="{{ $offer->category }}">
+                        <div class="offer-card">
+                            <div class="offer-img-wrap">
+                                <div class="offer-category-badge">{{ $offer->category }}</div>
+                                <img src="{{ $offer->image_url }}" alt="{{ $offer->title }}">
+                            </div>
+                            <div class="offer-content">
+                                <div>
+                                    <h6 class="offer-title">{{ $offer->title }}</h6>
+                                    <p class="offer-desc">{{ $offer->description }}</p>
+                                </div>
+                                <div class="offer-footer">
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if($offer->promo_code)
+                                            <div class="promo-pill">{{ $offer->promo_code }}</div>
+                                        @endif
+                                    </div>
+                                    <a href="{{ $offer->link_url }}" class="view-offer-btn text-primary fw-bold small">Details <i class="fas fa-arrow-right ms-1"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
                 </div>
             </div>
         </div>
@@ -538,71 +807,18 @@
                 <a href="/hotels" class="view-all-link">Explore All <i class="fas fa-arrow-right"></i></a>
             </div>
 
-            <style>
-                .inline-dest-wrapper {
-                    display: flex;
-                    overflow-x: auto;
-                    gap: 15px;
-                    padding: 10px 0 25px;
-                    scroll-behavior: smooth;
-                    -webkit-overflow-scrolling: touch;
-                }
-                .inline-dest-wrapper::-webkit-scrollbar {
-                    height: 6px;
-                }
-                .inline-dest-wrapper::-webkit-scrollbar-thumb {
-                    background: #e2e8f0;
-                    border-radius: 10px;
-                }
-                .inline-dest-card {
-                    flex: 0 0 220px;
-                    height: 280px;
-                    position: relative;
-                    border-radius: 20px;
-                    overflow: hidden;
-                    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-                    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-                }
-                .inline-dest-card:hover {
-                    transform: translateY(-8px);
-                    box-shadow: 0 15px 30px rgba(0,0,0,0.12);
-                }
-                .inline-dest-card img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                }
-                .inline-dest-overlay {
-                    position: absolute;
-                    inset: 0;
-                    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%);
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: flex-end;
-                    padding: 20px;
-                    color: #fff;
-                }
-                .inline-dest-overlay h5 {
-                    margin: 0;
-                    font-weight: 800;
-                    font-size: 18px;
-                }
-                .inline-dest-overlay span {
-                    font-size: 12px;
-                    opacity: 0.8;
-                }
-            </style>
-
-            <div class="inline-dest-wrapper">
-                @foreach($popularDestinations as $dest)
-                <a href="{{ route('hotels.index', ['city_code' => $dest['code'], 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}" class="inline-dest-card">
-                    <img src="{{ $dest['image'] }}" alt="{{ $dest['name'] }}">
-                    <div class="inline-dest-overlay">
-                        <h5>{{ $dest['name'] }}</h5>
-                        <span>{{ $dest['desc'] }} · From ₹{{ $dest['price'] }}</span>
-                    </div>
-                </a>
-                @endforeach
+            <div class="dest-carousel-container">
+                <div class="owl-carousel owl-theme" id="popularDestSlider">
+                    @foreach($popularDestinations as $dest)
+                    <a href="{{ route('hotels.index', ['city_code' => $dest['code'], 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}" class="inline-dest-card">
+                        <img src="{{ $dest['image'] }}" alt="{{ $dest['name'] }}" loading="eager" onerror="this.src='https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=800'">
+                        <div class="inline-dest-overlay">
+                            <h5>{{ $dest['name'] }}</h5>
+                            <span>{{ $dest['desc'] }} · From ₹{{ $dest['price'] }}</span>
+                        </div>
+                    </a>
+                    @endforeach
+                </div>
             </div>
         </div>
     </section>
@@ -796,47 +1012,7 @@
         </div>
     </section>
 
-    <!-- ====== PARTNER SHOWCASE (DYNAMIC PREVIEW) ====== -->
-    <section class="py-5 reveal" style="background:#fff;">
-        <div class="container">
-            <div class="section-head">
-                <div>
-                    <h2 class="main-title">Partner Showcase</h2>
-                    <p class="section-subtitle">Premium listings verified and managed by our trusted partners</p>
-                </div>
-                <div class="badge bg-navy text-white rounded-pill px-3 py-1 fw-bold" style="font-size:10px;">PARTNER EMPOWERED</div>
-            </div>
 
-            <div class="row g-4">
-                <div class="col-lg-6">
-                    <div class="partner-featured-card d-flex align-items-center gap-4 p-4 rounded-4 shadow-sm border hvr-grow" style="background: linear-gradient(to right, #ffffff, #f8fafc);">
-                        <img src="https://images.unsplash.com/photo-1436491865332-7a61a109c05e?w=300" class="rounded-3 shadow-sm" width="150" height="110" style="object-fit:cover;">
-                        <div>
-                            <span class="badge bg-blue-light text-blue mb-2">PARTNER: SKYBOUND TRAVEL</span>
-                            <h5 class="fw-900 text-navy mb-1">Direct Flights: Delhi to Dubai</h5>
-                            <p class="text-muted small mb-3">Managed by our aviation partners for the best dynamic rates.</p>
-                            <div class="fw-900 text-navy fs-5">Starting ₹14,200</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6">
-                    <div class="partner-featured-card d-flex align-items-center gap-4 p-4 rounded-4 shadow-sm border hvr-grow" style="background: linear-gradient(to right, #ffffff, #f8fafc);">
-                        <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300" class="rounded-3 shadow-sm" width="150" height="110" style="object-fit:cover;">
-                        <div>
-                            <span class="badge bg-orange-light text-orange mb-2">PARTNER: ELITE STAYS</span>
-                            <h5 class="fw-900 text-navy mb-1">The Grand Heritage Palace</h5>
-                            <p class="text-muted small mb-3">Exclusive luxury inventory managed directly by hotel owners.</p>
-                            <div class="fw-900 text-navy fs-5">Starting ₹18,500 <span style="font-size:10px; color:#aaa;">/night</span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="text-center mt-5">
-                <p class="text-muted small">Are you a travel service provider? <a href="/partner/signup" class="text-navy fw-bold text-decoration-none border-bottom border-navy pb-1">Become a Trip Zant Partner</a></p>
-            </div>
-        </div>
-    </section>
 
     <!-- ====== WHY CHOOSE US ====== -->
     <section class="py-5 reveal" style="background:var(--white);">
@@ -947,58 +1123,92 @@
     <section class="py-5" style="background:var(--white);">
         <div class="container">
             <h2 class="main-title mb-4">Popular Flight Routes</h2>
-            <style>
-                .inline-route-wrapper {
-                    display: flex;
-                    overflow-x: auto;
-                    gap: 15px;
-                    padding: 10px 0 25px;
-                    scroll-behavior: smooth;
-                    -webkit-overflow-scrolling: touch;
-                }
-                .inline-route-wrapper::-webkit-scrollbar {
-                    height: 6px;
-                }
-                .inline-route-wrapper::-webkit-scrollbar-thumb {
-                    background: #e2e8f0;
-                    border-radius: 10px;
-                }
-                .inline-route-card {
-                    flex: 0 0 260px;
-                    background: #fff;
-                    border: 1px solid #f1f5f9;
-                    border-radius: 20px;
-                    padding: 20px;
-                    text-decoration: none;
-                    box-shadow: 0 5px 15px rgba(0,0,0,0.03);
-                    transition: all 0.3s ease;
-                }
-                .inline-route-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-                    border-color: var(--primary);
-                }
-            </style>
-
-            <div class="inline-route-wrapper">
-                @foreach($popularRoutes as $route)
-                <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => $route->origin, 'destination' => $route->destination, 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}" class="inline-route-card">
-                    <div class="d-flex align-items-center gap-3 mb-3">
-                        <div style="width:40px;height:40px;border-radius:10px;background:rgba(0,168,225,0.1);display:flex;align-items:center;justify-content:center;">
-                            <i class="fas fa-plane text-primary"></i>
+            <div class="route-carousel-container">
+                <div class="owl-carousel owl-theme" id="popularRouteSlider">
+                    @foreach($popularRoutes as $route)
+                    <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => $route->origin, 'destination' => $route->destination, 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}" class="inline-route-card">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div style="width:40px;height:40px;border-radius:10px;background:rgba(0,168,225,0.1);display:flex;align-items:center;justify-content:center;">
+                                <i class="fas fa-plane text-primary"></i>
+                            </div>
+                            <div class="fw-800 text-navy" style="font-size:15px;">{{ $route->origin_name }} <i class="fas fa-arrow-right mx-1 small opacity-50"></i> {{ $route->destination_name }}</div>
                         </div>
-                        <div class="fw-800 text-navy" style="font-size:15px;">{{ $route->origin_name }} <i class="fas fa-arrow-right mx-1 small opacity-50"></i> {{ $route->destination_name }}</div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-end">
-                        <div class="text-muted x-small fw-bold">One Way</div>
-                        <div class="text-end">
-                            <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;">Starting from</div>
-                            <div class="fw-900 text-primary fs-5">₹{{ number_format($route->price) }}</div>
+                        <div class="d-flex justify-content-between align-items-end">
+                            <div class="text-muted x-small fw-bold">One Way</div>
+                            <div class="text-end">
+                                <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;">Starting from</div>
+                                <div class="fw-900 text-primary fs-5">₹{{ number_format($route->price) }}</div>
+                            </div>
                         </div>
-                    </div>
-                </a>
-                @endforeach
+                    </a>
+                    @endforeach
+                </div>
             </div>
         </div>
     </section>
+@section('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+<script>
+$(document).ready(function(){
+    $("#popularDestSlider").owlCarousel({
+        loop: true,
+        margin: 20,
+        nav: true,
+        dots: false,
+        navText: ['<i class="fas fa-chevron-left"></i>', '<i class="fas fa-chevron-right"></i>'],
+        responsive: {
+            0: { items: 1 },
+            600: { items: 2 },
+            1000: { items: 4 },
+            1200: { items: 5 }
+        }
+    });
+
+    $("#popularRouteSlider").owlCarousel({
+        loop: true,
+        margin: 20,
+        nav: true,
+        dots: false,
+        navText: ['<i class="fas fa-chevron-left"></i>', '<i class="fas fa-chevron-right"></i>'],
+        responsive: {
+            0: { items: 1 },
+            600: { items: 2 },
+            1000: { items: 3 },
+            1200: { items: 4 }
+        }
+    });
+
+    const offersSlider = $("#offersSlider").owlCarousel({
+        loop: false,
+        margin: 20,
+        nav: true,
+        dots: false,
+        autoWidth: false,
+        navText: ['<i class="fas fa-chevron-left"></i>', '<i class="fas fa-chevron-right"></i>'],
+        responsive: {
+            0: { items: 1.2 },
+            768: { items: 2 },
+            1200: { items: 4 }
+        }
+    });
+
+    $('.offer-filter').on('click', function() {
+        $('.offer-filter').removeClass('active');
+        $(this).addClass('active');
+        const filter = $(this).data('filter');
+        
+        $('#offersSlider .item').each(function() {
+            const item = $(this);
+            if (filter === 'all' || item.data('category') === filter) {
+                item.closest('.owl-item').show();
+            } else {
+                item.closest('.owl-item').hide();
+            }
+        });
+        offersSlider.trigger('refresh.owl.carousel');
+    });
+});
+</script>
+@endsection
 @endsection

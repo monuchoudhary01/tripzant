@@ -53,26 +53,19 @@
 
     <div class="row g-4">
         @php
-        $festivals = [
-            ['name' => 'Rio Carnival', 'location' => 'Rio de Janeiro, Brazil', 'month' => 'February', 'icon' => '🎭', 'img' => 'https://images.unsplash.com/photo-1549417229-aa67d3263c09?w=600&q=80'],
-            ['name' => 'Holi Festival', 'location' => 'Varanasi, India', 'month' => 'March', 'icon' => '🎨', 'img' => 'https://images.unsplash.com/photo-1547842602-bc3f7895aa97?w=600&q=80'],
-            ['name' => 'Cherry Blossom', 'location' => 'Kyoto, Japan', 'month' => 'April', 'icon' => '🌸', 'img' => 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80'],
-            ['name' => 'Tomorrowland', 'location' => 'Boom, Belgium', 'month' => 'July', 'icon' => '🎧', 'img' => 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600&q=80'],
-            ['name' => 'Oktoberfest', 'location' => 'Munich, Germany', 'month' => 'October', 'icon' => '🍻', 'img' => 'https://images.unsplash.com/photo-1532634812-d8581ccd7dc1?w=600&q=80'],
-            ['name' => 'Diwali', 'location' => 'All India', 'month' => 'October/November', 'icon' => '🪔', 'img' => 'https://images.unsplash.com/photo-1577744486770-020ab432da65?w=600&q=80'],
-        ];
+        $festivals = \App\Models\Festival::where('is_active', true)->orderBy('sort_order')->get();
         @endphp
         @foreach($festivals as $f)
         <div class="col-lg-4 col-md-6">
             <div class="fest-card d-flex flex-column">
-                <img src="{{ $f['img'] }}" class="fest-img" alt="">
+                <img src="{{ $f->image_url }}" class="fest-img" alt="">
                 <div class="p-4 flex-grow-1">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="small fw-800 text-primary">{{ $f['month'] }}</div>
-                        <div class="fs-4">{{ $f['icon'] }}</div>
+                        <div class="small fw-800 text-primary">{{ $f->month }}</div>
+                        <div class="fs-4">{{ $f->icon }}</div>
                     </div>
-                    <h5 class="fw-900 text-navy mb-1">{{ $f['name'] }}</h5>
-                    <p class="text-muted small fw-bold mb-4"><i class="fas fa-map-marker-alt me-1 text-danger"></i> {{ $f['location'] }}</p>
+                    <h5 class="fw-900 text-navy mb-1">{{ $f->name }}</h5>
+                    <p class="text-muted small fw-bold mb-4"><i class="fas fa-map-marker-alt me-1 text-danger"></i> {{ $f->location }}</p>
                     <button class="btn btn-navy w-100 rounded-pill py-2 fw-bold small">Explore Destination</button>
                 </div>
             </div>

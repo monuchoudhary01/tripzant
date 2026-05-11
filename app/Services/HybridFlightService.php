@@ -53,6 +53,18 @@ class HybridFlightService
                 
                 $providerMeta = $results['meta'] ?? [];
                 
+                // Apply markups to calendar if exists
+                if (isset($providerMeta['calendar']) && is_array($providerMeta['calendar'])) {
+                    foreach ($providerMeta['calendar'] as $date => &$data) {
+                        $price = (float)($data['price'] ?? ($data['value'] ?? 0));
+                        if ($price > 0) {
+                            $pricing = PricingService::calculateSellingPrice($price, 'flight');
+                            $data['price'] = $pricing['selling_price'];
+                            $data['markup'] = $pricing['markup'];
+                        }
+                    }
+                }
+
                 // Merge metadata (like calendar data)
                 $metadata = array_merge_recursive($metadata, $providerMeta);
 

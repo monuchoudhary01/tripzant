@@ -610,18 +610,18 @@
         <div class="map-sidebar" id="mapSidebar">
             <div class="sidebar-handle" onclick="toggleMobileSidebar()"></div>
             <div class="sidebar-tabs">
-              <?php /*  <div class="sidebar-tab active" id="tab-flights" onclick="switchTab('flights')">
+                <div class="sidebar-tab {{ ($activeTab ?? 'flights') == 'flights' ? 'active' : '' }}" id="tab-flights" onclick="switchTab('flights')">
                     <i class="fas fa-plane"></i>
                     <span>Flights</span>
                 </div>
-                 <div class="sidebar-tab" id="tab-hotels" onclick="switchTab('hotels')">
+                 <div class="sidebar-tab {{ ($activeTab ?? '') == 'hotels' ? 'active' : '' }}" id="tab-hotels" onclick="switchTab('hotels')">
                     <i class="fas fa-hotel"></i>
                     <span>Hotels</span>
                 </div>
-                <div class="sidebar-tab" id="tab-tours" onclick="switchTab('tours')">
+                <div class="sidebar-tab {{ ($activeTab ?? '') == 'tours' ? 'active' : '' }}" id="tab-tours" onclick="switchTab('tours')">
                     <i class="fas fa-camera-retro"></i>
                     <span>Tours</span>
-                </div> */ ?>
+                </div>
             </div>
 
             <div class="sidebar-scroll-area">
@@ -689,7 +689,7 @@
     const toursData = {!! $dynamicTours ?? '[]' !!};
     const originCoords = {!! $originCoords ?? '{"lat": 20.5937, "lng": 78.9629}' !!};
 
-    let currentTab = 'flights';
+    let currentTab = '{!! $activeTab ?? 'flights' !!}';
     let map, markers = [], routeLines = [];
 
     // --- Core Logic ---
@@ -711,7 +711,7 @@
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        renderData();
+        switchTab(currentTab);
     }
 
     function switchTab(tab) {

@@ -309,8 +309,8 @@
                 </a>
 
                 <span class="admin-nav-label">Configuration</span>
-                <a href="{{ route('admin.bank-offers.index') }}" class="admin-nav-link {{ request()->is('admin/bank-offers*') ? 'active' : '' }}">
-                    <i class="bx bx-credit-card"></i> Bank Offers
+                <a href="{{ route('admin.offers.index') }}" class="admin-nav-link {{ request()->is('admin/offers*') ? 'active' : '' }}">
+                    <i class="bx bx-gift"></i> Offers Management
                 </a>
                 <a href="/admin/settings" class="admin-nav-link {{ request()->is('admin/settings') ? 'active' : '' }}">
                     <i class="bx bx-cog"></i> Branding Settings

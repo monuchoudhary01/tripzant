@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\HotelController;
 use App\Http\Controllers\Api\HotelBookingController;
 use App\Http\Controllers\Api\MoneyTransferController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\LocationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,7 +24,9 @@ Route::prefix('v1')->group(function () {
     Route::post('/password/reset', [AuthController::class, 'resetPassword']);
 
     // Public Search & Details
+    Route::get('/locations/autocomplete', [LocationController::class, 'autocomplete']);
     Route::get('/flights/search', [FlightController::class, 'search']);
+    Route::get('/flights/calendar', [FlightController::class, 'priceCalendar']);
     Route::get('/flights/details/{id}', [FlightController::class, 'details']);
     Route::get('/hotels/search', [HotelController::class, 'search']);
     Route::get('/hotels/details/{code}', [HotelController::class, 'details']);

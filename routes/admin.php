@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\BankOfferController;
+use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\SystemSettingsController;
 use App\Http\Controllers\Admin\HomestayController;
@@ -30,13 +30,17 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', function () { return redirect('/admin-dashboard'); });
 
-        // Bank Offers
-        Route::prefix('bank-offers')->name('bank-offers.')->group(function () {
-            Route::get('/', [BankOfferController::class, 'index'])->name('index');
-            Route::post('/', [BankOfferController::class, 'store'])->name('store');
-            Route::put('/{bankOffer}', [BankOfferController::class, 'update'])->name('update');
-            Route::patch('/{bankOffer}/toggle', [BankOfferController::class, 'toggleStatus'])->name('toggle');
-            Route::delete('/{bankOffer}', [BankOfferController::class, 'destroy'])->name('destroy');
+
+
+        // Unified Offers Module (New)
+        Route::prefix('offers')->name('offers.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\OfferController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Admin\OfferController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Admin\OfferController::class, 'store'])->name('store');
+            Route::get('/{offer}/edit', [App\Http\Controllers\Admin\OfferController::class, 'edit'])->name('edit');
+            Route::put('/{offer}', [App\Http\Controllers\Admin\OfferController::class, 'update'])->name('update');
+            Route::delete('/{offer}', [App\Http\Controllers\Admin\OfferController::class, 'destroy'])->name('destroy');
+            Route::patch('/{offer}/toggle', [App\Http\Controllers\Admin\OfferController::class, 'toggleStatus'])->name('toggle');
         });
 
         Route::get('/partners', function () { return view('admin.partners'); })->name('partners');

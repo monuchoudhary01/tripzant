@@ -298,10 +298,7 @@
             <div class="d-flex align-items-center gap-3">
                 <div class="d-none d-lg-flex align-items-center gap-3">
                     @if(!auth()->check() || auth()->user()->role !== 'user')
-                        <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#partnerModal" class="btn btn-partner rounded-pill fw-bold shadow-sm hvr-grow">
-                            <i class="fas fa-handshake fs-6"></i>
-                            <span>BECOME A PARTNER</span>
-                        </a>
+
 
                         @if(auth()->check())
                             <!-- If logged in as Partner/Admin, show a small dashboard link instead of Login -->
@@ -508,6 +505,7 @@
                         <i class="fas fa-hotel"></i>
                         <span>Hotels in India</span>
                     </div>
+                    <div class="grid-body">
                         <div class="link-col">
                             <a href="{{ route('hotels.index', ['city_code' => 'JAI', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Jaipur</a>
                             <a href="{{ route('hotels.index', ['city_code' => 'GOI', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Goa</a>
@@ -571,24 +569,7 @@
                     </div>
                 </div>
 
-                <!-- QUICK ACCESS -->
-                <div class="grid-card">
-                    <div class="grid-head">
-                        <i class="fas fa-handshake"></i>
-                        <span>Partner Program</span>
-                    </div>
-                    <div class="grid-body">
-                        <div class="link-col">
-                            <a href="/payment" class="text-primary fw-bold"><i class="fas fa-credit-card me-1"></i> Payment Test</a>
-                            <a href="{{ route('partner.login') }}">Partner Login</a>
-                            <a href="/admin/login" class="text-muted">Admin Access</a>
-                        </div>
-                        <div class="link-col">
-                            <a href="/login">User Login</a>
-                            <a href="{{ route('partner.signup') }}" class="small text-primary opacity-50">Join as Partner</a>
-                        </div>
-                    </div>
-                </div>
+
 
                 <!-- IMPORTANT LINKS -->
                 <div class="grid-card">

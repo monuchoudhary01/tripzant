@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\FlightService;
 use App\Services\HybridFlightService;
+use App\Services\TravelPayoutsFlightService;
+use App\Services\PricingService;
 use App\Services\AuditLogService;
 use Illuminate\Support\Facades\Cache;
 
@@ -13,11 +15,59 @@ class FlightController extends Controller
 {
     protected $flightService;
     protected $hybridFlightService;
+    protected $tpService;
 
-    public function __construct(FlightService $flightService, HybridFlightService $hybridFlightService)
-    {
+    public function __construct(
+        FlightService $flightService, 
+        HybridFlightService $hybridFlightService,
+        TravelPayoutsFlightService $tpService
+    ) {
         $this->flightService = $flightService;
         $this->hybridFlightService = $hybridFlightService;
+        $this->tpService = $tpService;
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/flights/calendar",
+     *     tags={"Flights"},
+     *     summary="Flight Price Calendar (4 Months)",
+     *     description="Get flight prices for each date for the next 4 months",
+     *     @OA\Parameter(name="origin", in="query", required=true, @OA\Schema(type="string", example="DEL")),
+     *     @OA\Parameter(name="destination", in="query", required=true, @OA\Schema(type="string", example="BOM")),
+     *     @OA\Parameter(name="departure_date", in="query", required=false, @OA\Schema(type="string", format="date", example="2026-05-13")),
+     *     @OA\Parameter(name="months", in="query", required=false, @OA\Schema(type="integer", example=4)),
+     *     @OA\Response(response=200, description="Price calendar data")
+     * )
+     */
+    public function priceCalendar(Request $request)
+    {
+        $params = [
+            'from' => $request->input('origin', 'DEL'),
+            'to' => $request->input('destination', 'BOM'),
+            'date' => $request->input('departure_date', date('Y-m-d')),
+        ];
+
+        $months = $request->input('months', 4);
+        $calendarData = $this->tpService->getCalendarRange($params, $months);
+
+        // Apply markups
+        foreach ($calendarData as $date => &$data) {
+            $price = (float)($data['price'] ?? ($data['value'] ?? 0));
+            if ($price > 0) {
+                $pricing = PricingService::calculateSellingPrice($price, 'flight');
+                $data['price'] = $pricing['selling_price'];
+                $data['markup'] = $pricing['markup'];
+                $data['currency'] = 'INR';
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'origin' => $params['from'],
+            'destination' => $params['to'],
+            'calendar' => $calendarData
+        ]);
     }
 
     /**
@@ -156,6 +206,7 @@ class FlightController extends Controller
         return response()->json([
             'success' => true,
             'flights' => $allFlightsSorted,
+            'calendar' => $searchRes['meta']['calendar'] ?? [],
             'dictionaries' => $allDictionaries,
             'params' => $params
         ]);
