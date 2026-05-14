@@ -264,7 +264,19 @@
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label small fw-bold">PCC (OFFICE ID)</label>
-                                                    <input type="text" name="amadeus_pcc_in" value="{{ $globalSettings->get('api_credentials', collect())->where('key', 'amadeus_pcc_in')->first()->value ?? '' }}" class="form-control">
+                                                    <input type="text" name="amadeus_pcc_in" value="{{ $globalSettings->get('api_credentials', collect())->where('key', 'amadeus_pcc_in')->first()->value ?? '' }}" class="form-control" placeholder="e.g. JAIVS3793">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-bold">WSAP (WEB SERVICES ACCESS POINT)</label>
+                                                    <input type="text" name="amadeus_wsap_in" value="{{ $globalSettings->get('api_credentials', collect())->where('key', 'amadeus_wsap_in')->first()->value ?? '' }}" class="form-control" placeholder="e.g. 1ASIWIBEESI">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-bold">SOAP USER ID</label>
+                                                    <input type="text" name="amadeus_user_in" value="{{ $globalSettings->get('api_credentials', collect())->where('key', 'amadeus_user_in')->first()->value ?? '' }}" class="form-control" placeholder="e.g. WSESIIBE">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-bold">SOAP PASSWORD</label>
+                                                    <input type="password" name="amadeus_pass_in" value="{{ $globalSettings->get('api_credentials', collect())->where('key', 'amadeus_pass_in')->first()->value ?? '' }}" class="form-control">
                                                 </div>
                                             </div>
                                         </div>

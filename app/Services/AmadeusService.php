@@ -21,30 +21,20 @@ class AmadeusService
 
     public function __construct()
     {
-        // Default from config
-        $this->baseUrl = config('tripzant.amadeus.base_url', 'https://test.api.amadeus.com');
-        $this->apiKey = config('tripzant.amadeus.key');
-        $this->apiSecret = config('tripzant.amadeus.secret');
-        $this->ndcOid = config('tripzant.amadeus.ndc_oid');
+        // Fetch from GlobalSetting (Admin Dashboard)
+        $env = \App\Models\GlobalSetting::get('amadeus_api_env', 'test');
+        $this->apiKey = \App\Models\GlobalSetting::get('amadeus_api_key');
+        $this->apiSecret = \App\Models\GlobalSetting::get('amadeus_api_secret');
+        $this->ndcOid = \App\Models\GlobalSetting::get('amadeus_pcc_in', 'BNEA828CT');
 
-        // Prefer dynamic keys from DB if available (as requested by user)
-        try {
-            $dbConfig = \App\Models\ApiConfig::where('provider_name', 'amadeus')->where('is_active', true)->first();
-            if ($dbConfig && $dbConfig->credentials) {
-                $creds = is_array($dbConfig->credentials) ? $dbConfig->credentials : json_decode($dbConfig->credentials, true);
-                if (!empty($creds['api_key']) || !empty($creds['client_id'])) {
-                    $this->apiKey = $creds['api_key'] ?? $creds['client_id'];
-                }
-                if (!empty($creds['api_secret']) || !empty($creds['client_secret'])) {
-                    $this->apiSecret = $creds['api_secret'] ?? $creds['client_secret'];
-                }
-                if (!empty($creds['base_url'])) {
-                    $this->baseUrl = $creds['base_url'];
-                }
-            }
-        } catch (\Exception $e) {
-            \Log::warning('AmadeusService: Fallback to static config due to DB error: ' . $e->getMessage());
+        // Dynamic Base URL Selection
+        if ($env === 'live' || $env === 'production') {
+            $this->baseUrl = 'https://api.amadeus.com';
+        } else {
+            $this->baseUrl = 'https://test.api.amadeus.com';
         }
+
+        \Log::info("AmadeusService: Initialized in {$env} mode targeting {$this->baseUrl}");
     }
 
     /**

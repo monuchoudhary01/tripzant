@@ -15,13 +15,21 @@ class AmadeusSoapService
 
     public function __construct($region = 'IN')
     {
-        $this->config = config("tripzant.amadeus.providers.{$region}");
-        $this->wsap = $this->config['wsap'] ?? '1ASIWIBEESI'; 
-        $this->username = $this->config['user'] ?? 'WSESIIBE';
-        $this->password = $this->config['password'] ?? 'prWC5RnJ%ARx';
-        $this->officeId = $this->config['pcc'] ?? 'JAIVS3793';
-        
-        $this->endpoint = "https://nodeD2.test.webservices.amadeus.com/1ASIWIBEESI";
+        // Fetch from GlobalSetting (Admin Dashboard)
+        $env = \App\Models\GlobalSetting::get('amadeus_api_env', 'test');
+        $this->wsap = \App\Models\GlobalSetting::get("amadeus_wsap_" . strtolower($region), '1ASIWIBEESI');
+        $this->username = \App\Models\GlobalSetting::get("amadeus_user_" . strtolower($region), 'WSESIIBE');
+        $this->password = \App\Models\GlobalSetting::get("amadeus_pass_" . strtolower($region), 'prWC5RnJ%ARx');
+        $this->officeId = \App\Models\GlobalSetting::get("amadeus_pcc_" . strtolower($region), 'JAIVS3793');
+
+        // Dynamic Endpoint Selection
+        if ($env === 'live' || $env === 'production') {
+            $this->endpoint = "https://nodeD2.production.webservices.amadeus.com/{$this->wsap}";
+        } else {
+            $this->endpoint = "https://nodeD2.test.webservices.amadeus.com/{$this->wsap}";
+        }
+
+        Log::info("AmadeusSoapService: Initialized in {$env} mode targeting {$this->endpoint}");
     }
 
     private function generateUUID() {
