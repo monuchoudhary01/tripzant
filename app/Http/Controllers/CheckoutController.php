@@ -428,6 +428,9 @@ class CheckoutController extends Controller
                     'gateway_response' => json_encode($request->all())
                 ]
             );
+
+            // CREATE DETAILED SUB-RECORDS (Flight/Hotel)
+            $bookingService->createSubRecords($booking, $sessionData);
         } else {
             // Fallback to service if something went wrong with pending record
             $booking = $bookingService->completeBooking($sessionData, $transactionId, $gateway, $request->all());

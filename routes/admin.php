@@ -44,12 +44,16 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         });
 
         Route::get('/partners', function () { return view('admin.partners'); })->name('partners');
-        Route::get('/flights', function () { return view('admin.flights'); })->name('flights');
-        Route::get('/hotels', function () { return view('admin.hotels'); })->name('hotels');
+        Route::get('/flights', [BookingController::class, 'flights'])->name('flights');
+        Route::get('/flights/export', [BookingController::class, 'exportFlights'])->name('flights.export');
+        Route::get('/hotels', [BookingController::class, 'hotels'])->name('hotels');
+        Route::get('/hotels/export', [BookingController::class, 'exportHotels'])->name('hotels.export');
         Route::get('/tours', function () { return view('admin.tours'); })->name('tours');
         Route::get('/visa', function () { return view('admin.visa'); })->name('visa'); // Added as requested earlier
         
         Route::get('/bookings', [BookingController::class, 'index'])->name('bookings');
+        Route::get('/bookings/{id}', [BookingController::class, 'show'])->name('bookings.show');
+        Route::get('/bookings/{id}/detail', [BookingController::class, 'detail'])->name('bookings.detail');
         Route::get('/marketing', function () { return view('admin.marketing'); })->name('marketing');
 
         // System Master Settings

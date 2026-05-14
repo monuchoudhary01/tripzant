@@ -67,7 +67,7 @@ class HotelController extends Controller
             'KUU' => 'Manali'
         ];
 
-        $destCode = $request->city_code ?? ($request->destinationCode ?? 'DEL');
+        $destCode = $request->city_code ?? ($request->destination ?? ($request->destinationCode ?? 'DEL'));
         $destName = $request->city ?? ($cityMap[$destCode] ?? $destCode);
 
         $params = [
@@ -101,10 +101,10 @@ class HotelController extends Controller
             $c = $coords[$params['destinationCode']] ?? [28.6, 77.2];
             foreach($hotels as $h) {
                 $formatted[] = [
-                    'id' => $h['code'], 'type' => 'hotels', 'title' => $h['name'],
-                    'price' => '₹' . number_format($h['minRate'] ?? 0, 0), 'rating' => $h['categoryCode'][0] ?? 4,
-                    'image' => $h['main_image'], 'lat' => $h['latitude'] ?? ($c[0] + rand(-50,50)/1000),
-                    'lng' => $h['longitude'] ?? ($c[1] + rand(-50,50)/1000), 'location' => $h['destinationName'] ?? ''
+                    'id' => $h['code'], 'type' => 'hotel', 'title' => $h['name'],
+                    'price' => '₹' . number_format($h['price'] ?? 0, 0), 'rating' => $h['rating'] ?? 4,
+                    'image' => $h['main_image'] ?? ($h['image'] ?? null), 'lat' => $h['latitude'] ?? ($c[0] + rand(-50,50)/1000),
+                    'lng' => $h['longitude'] ?? ($c[1] + rand(-50,50)/1000), 'meta' => ($h['rating'] ?? 4) . ' Star | ' . ($h['location'] ?? 'City Center')
                 ];
             }
             return view('explore-map', [

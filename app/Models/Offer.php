@@ -15,4 +15,19 @@ class Offer extends Model
         'bank_name', 'card_type', 'discount_value', 'discount_type',
         'max_discount', 'min_amount', 'valid_till'
     ];
+
+    public function getDisplayNameAttribute()
+    {
+        return $this->bank_name ?: $this->title;
+    }
+
+    public function getTaglineAttribute()
+    {
+        return $this->description ?: $this->discount_text;
+    }
+
+    public function getLogoAttribute()
+    {
+        return $this->image_url;
+    }
 }

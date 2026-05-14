@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Passenger extends Model
 {
     protected $fillable = [
-        'booking_id', 'type', 'title', 'first_name', 'last_name', 'dob', 
-        'passport_number', 'passport_expiry', 'seat_number', 'meal_preference', 'extra_details'
+        'booking_id', 'type', 'title', 'first_name', 'last_name', 'gender', 'dob', 
+        'passport_number', 'passport_expiry', 'nationality', 'seat_number', 'meal_preference', 'extra_details'
     ];
 
     public function booking()

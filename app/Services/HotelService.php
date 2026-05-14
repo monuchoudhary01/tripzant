@@ -123,10 +123,21 @@ class HotelService
                 
                 $sell = round($net * (1 + $markupPct / 100), 2);
 
+                $imgId = (int)$h['code'] % 20;
+                $mainImage = "https://images.unsplash.com/photo-" . ([
+                    '1566073771259-6a8506099945', '1542314831-068cd1dbfeeb', '1582719478250-c89cae4dc85b', 
+                    '1517841905240-472988babdf9', '1571896349842-33c89424de2d', '1520250497591-112f2f40a3f4',
+                    '1551882547-ff43c63fedfe', '1561501900-3701fa6a0864', '1549294413-26f195af03c1',
+                    '1445019980597-93fa8acb246c', '1618773928121-c32242e63f39', '1596436889106-be35e843f974',
+                    '1566665797739-1674de7a421a', '1521783593447-5702b9bfd275', '1564501049412-61c2a3083791',
+                    '1578683062331-624344d8f8cd', '1455587734955-081b22074882', '1535827848775-03999ef75825',
+                    '1560662105-57f8ad6fc2d1', '1562790351-d273a46380c1'
+                ][$imgId] ?? '1566073771259-6a8506099945') . "?fit=crop&w=800&q=80";
+
                 $formatted[] = [
                     'code' => $h['code'],
                     'name' => $h['name'],
-                    'main_image' => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?fit=crop&w=800&q=80',
+                    'main_image' => $mainImage,
                     'price' => $sell,
                     'rating' => isset($h['categoryCode']) ? (int) substr($h['categoryCode'], 0, 1) : 4,
                     'facilities' => array_map(function($f) { return $f['description'] ?? $f; }, $h['facilities'] ?? []),
@@ -420,13 +431,11 @@ class HotelService
                 'name' => 'The Grand Heritage ' . $cityName,
                 'main_image' => 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?fit=crop&w=800&q=80',
                 'facilities' => ['Premium Spa', 'Infinity Pool', 'Luxury Dining', '24/7 Butler'],
-                'minRate' => 12000.00,
-                'price' => 12000.00,
+                'minRate' => 12000.00 + rand(-500, 500),
+                'price' => 12000.00 + rand(-500, 500),
                 'rating' => 5,
                 'categoryCode' => '5EST',
                 'destinationName' => $cityName,
-                'latitude' => 28.61,
-                'longitude' => 77.20,
                 'rooms' => [
                     [
                         'name' => 'Royal Suite',
@@ -439,13 +448,11 @@ class HotelService
                 'name' => $cityName . ' Regency & Spa',
                 'main_image' => 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?fit=crop&w=800&q=80',
                 'facilities' => ['City View', 'Executive Lounge', 'Fitness Center'],
-                'minRate' => 8500.00,
-                'price' => 8500.00,
+                'minRate' => 8500.00 + rand(-300, 300),
+                'price' => 8500.00 + rand(-300, 300),
                 'rating' => 4,
                 'categoryCode' => '4EST',
                 'destinationName' => $cityName,
-                'latitude' => 28.62,
-                'longitude' => 77.21,
                 'rooms' => [
                     [
                         'name' => 'Deluxe City View',
@@ -458,13 +465,11 @@ class HotelService
                 'name' => 'Riverside Retreat ' . $cityName,
                 'main_image' => 'https://images.unsplash.com/photo-1517841905240-472988babdf9?fit=crop&w=800&q=80',
                 'facilities' => ['Nature Trail', 'Organic Kitchen', 'Yoga Deck'],
-                'minRate' => 6200.00,
-                'price' => 6200.00,
+                'minRate' => 6200.00 + rand(-200, 200),
+                'price' => 6200.00 + rand(-200, 200),
                 'rating' => 4,
                 'categoryCode' => '4EST',
                 'destinationName' => $cityName,
-                'latitude' => 28.63,
-                'longitude' => 77.22,
                 'rooms' => [
                     [
                         'name' => 'Eco Garden Room',
@@ -477,17 +482,151 @@ class HotelService
                 'name' => 'The Urban Oasis ' . $cityName,
                 'main_image' => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?fit=crop&w=800&q=80',
                 'facilities' => ['Rooftop Bar', 'Business Center', 'Valet Parking'],
-                'minRate' => 9800.00,
-                'price' => 9800.00,
+                'minRate' => 9800.00 + rand(-400, 400),
+                'price' => 9800.00 + rand(-400, 400),
                 'rating' => 5,
                 'categoryCode' => '5EST',
                 'destinationName' => $cityName,
-                'latitude' => 28.64,
-                'longitude' => 77.23,
                 'rooms' => [
                     [
                         'name' => 'Executive Suite',
                         'rates' => [['rateKey' => 'MOCK_RK_' . $destCode . '_4', 'net' => 8800, 'sellingRate' => 9800, 'currency' => 'INR', 'boardName' => 'Full Board', 'hotelCode' => 'MOCK4']]
+                    ]
+                ]
+            ],
+            [
+                'code' => 'MOCK5',
+                'name' => 'Lakeside Palace ' . $cityName,
+                'main_image' => 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?fit=crop&w=800&q=80',
+                'facilities' => ['Lake View', 'Fine Dining', 'Wellness Center'],
+                'minRate' => 11000.00 + rand(-500, 500),
+                'price' => 11000.00 + rand(-500, 500),
+                'rating' => 5,
+                'categoryCode' => '5EST',
+                'destinationName' => $cityName,
+                'rooms' => [
+                    [
+                        'name' => 'Lake View Premier',
+                        'rates' => [['rateKey' => 'MOCK_RK_' . $destCode . '_5', 'net' => 9500, 'sellingRate' => 11000, 'currency' => 'INR', 'boardName' => 'Breakfast Included', 'hotelCode' => 'MOCK5']]
+                    ]
+                ]
+            ],
+            [
+                'code' => 'MOCK6',
+                'name' => 'Skyline Heights ' . $cityName,
+                'main_image' => 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?fit=crop&w=800&q=80',
+                'facilities' => ['Helipad', 'Rooftop Pool', 'Luxury Bar'],
+                'minRate' => 15000.00 + rand(-1000, 1000),
+                'price' => 15000.00 + rand(-1000, 1000),
+                'rating' => 5,
+                'categoryCode' => '5EST',
+                'destinationName' => $cityName,
+                'rooms' => [
+                    [
+                        'name' => 'Skyline Suite',
+                        'rates' => [['rateKey' => 'MOCK_RK_' . $destCode . '_6', 'net' => 13000, 'sellingRate' => 15000, 'currency' => 'INR', 'boardName' => 'All Inclusive', 'hotelCode' => 'MOCK6']]
+                    ]
+                ]
+            ],
+            [
+                'code' => 'MOCK7',
+                'name' => 'Classic Comfort ' . $cityName,
+                'main_image' => 'https://images.unsplash.com/photo-1551882547-ff43c63fedfe?fit=crop&w=800&q=80',
+                'facilities' => ['Free Parking', 'Pet Friendly', 'Laundry'],
+                'minRate' => 4500.00 + rand(-200, 200),
+                'price' => 4500.00 + rand(-200, 200),
+                'rating' => 3,
+                'categoryCode' => '3EST',
+                'destinationName' => $cityName,
+                'rooms' => [
+                    [
+                        'name' => 'Standard Double',
+                        'rates' => [['rateKey' => 'MOCK_RK_' . $destCode . '_7', 'net' => 4000, 'sellingRate' => 4500, 'currency' => 'INR', 'boardName' => 'Room Only', 'hotelCode' => 'MOCK7']]
+                    ]
+                ]
+            ],
+            [
+                'code' => 'MOCK8',
+                'name' => 'The Boutique Stay ' . $cityName,
+                'main_image' => 'https://images.unsplash.com/photo-1561501900-3701fa6a0864?fit=crop&w=800&q=80',
+                'facilities' => ['Art Gallery', 'Customized Meals', 'Quiet Zone'],
+                'minRate' => 7800.00 + rand(-400, 400),
+                'price' => 7800.00 + rand(-400, 400),
+                'rating' => 4,
+                'categoryCode' => '4EST',
+                'destinationName' => $cityName,
+                'rooms' => [
+                    [
+                        'name' => 'Artisanal Room',
+                        'rates' => [['rateKey' => 'MOCK_RK_' . $destCode . '_8', 'net' => 6800, 'sellingRate' => 7800, 'currency' => 'INR', 'boardName' => 'Bed & Breakfast', 'hotelCode' => 'MOCK8']]
+                    ]
+                ]
+            ],
+            [
+                'code' => 'MOCK9',
+                'name' => 'Metro Plaza Hotel ' . $cityName,
+                'main_image' => 'https://images.unsplash.com/photo-1549294413-26f195af03c1?fit=crop&w=800&q=80',
+                'facilities' => ['Near Metro', 'Fast WiFi', 'Meeting Rooms'],
+                'minRate' => 5500.00 + rand(-300, 300),
+                'price' => 5500.00 + rand(-300, 300),
+                'rating' => 3,
+                'categoryCode' => '3EST',
+                'destinationName' => $cityName,
+                'rooms' => [
+                    [
+                        'name' => 'Business Standard',
+                        'rates' => [['rateKey' => 'MOCK_RK_' . $destCode . '_9', 'net' => 4800, 'sellingRate' => 5500, 'currency' => 'INR', 'boardName' => 'Room Only', 'hotelCode' => 'MOCK9']]
+                    ]
+                ]
+            ],
+            [
+                'code' => 'MOCK10',
+                'name' => 'The Zenith ' . $cityName,
+                'main_image' => 'https://images.unsplash.com/photo-1445019980597-93fa8acb246c?fit=crop&w=800&q=80',
+                'facilities' => ['Smart Rooms', 'Tesla Charging', 'Library'],
+                'minRate' => 13500.00 + rand(-700, 700),
+                'price' => 13500.00 + rand(-700, 700),
+                'rating' => 5,
+                'categoryCode' => '5EST',
+                'destinationName' => $cityName,
+                'rooms' => [
+                    [
+                        'name' => 'Zenith Executive',
+                        'rates' => [['rateKey' => 'MOCK_RK_' . $destCode . '_10', 'net' => 11800, 'sellingRate' => 13500, 'currency' => 'INR', 'boardName' => 'Half Board', 'hotelCode' => 'MOCK10']]
+                    ]
+                ]
+            ],
+            [
+                'code' => 'MOCK11',
+                'name' => 'Sapphire Suites ' . $cityName,
+                'main_image' => 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?fit=crop&w=800&q=80',
+                'facilities' => ['Personal Gym', 'Sauna', 'Wine Cellar'],
+                'minRate' => 16500.00 + rand(-1200, 1200),
+                'price' => 16500.00 + rand(-1200, 1200),
+                'rating' => 5,
+                'categoryCode' => '5EST',
+                'destinationName' => $cityName,
+                'rooms' => [
+                    [
+                        'name' => 'Sapphire Royal',
+                        'rates' => [['rateKey' => 'MOCK_RK_' . $destCode . '_11', 'net' => 14500, 'sellingRate' => 16500, 'currency' => 'INR', 'boardName' => 'All Inclusive', 'hotelCode' => 'MOCK11']]
+                    ]
+                ]
+            ],
+            [
+                'code' => 'MOCK12',
+                'name' => 'Green Gardenia ' . $cityName,
+                'main_image' => 'https://images.unsplash.com/photo-1596436889106-be35e843f974?fit=crop&w=800&q=80',
+                'facilities' => ['Roof Garden', 'Solar Powered', 'Compostable Kit'],
+                'minRate' => 7200.00 + rand(-400, 400),
+                'price' => 7200.00 + rand(-400, 400),
+                'rating' => 4,
+                'categoryCode' => '4EST',
+                'destinationName' => $cityName,
+                'rooms' => [
+                    [
+                        'name' => 'Green Deluxe',
+                        'rates' => [['rateKey' => 'MOCK_RK_' . $destCode . '_12', 'net' => 6300, 'sellingRate' => 7200, 'currency' => 'INR', 'boardName' => 'Bed & Breakfast', 'hotelCode' => 'MOCK12']]
                     ]
                 ]
             ]

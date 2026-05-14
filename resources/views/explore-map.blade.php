@@ -532,57 +532,93 @@
 <div class="explore-map-page">
     <!-- Top Search Bar -->
     <div class="map-top-nav">
-        <form action="{{ route('explore.map') }}" method="GET" class="map-search-engine" style="max-width: 1200px; position: relative;">
-            <div class="search-input-group" style="flex: 0.6; min-width: 110px;">
+        <div class="me-3">
+            @php
+                $currentTab = $activeTab ?? 'flights';
+                $routeName = 'flights.index';
+                if ($currentTab == 'hotels') $routeName = 'hotels.index';
+                elseif ($currentTab == 'tours') $routeName = 'tours.index';
+            @endphp
+            <a href="{{ route($routeName, request()->except('mode')) }}" class="btn btn-outline-secondary rounded-pill px-3 fw-800 d-flex align-items-center gap-2" style="border-width: 2px;">
+                <i class="fas fa-list"></i> <span class="d-none d-md-inline">List View</span>
+            </a>
+        </div>
+        <form action="{{ route('explore.map') }}" method="GET" class="map-search-engine" id="mapSearchForm" style="max-width: 1200px; position: relative;">
+            <input type="hidden" name="mode" value="map">
+            <input type="hidden" name="activeTab" id="activeTabHidden" value="{{ $activeTab ?? 'flights' }}">
+
+            <!-- Flight Only: Trip Type -->
+            <div class="search-input-group flight-only" style="flex: 0.6; min-width: 110px; {{ ($activeTab ?? 'flights') !== 'flights' ? 'display:none;' : '' }}">
                 <select name="trip" id="tripTypeSelect" class="bg-transparent border-0 fw-800 text-navy" style="outline:none; font-size: 13px; cursor: pointer;" onchange="updateTripType()">
                     <option value="one" {{ ($trip ?? 'one') == 'one' ? 'selected' : '' }}>One Way</option>
                     <option value="round" {{ ($trip ?? '') == 'round' ? 'selected' : '' }}>Round Trip</option>
                 </select>
             </div>
-            <div class="search-input-group" style="position: relative;">
+
+            <!-- Flight Only: Origin -->
+            <div class="search-input-group flight-only" style="position: relative; {{ ($activeTab ?? 'flights') !== 'flights' ? 'display:none;' : '' }}">
                 <i class="fas fa-plane-departure"></i>
                 <input type="text" name="origin" id="originInput" placeholder="From" value="{{ $origin ?? '' }}" autocomplete="off" style="background: transparent; border: none; outline: none; font-size: 14px; font-weight: 700; color: #1e293b; width: 100%;">
                 <div id="originResults" class="autocomplete-results d-none"></div>
             </div>
+
+            <!-- Shared: Destination (but label/icon might differ) -->
             <div class="search-input-group" style="position: relative;">
-                <i class="fas fa-plane-arrival"></i>
+                <i class="fas {{ ($activeTab ?? 'flights') === 'hotels' ? 'fa-map-marker-alt' : 'fa-plane-arrival' }}" id="destIcon"></i>
                 <input type="text" name="destination" id="destinationInput" placeholder="To" value="{{ $destination ?? '' }}" autocomplete="off" style="background: transparent; border: none; outline: none; font-size: 14px; font-weight: 700; color: #1e293b; width: 100%;">
                 <div id="destinationResults" class="autocomplete-results d-none"></div>
             </div>
+
+            <!-- Shared: Dates -->
             <div class="search-input-group">
                 <i class="fas fa-calendar-alt"></i>
                 <input type="text" name="departure_date" id="depDateInput" placeholder="Depart" value="{{ $departure_date ?? date('D, d M') }}" readonly style="cursor: pointer;">
             </div>
-            <div class="search-input-group" id="returnCol">
+            <div class="search-input-group" id="returnCol" style="{{ (($trip ?? 'one') === 'one' && ($activeTab ?? 'flights') === 'flights') ? 'opacity:0.5; pointer-events:none;' : '' }}">
                 <i class="fas fa-calendar-plus"></i>
                 <input type="text" name="return_date" id="retDateInput" placeholder="Return" value="{{ $return_date ?? 'Add Return' }}" readonly style="cursor: pointer;">
             </div>
+
+            <!-- Shared: Travelers / Guests -->
             <div class="search-input-group" style="cursor: pointer;" onclick="toggleTravelerPicker(event)">
                 <i class="fas fa-user-friends"></i>
-                <input type="text" id="travelerText" value="{{ $adults ?? 1 }} Adult, {{ $class ?? 'Economy' }}" readonly style="font-size: 12px; cursor: pointer;">
+                <input type="text" id="travelerText" value="{{ $adults ?? 1 }} Adult, {{ ($activeTab ?? 'flights') === 'hotels' ? (($rooms ?? 1) . ' Room') : ($class ?? 'Economy') }}" readonly style="font-size: 12px; cursor: pointer;">
                 
                 <!-- Travelers Modal -->
-                <div id="mmtTravelerDropdown" class="d-none animate-in border-0 rounded-4 p-4 bg-white position-absolute" onclick="event.stopPropagation()">
+                <div id="mmtTravelerDropdown" class="d-none animate-in border-0 rounded-4 p-4 bg-white position-absolute" style="top: 100%; right: 0; z-index: 10000; min-width: 350px; box-shadow: 0 15px 45px rgba(0,0,0,0.1);" onclick="event.stopPropagation()">
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <label class="fw-900 text-navy mb-0" style="font-size: 14px;">ADULTS (12y+)</label>
-                            <span class="badge bg-light text-muted rounded-pill px-3 py-1 fw-700">on the day of travel</span>
                         </div>
-                        <div class="mmt-pills-container">
+                        <div class="mmt-pills-container d-flex flex-wrap gap-2">
                             @for($i=1;$i<10;$i++)
                                 <div class="mmt-modern-pill {{ ($adults ?? 1) == $i ? 'active' : '' }}" onclick="updateMmtAdults({{ $i }}, this)">{{ $i }}</div>
                             @endfor
-                            <div class="mmt-modern-pill {{ ($adults ?? 1) >= 10 ? 'active' : '' }}" onclick="updateMmtAdults(10, this)">>9</div>
                         </div>
                     </div>
-                    <div class="mb-4 pt-3 border-top">
-                        <label class="fw-900 text-navy mb-3 d-block" style="font-size: 14px;">CHOOSE TRAVEL CLASS</label>
-                        <div class="mmt-pills-container">
-                            <div class="mmt-class-pill-lg {{ ($class ?? 'Economy') == 'Economy' ? 'active' : '' }}" onclick="updateMmtClass('Economy', this)">Economy</div>
-                            <div class="mmt-class-pill-lg {{ ($class ?? '') == 'Premium Economy' ? 'active' : '' }}" onclick="updateMmtClass('Premium Economy', this)">Premium Economy</div>
-                            <div class="mmt-class-pill-lg {{ ($class ?? '') == 'Business' ? 'active' : '' }}" onclick="updateMmtClass('Business', this)">Business</div>
+
+                    <div class="hotel-only" style="{{ ($activeTab ?? 'flights') !== 'hotels' ? 'display:none;' : '' }}">
+                        <div class="mb-4 pt-3 border-top">
+                            <label class="fw-900 text-navy mb-3 d-block" style="font-size: 14px;">ROOMS</label>
+                            <div class="mmt-pills-container d-flex flex-wrap gap-2">
+                                @for($i=1;$i<6;$i++)
+                                    <div class="mmt-modern-pill {{ ($rooms ?? 1) == $i ? 'active' : '' }}" onclick="updateMmtRooms({{ $i }}, this)">{{ $i }}</div>
+                                @endfor
+                            </div>
                         </div>
                     </div>
+
+                    <div class="flight-only" style="{{ ($activeTab ?? 'flights') !== 'flights' ? 'display:none;' : '' }}">
+                        <div class="mb-4 pt-3 border-top">
+                            <label class="fw-900 text-navy mb-3 d-block" style="font-size: 14px;">CHOOSE TRAVEL CLASS</label>
+                            <div class="mmt-pills-container d-flex flex-wrap gap-2">
+                                <div class="mmt-class-pill-lg {{ ($class ?? 'Economy') == 'Economy' ? 'active' : '' }}" onclick="updateMmtClass('Economy', this)">Economy</div>
+                                <div class="mmt-class-pill-lg {{ ($class ?? '') == 'Premium Economy' ? 'active' : '' }}" onclick="updateMmtClass('Premium Economy', this)">Premium Economy</div>
+                                <div class="mmt-class-pill-lg {{ ($class ?? '') == 'Business' ? 'active' : '' }}" onclick="updateMmtClass('Business', this)">Business</div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="d-flex justify-content-end pt-2">
                         <button type="button" class="btn btn-primary rounded-pill px-5 fw-800 py-2" onclick="applyTravelers()">APPLY</button>
                     </div>
@@ -590,6 +626,7 @@
             </div>
 
             <input type="hidden" name="adults" id="adultsHidden" value="{{ $adults ?? 1 }}">
+            <input type="hidden" name="rooms" id="roomsHidden" value="{{ $rooms ?? 1 }}">
             <input type="hidden" name="cabin_class" id="classHidden" value="{{ $class ?? 'Economy' }}">
 
             <button type="submit" class="btn-map-search">
@@ -626,7 +663,15 @@
 
             <div class="sidebar-scroll-area">
                 <div class="px-3 pt-3">
-                    <h5 class="fw-900 mb-0" id="results-count">{{ count($flights ?? []) }} Flights found</h5>
+                    @php
+                        $activeCount = count($flights ?? []);
+                        $activeLabel = 'Flights';
+                        if(($activeTab ?? '') === 'hotels') {
+                            $activeCount = count(json_decode($dynamicHotels ?? '[]'));
+                            $activeLabel = 'Hotels';
+                        }
+                    @endphp
+                    <h5 class="fw-900 mb-0" id="results-count">{{ $activeCount }} {{ $activeLabel }} found</h5>
                     <p class="text-muted small mb-3">Showing real-time results from 100+ sources</p>
                     
                     <!-- Compact Fare Monitoring Banner -->
@@ -719,6 +764,25 @@
         document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
         const tabEl = document.getElementById(`tab-${tab}`);
         if(tabEl) tabEl.classList.add('active');
+
+        // Update Hidden Field
+        document.getElementById('activeTabHidden').value = tab;
+        
+        // Toggle Search Form Visibility
+        if (tab === 'hotels') {
+            document.querySelectorAll('.flight-only').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.hotel-only').forEach(el => el.style.display = 'block');
+            document.getElementById('destIcon').className = 'fas fa-map-marker-alt';
+            document.getElementById('returnCol').style.opacity = '1';
+            document.getElementById('returnCol').style.pointerEvents = 'auto';
+            document.getElementById('travelerText').value = `${mmtAdults} Adult, ${mmtRooms} Room`;
+        } else {
+            document.querySelectorAll('.flight-only').forEach(el => el.style.display = 'block');
+            document.querySelectorAll('.hotel-only').forEach(el => el.style.display = 'none');
+            document.getElementById('destIcon').className = 'fas fa-plane-arrival';
+            updateTripType(); // restores flight logic
+            document.getElementById('travelerText').value = `${mmtAdults} Adult, ${mmtClass}`;
+        }
         
         let countText;
         let data;
@@ -762,18 +826,20 @@
             card.id = `card-${item.id}`;
             card.onclick = () => focusItem(item.id, true);
             
-            const logoUrl = item.airline_code ? `https://imgak.mmtcdn.com/flights/assets/media/dt/common/icons/${item.airline_code}.png` : item.image;
+            const title = item.title || item.airline_name || 'Item';
+            const subTitle = item.type === 'flight' ? (item.airline_name || 'Flight') : (item.type === 'hotel' ? 'Hotel' : 'Tour');
+            const logoUrl = item.airline_code ? `https://imgak.mmtcdn.com/flights/assets/media/dt/common/icons/${item.airline_code}.png` : (item.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=50');
             
             card.innerHTML = `
                 <div class="w-100">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div class="d-flex align-items-center gap-2">
                             <div class="bg-white rounded-3 shadow-sm d-flex align-items-center justify-content-center" style="width:32px; height:32px; border:1px solid #f1f5f9;">
-                                <img src="${logoUrl}" alt="${item.airline_name}" style="width:20px; height:20px; object-fit:contain;">
+                                <img src="${logoUrl}" alt="${title}" style="width:20px; height:20px; object-fit:contain;">
                             </div>
                             <div class="d-flex flex-column">
-                                <div class="fw-800 text-navy" style="font-size:12px; line-height:1.2;">${item.airline_name || 'Airline'}</div>
-                                <div class="text-muted fw-bold" style="font-size:9px;">${item.type === 'flight' ? 'Flight' : (item.type === 'hotel' ? 'Hotel' : 'Tour')}</div>
+                                <div class="fw-800 text-navy text-truncate" style="font-size:12px; line-height:1.2; max-width: 180px;">${title}</div>
+                                <div class="text-muted fw-bold" style="font-size:9px;">${subTitle}</div>
                             </div>
                         </div>
                         <div class="listing-price" style="font-size:18px; letter-spacing:-0.5px;">${item.price}</div>
@@ -810,9 +876,9 @@
                     <div class="d-flex justify-content-between align-items-center pt-1">
                         <div class="text-muted fw-bold d-flex align-items-center gap-1" style="font-size:10px;">
                             <i class="fas fa-calendar-check text-primary opacity-50"></i> 
-                            ${item.meta.includes('|') ? item.meta.split('|')[0] : item.meta}
+                            ${item.meta ? (item.meta.includes('|') ? item.meta.split('|')[0] : item.meta) : ''}
                         </div>
-                        <button class="btn btn-sm btn-navy px-4 rounded-pill fw-900 shadow-sm" style="font-size:10px; background:#1e293b; border:none; height:32px;" onclick="showFlightDetails('${item.id}', event)">SELECT</button>
+                        <button class="btn btn-sm btn-navy px-4 rounded-pill fw-900 shadow-sm" style="font-size:10px; background:#1e293b; border:none; height:32px;" onclick="${item.type === 'flight' ? `showFlightDetails('${item.id}', event)` : `showHotelDetails('${item.id}', event)`}">SELECT</button>
                     </div>
                 </div>
             `;
@@ -900,8 +966,26 @@
 
     // --- UI Interactions ---
 
+    document.getElementById('mapSearchForm').addEventListener('submit', function(e) {
+        // Change action based on active tab so the correct controller handles the search
+        if (currentTab === 'hotels') {
+            this.action = "{{ route('hotels.index') }}";
+        } else if (currentTab === 'tours') {
+            this.action = "{{ route('tours.index') }}";
+        } else {
+            this.action = "{{ route('explore.map') }}";
+        }
+    });
+
     let mmtAdults = {{ $adults ?? 1 }};
+    let mmtRooms = {{ $rooms ?? 1 }};
     let mmtClass = '{{ $class ?? "Economy" }}';
+
+    function updateMmtRooms(count, el) {
+        mmtRooms = count;
+        el.parentElement.querySelectorAll('.mmt-modern-pill').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+    }
 
     function toggleTravelerPicker(e) {
         e.stopPropagation();
@@ -923,8 +1007,15 @@
 
     function applyTravelers() {
         document.getElementById('adultsHidden').value = mmtAdults;
+        document.getElementById('roomsHidden').value = mmtRooms;
         document.getElementById('classHidden').value = mmtClass;
-        document.getElementById('travelerText').value = `${mmtAdults} Adult, ${mmtClass}`;
+        
+        if (currentTab === 'hotels') {
+            document.getElementById('travelerText').value = `${mmtAdults} Adult, ${mmtRooms} Room`;
+        } else {
+            document.getElementById('travelerText').value = `${mmtAdults} Adult, ${mmtClass}`;
+        }
+        
         document.getElementById('mmtTravelerDropdown').classList.add('d-none');
     }
 
@@ -958,6 +1049,91 @@
             flatpickr("#depDateInput", { dateFormat: "D, d M", minDate: "today" });
             flatpickr("#retDateInput", { dateFormat: "D, d M", minDate: "today" });
         }
+    }
+
+    function showFlightDetails(id, e) {
+        if(e) e.stopPropagation();
+        const f = flightsData.find(i => i.id === id);
+        if(!f) return;
+        
+        // Use SweetAlert for a premium preview or redirect
+        Swal.fire({
+            title: `<div class="fw-900 text-navy mt-2" style="font-size:20px;">${f.airline_name}</div>`,
+            html: `
+                <div class="p-2">
+                    <div class="d-flex justify-content-between align-items-center mb-4 bg-light rounded-4 p-3">
+                        <div class="text-start">
+                            <div class="fw-900 text-navy fs-4">${f.departure_time}</div>
+                            <div class="text-muted fw-800 small">${f.origin_code}</div>
+                        </div>
+                        <i class="fas fa-plane text-primary mx-3"></i>
+                        <div class="text-end">
+                            <div class="fw-900 text-navy fs-4">${f.arrival_time}</div>
+                            <div class="text-muted fw-800 small">${f.dest_code}</div>
+                        </div>
+                    </div>
+                    <div class="text-muted fw-bold small mb-4">Duration: ${f.duration} | ${f.stops} Stops</div>
+                    <div class="fw-900 text-primary fs-3 mb-2">${f.price}</div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'BOOK NOW',
+            cancelButtonText: 'CLOSE',
+            confirmButtonColor: '#008489',
+            customClass: {
+                popup: 'rounded-5 border-0 shadow-lg',
+                confirmButton: 'rounded-pill px-5 fw-800 py-2',
+                cancelButton: 'rounded-pill px-5 fw-800 py-2'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Redirect to booking/details (example URL)
+                window.location.href = `/flights/details?id=${id}`;
+            }
+        });
+    }
+
+    function showHotelDetails(id, e) {
+        if(e) e.stopPropagation();
+        const h = hotelsData.find(i => i.id === id);
+        if(!h) return;
+        
+        Swal.fire({
+            title: `<div class="fw-900 text-navy mt-2" style="font-size:20px;">${h.title}</div>`,
+            html: `
+                <div class="p-2">
+                    <img src="${h.image}" class="rounded-4 w-100 mb-3" style="height:180px; object-fit:cover;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="text-start">
+                            <div class="rating-stars mb-1">
+                                ${Array(parseInt(h.rating)).fill('<i class="fas fa-star text-warning"></i>').join('')}
+                            </div>
+                            <div class="text-muted fw-800 small">${h.meta}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-900 text-primary fs-3">${h.price}</div>
+                            <div class="text-muted small fw-bold">per night</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'VIEW DETAILS',
+            cancelButtonText: 'CLOSE',
+            confirmButtonColor: '#008489',
+            customClass: {
+                popup: 'rounded-5 border-0 shadow-lg',
+                confirmButton: 'rounded-pill px-5 fw-800 py-2',
+                cancelButton: 'rounded-pill px-5 fw-800 py-2'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Map current search params to detail page
+                const checkIn = document.getElementById('depDateInput').value;
+                const checkOut = document.getElementById('retDateInput').value;
+                window.location.href = `/hotels/details?hotelCode=${id}&checkIn=${checkIn}&checkOut=${checkOut}&adults=${mmtAdults}&rooms=${mmtRooms}`;
+            }
+        });
     }
 
     // --- Autocomplete Logic ---

@@ -35,6 +35,11 @@ class Booking extends Model
         return $this->hasOne(FlightBooking::class);
     }
 
+    public function hotelBooking()
+    {
+        return $this->hasOne(HotelBooking::class);
+    }
+
     public function passengers()
     {
         return $this->hasMany(Passenger::class);

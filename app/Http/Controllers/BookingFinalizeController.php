@@ -60,25 +60,27 @@ class BookingFinalizeController extends Controller
             if (empty($pnrs)) $pnrs[0] = $this->callApiServiceForPnr(0);
 
             DB::transaction(function () use ($booking, $pnrs, $legs) {
-                foreach ($legs as $idx => $legFlight) {
-                    $pnr = $pnrs[$idx] ?? $pnrs[0];
-                    DB::table('flight_bookings')->insert([
-                        'booking_id' => $booking->id,
-                        'pnr' => $pnr,
-                        'airline_pnr' => $pnr, 
-                        'origin' => $legFlight['departure_city'] ?? 'Unknown',
-                        'destination' => $legFlight['arrival_city'] ?? 'Unknown',
-                        'departure_at' => $legFlight['departure_at'] ?? now(),
-                        'arrival_at' => $legFlight['arrival_at'] ?? now(),
-                        'airline_code' => $legFlight['airline_code'] ?? '??',
-                        'flight_number' => $legFlight['flight_number'] ?? '000',
-                        'cabin_class' => $legFlight['cabin'] ?? 'Economy',
-                        'itinerary_details' => json_encode($legFlight),
-                        'fare_details' => json_encode(['total' => $booking->total_amount / count($legs)]),
-                        'updated_at' => now(),
-                        'created_at' => now(),
-                    ]);
-                }
+                // Save only ONE FlightBooking record with all legs in itinerary_details
+                $firstLeg = $legs[0] ?? [];
+                $lastLeg = end($legs) ?? $firstLeg;
+                $pnr = $pnrs[0] ?? 'N/A';
+
+                DB::table('flight_bookings')->insert([
+                    'booking_id' => $booking->id,
+                    'pnr' => $pnr,
+                    'airline_pnr' => $pnr, 
+                    'origin' => $firstLeg['departure_city'] ?? 'Unknown',
+                    'destination' => $lastLeg['arrival_city'] ?? 'Unknown',
+                    'departure_at' => $firstLeg['departure_at'] ?? now(),
+                    'arrival_at' => $lastLeg['arrival_at'] ?? now(),
+                    'airline_code' => $firstLeg['airline_code'] ?? '??',
+                    'flight_number' => $firstLeg['flight_number'] ?? '000',
+                    'cabin_class' => $firstLeg['cabin'] ?? 'Economy',
+                    'itinerary_details' => json_encode(['segments' => $legs]), // Save ALL legs
+                    'fare_rules' => json_encode(['total' => $booking->total_amount]),
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]);
 
                 // Sync Passengers with multi-leg seat support
                 $insertedPax = false;

@@ -1,103 +1,214 @@
 @extends('layouts.admin')
 
-@section('title', 'Global Hotel Inventory | Master Admin')
+@section('title', 'Hotel Booking History | TripZant Admin')
 
 @section('admin_content')
-<div class="row g-4 mb-5">
-    <div class="col-xl-12">
-        <div class="card-admin shadow-sm border-0 mb-4 p-5">
-            <div class="d-flex justify-content-between align-items-center mb-5 border-bottom pb-4">
-                <h4 class="fw-900 text-navy mb-0">Master Hotels Controller</h4>
-                <div class="d-flex gap-3">
-                    <button class="btn btn-outline-navy rounded-pill px-4 fw-bold bg-white shadow-sm"><i class="fas fa-plus me-2"></i> Register New Property</button>
-                    <button class="btn btn-admin-primary rounded-pill px-4 fw-bold shadow-sm"><i class="fas fa-sync me-2"></i> Sync OTA Inventory</button>
-                </div>
-            </div>
+<div class="container-fluid p-0">
+    <!-- Breadcrumbs -->
+    <div class="mb-3">
+        <h4 class="fw-bold text-navy mb-1">Hotel Booking History</h4>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 smaller fw-bold">
+                <li class="breadcrumb-item"><a href="/admin-dashboard" class="text-primary text-decoration-none">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="/admin/hotels" class="text-primary text-decoration-none">Hotels Control</a></li>
+                <li class="breadcrumb-item active text-muted">Hotel Booking History</li>
+            </ol>
+        </nav>
+    </div>
 
-            <!-- Header Info Cards -->
-            <div class="row g-4 mb-5">
-                <div class="col-md-3">
-                    <div class="p-4 bg-orange-subtle rounded-4 text-center hvr-grow shadow-sm">
-                         <h2 class="fw-900 text-orange mb-1 leading-relaxed">24,150</h2>
-                         <p class="text-muted smaller mb-0 fw-bold">ACTIVE HOTELS</p>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="p-4 bg-orange-subtle rounded-4 text-center hvr-grow shadow-sm">
-                         <h2 class="fw-900 text-orange mb-1 leading-relaxed">84</h2>
-                         <p class="text-muted smaller mb-0 fw-bold">HOTEL PARTNERS</p>
-                    </div>
-                </div>
-                 <div class="col-md-3">
-                    <div class="p-4 bg-orange-subtle rounded-4 text-center hvr-grow shadow-sm">
-                         <h2 class="fw-900 text-orange mb-1 leading-relaxed">4.82/5</h2>
-                         <p class="text-muted smaller mb-0 fw-bold">AVG. RATING</p>
-                    </div>
-                </div>
-                 <div class="col-md-3">
-                    <div class="p-4 bg-orange-subtle rounded-4 text-center hvr-grow shadow-sm">
-                         <h2 class="fw-900 text-orange mb-1 leading-relaxed">₹14M+</h2>
-                         <p class="text-muted smaller mb-0 fw-bold">PENDING PAYOUTS</p>
+    <!-- Top Stats Row -->
+    <div class="row g-3 mb-4 align-items-stretch">
+        <div class="col">
+            <div class="card card-sneat h-100 border-0 shadow-sm">
+                <div class="card-body p-3 d-flex align-items-center gap-3">
+                    <div class="avatar bg-label-primary rounded p-2"><i class="bx bx-building fs-3"></i></div>
+                    <div>
+                        <div class="text-muted smaller fw-bold">Total Bookings</div>
+                        <h4 class="fw-bold mb-0">{{ number_format($stats['total'] ?? 0) }}</h4>
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="col">
+            <div class="card card-sneat h-100 border-0 shadow-sm">
+                <div class="card-body p-3 d-flex align-items-center gap-3">
+                    <div class="avatar bg-label-success rounded p-2"><i class="bx bx-check-circle fs-3"></i></div>
+                    <div>
+                        <div class="text-muted smaller fw-bold">Confirmed</div>
+                        <h4 class="fw-bold mb-0">{{ number_format($stats['confirmed'] ?? 0) }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card card-sneat h-100 border-0 shadow-sm">
+                <div class="card-body p-3 d-flex align-items-center gap-3">
+                    <div class="avatar bg-label-warning rounded p-2"><i class="bx bx-time fs-3"></i></div>
+                    <div>
+                        <div class="text-muted smaller fw-bold">Pending</div>
+                        <h4 class="fw-bold mb-0">{{ number_format($stats['pending'] ?? 0) }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card card-sneat h-100 border-0 shadow-sm">
+                <div class="card-body p-3 d-flex align-items-center gap-3">
+                    <div class="avatar bg-label-danger rounded p-2"><i class="bx bx-x-circle fs-3"></i></div>
+                    <div>
+                        <div class="text-muted smaller fw-bold">Cancelled</div>
+                        <h4 class="fw-bold mb-0">{{ number_format($stats['cancelled'] ?? 0) }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-sneat h-100 border-0 shadow-sm bg-label-primary">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar bg-white rounded p-2"><i class="bx bx-wallet fs-3 text-primary"></i></div>
+                        <div>
+                            <div class="text-primary smaller fw-bold">Total Revenue</div>
+                            <h4 class="fw-bold mb-0 text-primary">₹ {{ number_format($stats['revenue'] ?? 0) }}</h4>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column gap-1">
+                        <a href="{{ route('admin.hotels.export') }}" class="btn btn-success btn-xs px-2 py-1 smaller fw-bold text-white"><i class="bx bx-export me-1"></i> Export CSV</a>
+                        <a href="{{ route('admin.hotels.export') }}" class="btn btn-primary btn-xs px-2 py-1 smaller fw-bold text-white"><i class="bx bxs-file-export me-1"></i> Export Excel</a>
+                        <a href="{{ route('admin.hotels') }}" class="btn btn-outline-secondary btn-xs px-2 py-1 bg-white smaller fw-bold"><i class="bx bx-reset me-1"></i> Reset Filter</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            <div class="table-responsive">
-                <table class="table table-borderless align-middle custom-admin-table">
-                     <thead class="text-muted small fw-800 text-uppercase">
-                         <tr>
-                             <th class="ps-0 border-bottom pb-4">Property / Location</th>
-                             <th class="border-bottom pb-4">Rating</th>
-                             <th class="border-bottom pb-4">Avg. Price / Night</th>
-                             <th class="border-bottom pb-4">Status</th>
-                             <th class="border-bottom pb-4">Partner Control</th>
-                             <th class="border-bottom pb-4 text-end pe-0">Action Hub</th>
-                         </tr>
-                     </thead>
-                     <tbody class="text-navy">
-                         @for($i=1; $i<=8; $i++)
-                         <tr class="border-bottom">
-                             <td class="ps-0 py-4">
-                                 <div class="d-flex align-items-center gap-3">
-                                     <div class="avatar-sm bg-orange-subtle text-orange rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:45px;height:45px;"><i class="fas fa-hotel"></i></div>
-                                     <div>
-                                         <h6 class="fw-800 mb-0">Taj Exotica Spa {{$i}}</h6>
-                                         <p class="text-muted smaller mb-0">Benaulim, Goa</p>
-                                     </div>
-                                 </div>
-                             </td>
-                             <td><span class="badge bg-navy text-white rounded-pill px-3 py-1 fw-bold fs-6 shadow-sm"><i class="fas fa-star me-2 text-warning"></i> 4.9</span></td>
-                             <td class="fw-900 fs-6">₹24,500</td>
-                             <td><span class="badge {{ $i%3==0 ? 'badge-admin-warning' : 'badge-admin-success' }} px-4 py-2 border-0 fw-bold">{{ $i%3==0 ? 'MAINTENANCE' : 'LIVE' }}</span></td>
-                             <td><span class="text-muted fw-bold small">Enterprise Partner {{$i}}</span></td>
-                             <td class="text-end pe-0">
-                                 <div class="dropdown">
-                                     <button class="btn btn-sm btn-light border-0 px-3 py-2 rounded-pill shadow-sm" type="button" data-bs-toggle="dropdown">
-                                         <i class="fas fa-ellipsis-h text-navy"></i>
-                                     </button>
-                                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2">
-                                         <li><a class="dropdown-item py-2 fw-bold text-navy small" href="#"><i class="fas fa-eye me-2 opacity-50"></i> View Listing</a></li>
-                                         <li><a class="dropdown-item py-2 fw-bold text-navy small" href="#"><i class="fas fa-bed me-2 opacity-50"></i> Manage Rooms</a></li>
-                                         <li><hr class="dropdown-divider"></li>
-                                         <li><a class="dropdown-item py-2 fw-bold text-danger small" href="#"><i class="fas fa-ban me-2 opacity-50"></i> Suspend Property</a></li>
-                                     </ul>
-                                 </div>
-                             </td>
-                         </tr>
-                         @endfor
-                     </tbody>
+    <!-- Advanced Filters -->
+    <div class="card card-sneat border-0 shadow-sm mb-4">
+        <div class="card-header py-3 border-bottom"><h6 class="mb-0 fw-bold">Search & Filters</h6></div>
+        <div class="card-body p-4">
+            <form action="{{ route('admin.hotels') }}" method="GET" class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label smaller fw-bold text-muted">Booking ID</label>
+                    <input type="text" name="search" class="form-control form-control-sm" placeholder="Enter Booking ID" value="{{ request('search') }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label smaller fw-bold text-muted">Hotel Name</label>
+                    <input type="text" name="hotel" class="form-control form-control-sm" placeholder="Enter Hotel Name" value="{{ request('hotel') }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label smaller fw-bold text-muted">City</label>
+                    <input type="text" name="city" class="form-control form-control-sm" placeholder="Enter City" value="{{ request('city') }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label smaller fw-bold text-muted">Booking Status</label>
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="">Select Status</option>
+                        <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
+                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm px-4 rounded-pill fw-bold shadow-sm w-100">Apply Filter</button>
+                    <a href="{{ route('admin.hotels') }}" class="btn btn-outline-secondary btn-sm px-4 rounded-pill fw-bold bg-white w-100">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Listing Table -->
+    <div class="card card-sneat border-0 shadow-sm overflow-hidden">
+        <div class="card-body p-0">
+            <div class="table-responsive text-nowrap">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light border-bottom">
+                        <tr class="text-uppercase smaller fw-bold text-muted">
+                            <th class="ps-4">Booking ID</th>
+                            <th>User</th>
+                            <th>Hotel Name</th>
+                            <th>City</th>
+                            <th>Stay Dates</th>
+                            <th>Rooms/Pax</th>
+                            <th>Amount</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                            <th>Booking Date</th>
+                            <th class="text-end pe-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        @forelse($bookings as $booking)
+                        @php
+                            $details = is_string($booking->api_booking_details) ? json_decode($booking->api_booking_details, true) : $booking->api_booking_details;
+                            $details = $details ?? [];
+                            $checkIn = $booking->hotelBooking->check_in ?? ($details['check_in'] ?? ($details['checkIn'] ?? null));
+                            $checkOut = $booking->hotelBooking->check_out ?? ($details['check_out'] ?? ($details['checkOut'] ?? null));
+                            $hotelName = $booking->hotelBooking->hotel_name ?? ($details['hotel_name'] ?? ($details['name'] ?? 'Hotel'));
+                            $city = $booking->hotelBooking->city ?? ($details['city_name'] ?? ($details['location'] ?? 'N/A'));
+                        @endphp
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-navy small">#{{ $booking->booking_reference }}</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark smaller">{{ $booking->user->name ?? 'User' }}</div>
+                                <div class="smaller text-muted">{{ $booking->user->phone ?? 'N/A' }}</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-navy smaller">{{ $hotelName }}</div>
+                                <div class="text-warning smaller">
+                                    <i class="bx bxs-star"></i><i class="bx bxs-star"></i><i class="bx bxs-star"></i><i class="bx bxs-star"></i><i class="bx bxs-star"></i>
+                                </div>
+                            </td>
+                            <td><div class="smaller fw-bold text-dark">{{ $city }}</div></td>
+                            <td>
+                                <div class="smaller fw-bold text-dark">{{ $checkIn ? \Carbon\Carbon::parse($checkIn)->format('d M Y') : 'N/A' }}</div>
+                                <div class="smaller text-muted">{{ $checkOut ? \Carbon\Carbon::parse($checkOut)->format('d M Y') : 'N/A' }}</div>
+                            </td>
+                            <td>
+                                <div class="smaller fw-bold text-dark">{{ $booking->hotelBooking->rooms ?? ($details['rooms'] ?? '1') }} Room(s)</div>
+                                <div class="smaller text-muted">{{ $booking->passengers->count() }} Pax</div>
+                            </td>
+                            <td><div class="fw-bold text-navy smaller">₹ {{ number_format($booking->total_amount, 2) }}</div></td>
+                            <td><span class="badge bg-label-success smaller fw-bold">Paid</span></td>
+                            <td>
+                                @php
+                                    $statusClass = 'bg-label-info';
+                                    if($booking->status == 'confirmed') $statusClass = 'bg-label-success';
+                                    if($booking->status == 'cancelled') $statusClass = 'bg-label-danger';
+                                    if($booking->status == 'pending') $statusClass = 'bg-label-warning';
+                                @endphp
+                                <span class="badge {{ $statusClass }} smaller fw-bold text-uppercase">{{ $booking->status }}</span>
+                            </td>
+                            <td>
+                                <div class="smaller fw-bold text-dark">{{ $booking->created_at->format('d M Y') }}</div>
+                                <div class="smaller text-muted">{{ $booking->created_at->format('H:i A') }}</div>
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="{{ route('admin.bookings.detail', $booking->id) }}" class="btn btn-outline-primary btn-xs px-2 rounded-pill fw-bold">View</a>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="11" class="text-center py-5 text-muted">No records found.</td></tr>
+                        @endforelse
+                    </tbody>
                 </table>
             </div>
-
-            <div class="d-flex justify-content-center mt-5">
-                 <button class="btn btn-outline-navy rounded-pill px-5 fw-bold bg-white shadow-sm">Explore More Properties <i class="fas fa-arrow-down ms-2"></i></button>
+            <!-- Pagination Footer -->
+            <div class="px-4 py-3 border-top d-flex justify-content-between align-items-center">
+                <div class="smaller text-muted fw-bold">Showing {{ $bookings->firstItem() ?? 0 }} to {{ $bookings->lastItem() ?? 0 }} of {{ $bookings->total() ?? 0 }} results</div>
+                <div>{{ $bookings->links() }}</div>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    .bg-orange-subtle { background: rgba(249, 115, 22, 0.1); }
-    .text-orange { color: #f97316; }
+    .bg-label-primary { background-color: #e7e7ff !important; color: #696cff !important; }
+    .bg-label-success { background-color: #e8fadf !important; color: #71dd37 !important; }
+    .bg-label-warning { background-color: #fff2d6 !important; color: #ffab00 !important; }
+    .bg-label-danger { background-color: #ffe5e0 !important; color: #ff3e1d !important; }
+    .btn-xs { padding: 0.2rem 0.5rem; font-size: 0.7rem; }
+    .smaller { font-size: 0.7rem; }
 </style>
 @endsection

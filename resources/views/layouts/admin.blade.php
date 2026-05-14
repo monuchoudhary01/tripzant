@@ -43,27 +43,37 @@
             position: fixed;
             height: 100vh;
             left: 0; top: 0;
-            z-index: 1000;
-            transition: all 0.3s ease;
+            z-index: 1001;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             overflow-y: auto;
             box-shadow: 0 0.125rem 0.25rem rgba(161, 172, 184, 0.4);
         }
 
+        .admin-wrapper.collapsed .admin-sidebar { width: 80px; }
+        .admin-wrapper.collapsed .admin-nav-label,
+        .admin-wrapper.collapsed .flex-grow-1,
+        .admin-wrapper.collapsed .arrow-icon { display: none; }
+        .admin-wrapper.collapsed .admin-nav-link { justify-content: center; padding: 0.625rem; }
+        .admin-wrapper.collapsed .admin-logo-area { justify-content: center; padding: 1rem 0; }
+        .admin-wrapper.collapsed .admin-logo-area img { height: 30px; }
+
         .admin-logo-area {
-            padding: 1rem 1.5rem;
+            padding: 1.5rem 1.5rem;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            border-bottom: 1px solid #f5f5f9;
+            margin-bottom: 1rem;
         }
 
-        .admin-nav { padding: 0 1rem 1rem 1rem; }
+        .admin-nav { padding: 0 0.75rem 2rem 0.75rem; }
         .admin-nav-label {
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: #a1acb8;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #b4bdc6;
             text-transform: uppercase;
-            letter-spacing: 0.4px;
-            margin: 1rem 0 0.4rem 0.5rem;
+            letter-spacing: 1px;
+            margin: 1.5rem 0 0.5rem 1rem;
             display: block;
         }
 
@@ -71,74 +81,85 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 0.625rem 1rem;
-            border-radius: 0.375rem;
-            color: #697a8d;
+            padding: 0.7rem 1.2rem;
+            border-radius: 0.5rem;
+            color: #566a7f;
             text-decoration: none;
-            font-weight: 400;
-            transition: all 0.2s ease;
-            margin-bottom: 2px;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 4px;
         }
 
         .admin-nav-link:hover {
-            background-color: rgba(67, 89, 113, 0.04);
-            color: #697a8d;
+            background-color: #f5f5f9;
+            color: var(--sneat-primary);
+            transform: translateX(4px);
         }
 
         .admin-nav-link.active {
             background: linear-gradient(72.47deg, var(--sneat-primary) 22.16%, rgba(105, 108, 255, 0.7) 76.47%);
-            color: #fff;
-            box-shadow: 0 2px 4px 0 rgba(105, 108, 255, 0.4);
+            color: #fff !important;
+            box-shadow: 0 4px 12px 0 rgba(105, 108, 255, 0.3);
         }
         
-        .admin-nav-link i { font-size: 1.25rem; }
+        .admin-nav-link i { font-size: 1.4rem; transition: transform 0.2s; }
+        .admin-nav-link:hover i { transform: scale(1.1); }
         
         /* Submenu Styling */
         .admin-menu-sub {
             list-style: none;
             padding: 0;
-            margin: 0 0 0 1rem;
+            margin: 0.25rem 0 0.5rem 1rem;
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease-out;
+            border-left: 2px solid #f5f5f9;
         }
         .nav-item-wrapper.open .admin-menu-sub { 
-            max-height: 500px;
-            margin-bottom: 10px;
+            max-height: 800px;
         }
-        .admin-menu-sub .admin-nav-link.small {
-            font-size: 0.8125rem;
+        .admin-menu-sub .admin-nav-link {
+            font-size: 0.85rem;
             padding: 0.5rem 1rem;
+            margin-left: 0.5rem;
         }
         .nav-item-wrapper.open .arrow-icon { transform: rotate(90deg); }
-        .arrow-icon { transition: transform 0.3s ease; }
-        .flex-grow-1 { flex-grow: 1; }
+        .arrow-icon { transition: transform 0.3s ease; font-size: 1rem !important; }
+        .flex-grow-1 { flex-grow: 1; white-space: nowrap; }
 
         /* Main Content */
         .admin-main {
             flex: 1;
             margin-left: 260px;
             min-height: 100vh;
-            background-color: #f5f5f9;
+            background-color: #f8f9fa;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
         }
+        .admin-wrapper.collapsed .admin-main { margin-left: 80px; }
 
         .admin-navbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(6px);
-            margin: 0.75rem 1.5rem;
-            padding: 0 1.25rem;
-            border-radius: 0.375rem;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            margin: 1rem 1.5rem;
+            padding: 0 1.5rem;
+            border-radius: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: 64px;
-            box-shadow: 0 0 0.375rem 0.25rem rgba(161, 172, 184, 0.15);
+            height: 70px;
+            box-shadow: 0 2px 10px 0 rgba(0,0,0,0.05);
             position: sticky;
-            top: 0.75rem;
-            z-index: 999;
+            top: 1rem;
+            z-index: 1000;
+            border: 1px solid rgba(255,255,255,0.3);
         }
 
-        .admin-content { padding: 0.5rem 1.5rem 1.5rem 1.5rem; }
+        .admin-content { 
+            padding: 1rem 1.5rem 2.5rem 1.5rem; 
+            flex: 1;
+        }
 
         /* Sneat Cards */
         .card-sneat {
@@ -333,7 +354,7 @@
             <!-- Navbar -->
             <header class="admin-navbar">
                 <div class="d-flex align-items-center">
-                    <i class="bx bx-menu fs-4 me-3 cursor-pointer d-lg-none"></i>
+                    <i class="bx bx-menu fs-4 me-3 cursor-pointer" onclick="toggleSidebar()"></i>
                     <div class="input-group input-group-merge shadow-none border-0" style="width: 300px;">
                         <span class="input-group-text bg-transparent border-0"><i class="bx bx-search fs-4"></i></span>
                         <input type="text" class="form-control bg-transparent border-0 shadow-none" placeholder="Search (Ctrl+/)">
@@ -357,6 +378,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        function toggleSidebar() {
+            document.querySelector('.admin-wrapper').classList.toggle('collapsed');
+        }
+
         function toggleSubmenu(el) {
             const wrapper = el.parentElement;
             wrapper.classList.toggle('open');

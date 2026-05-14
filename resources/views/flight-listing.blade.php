@@ -893,6 +893,11 @@
         <div class="row g-4">
             <!-- Filters Sidebar -->
             <div class="col-lg-3">
+                <div class="mb-4">
+                    <a href="{{ request()->fullUrlWithQuery(['mode' => 'map']) }}" class="btn rounded-pill py-3 fw-800 d-flex align-items-center justify-content-center gap-2 hover-up shadow-sm" style="background: #001d3d; color: #fff;">
+                        <i class="fas fa-map-marked-alt text-warning"></i> EXPLORE ON MAP
+                    </a>
+                </div>
                 <div class="filter-card-v4 sticky-top shadow-sm" style="top:180px; z-index: 900;">
                     <div class="filter-title-v4"><span><i class="fas fa-sliders"></i></span> FILTERS</div>
 

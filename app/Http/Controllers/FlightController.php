@@ -265,7 +265,7 @@ class FlightController extends Controller
             if (!empty($f['is_refundable'])) $refundableCount++;
         }
 
-        $bankOffers = \App\Models\BankOffer::where('is_active', true)->orderBy('sort_order')->get();
+        $bankOffers = \App\Models\Offer::where('is_active', true)->orderBy('sort_order')->get();
 
         $viewData = [
             'flights' => $allFlightsSorted,
@@ -297,11 +297,81 @@ class FlightController extends Controller
             'initialMaxBudget' => $maxBudget
         ];
 
+        if ($request->mode === 'map') {
+            $formatted = [];
+            $airportCoords = [
+                'BOM' => ['lat' => 19.0896, 'lng' => 72.8656],
+                'DEL' => ['lat' => 28.5562, 'lng' => 77.1000],
+                'BLR' => ['lat' => 13.1986, 'lng' => 77.7066],
+                'MAA' => ['lat' => 12.9941, 'lng' => 80.1709],
+                'HYD' => ['lat' => 17.2403, 'lng' => 78.4294],
+                'CCU' => ['lat' => 22.6547, 'lng' => 88.4467],
+                'GOI' => ['lat' => 15.3803, 'lng' => 73.8314],
+                'AMD' => ['lat' => 23.0772, 'lng' => 72.6347],
+                'COK' => ['lat' => 10.1520, 'lng' => 76.3920],
+                'DXB' => ['lat' => 25.2532, 'lng' => 55.3657],
+                'LHR' => ['lat' => 51.4700, 'lng' => -0.4543],
+                'SIN' => ['lat' => 1.3644, 'lng' => 103.9915],
+                'JFK' => ['lat' => 40.6413, 'lng' => -73.7781],
+                'SFO' => ['lat' => 37.6213, 'lng' => -122.3790],
+                'SYD' => ['lat' => -33.9399, 'lng' => 151.1753],
+                'BKK' => ['lat' => 13.6898, 'lng' => 100.7501],
+            ];
+            
+            foreach($allFlightsSorted as $index => $f) {
+                $dest = $f['destination'] ?? $destination;
+                $coords = $airportCoords[$dest] ?? [
+                    'lat' => 20 + rand(-100, 100)/20,
+                    'lng' => 78 + rand(-100, 100)/20
+                ];
+                
+                $formatted[] = [
+                    'id' => $f['id'] ?? ('f_' . $index),
+                    'type' => 'flight',
+                    'title' => ($f['airline_name'] ?? ($f['airline'] ?? 'Flight')) . ' to ' . $dest,
+                    'airline_code' => $f['airline_code'] ?? '6E',
+                    'airline_name' => $f['airline_name'] ?? ($f['airline'] ?? 'Airline'),
+                    'dest_code' => $dest,
+                    'origin_code' => $origin,
+                    'meta' => date('d M H:i', strtotime($f['departure_at'] ?? $departureDate)) . ' | ' . ($f['airline'] ?? ''),
+                    'price' => '₹' . number_format($f['price'] ?? 0, 0),
+                    'price_raw' => $f['price'] ?? 0,
+                    'departure_at' => $f['departure_at'] ?? $departureDate,
+                    'arrival_at' => $f['arrival_at'] ?? null,
+                    'departure_time' => isset($f['departure_at']) ? date('H:i', strtotime($f['departure_at'])) : '--:--',
+                    'arrival_time' => isset($f['arrival_at']) ? date('H:i', strtotime($f['arrival_at'])) : '--:--',
+                    'duration' => $f['duration'] ?? '',
+                    'stops' => $f['stops'] ?? 0,
+                    'image' => 'https://images.unsplash.com/photo-1436491865332-7a61a109c05e?q=80&w=400',
+                    'lat' => $coords['lat'],
+                    'lng' => $coords['lng'],
+                    'is_direct' => ($f['stops'] ?? 0) == 0
+                ];
+            }
+            
+            $originCoord = $airportCoords[$origin] ?? ['lat' => 28.5562, 'lng' => 77.1000];
+
+            return view('explore-map', [
+                'dynamicFlights' => json_encode($formatted),
+                'dynamicHotels' => json_encode([]),
+                'dynamicTours' => json_encode([]),
+                'flights' => $formatted,
+                'origin' => $origin,
+                'destination' => $destination,
+                'departure_date' => $departureDate,
+                'return_date' => $returnDate,
+                'adults' => $params['adults'],
+                'children' => $params['children'],
+                'originCoords' => json_encode($originCoord),
+                'activeTab' => 'flights'
+            ]);
+        }
+
         if ($multiCity) {
-            $viewData['numSegments'] = count($originArr);
-            $viewData['multiCityOrigins'] = $originArr;
-            $viewData['multiCityDestinations'] = $destinationArr;
-            $viewData['multiCityDates'] = $departureDateArr;
+            $viewData['numSegments'] = count($origins);
+            $viewData['multiCityOrigins'] = $origins;
+            $viewData['multiCityDestinations'] = $destinations;
+            $viewData['multiCityDates'] = $dates;
         }
 
         $view = view('flight-listing', $viewData);
@@ -619,31 +689,33 @@ class FlightController extends Controller
         
         $booking = \App\Models\Booking::create([
             'user_id' => auth()->id() ?? null,
-            'booking_type' => 'flight',
-            'api_reference' => $pnr,
-            'net_price' => $flightOffer['price']['total'] ?? 0,
-            'selling_price' => $request->input('total_amount') ?? ($flightOffer['price']['total'] ?? 0),
-            'payment_status' => 'confirmed',
-            'contact_email' => $request->user()->email ?? null,
-            'contact_phone' => $primaryContact['mobile'] ?? null,
-            'booking_details' => json_encode([
+            'type' => 'flight',
+            'booking_reference' => $pnr,
+            'total_amount' => $request->input('total_amount') ?? ($flightOffer['price']['total'] ?? 0),
+            'currency' => $flightOffer['price']['currency'] ?? 'INR',
+            'status' => 'confirmed',
+            'api_booking_details' => json_encode([
                 'flight' => $flightOffer,
+                'contact' => $primaryContact,
                 'is_affiliate' => false,
             ]),
-            'api_response' => json_encode($bookingData),
-            'status' => 'confirmed',
         ]);
 
         // 2a. Create Detailed Flight Booking Record
-        $itineraries = $flightOffer['itineraries'][0] ?? [];
-        $segments = $itineraries['segments'] ?? [];
-        $firstSeg = $segments[0] ?? null;
-        $lastSeg = end($segments) ?? null;
+        $allItineraries = $flightOffer['itineraries'] ?? [];
+        $firstItinerary = $allItineraries[0] ?? [];
+        $lastItinerary = end($allItineraries) ?? $firstItinerary;
+        
+        $firstSegments = $firstItinerary['segments'] ?? [];
+        $lastSegments = $lastItinerary['segments'] ?? $firstSegments;
+        
+        $firstSeg = $firstSegments[0] ?? null;
+        $lastSeg = end($lastSegments) ?? null;
 
         \App\Models\FlightBooking::create([
             'booking_id' => $booking->id,
             'pnr' => $pnr,
-            'airline_pnr' => $bookingData['associatedRecords'][1]['reference'] ?? $pnr, // Some GDS return 2 references
+            'airline_pnr' => $bookingData['associatedRecords'][1]['reference'] ?? $pnr,
             'origin' => $firstSeg['departure']['iataCode'] ?? '???',
             'destination' => $lastSeg['arrival']['iataCode'] ?? '???',
             'departure_at' => isset($firstSeg['departure']['at']) ? date('Y-m-d H:i:s', strtotime($firstSeg['departure']['at'])) : null,
@@ -651,7 +723,7 @@ class FlightController extends Controller
             'airline_code' => $firstSeg['carrierCode'] ?? '??',
             'flight_number' => $firstSeg['number'] ?? '000',
             'cabin_class' => $flightOffer['travelerPricings'][0]['fareDetailsBySegment'][0]['cabin'] ?? 'ECONOMY',
-            'itinerary_details' => json_encode($itineraries),
+            'itinerary_details' => json_encode($allItineraries), // Save ALL itineraries for round-trip/multi-city
             'fare_rules' => json_encode($flightOffer['travelerPricings'][0]['fareDetailsBySegment'] ?? [])
         ]);
 
@@ -663,9 +735,11 @@ class FlightController extends Controller
                 'title' => $t['title'] ?? 'Mr',
                 'first_name' => $t['first_name'],
                 'last_name' => $t['last_name'],
+                'gender' => $t['gender'] ?? null,
                 'dob' => $t['dob'] ?? null,
                 'passport_number' => $t['passport'] ?? null,
                 'passport_expiry' => $t['p_expiry'] ?? null,
+                'nationality' => $t['nationality'] ?? null,
                 'extra_details' => json_encode($t)
             ]);
         }
@@ -676,7 +750,7 @@ class FlightController extends Controller
             'user_id' => auth()->id() ?? 0,
             'transaction_id' => 'TXN-' . strtoupper(uniqid()),
             'payment_gateway' => 'Razorpay', // Default for now
-            'amount' => $booking->selling_price,
+            'amount' => $booking->total_amount,
             'currency' => $flightOffer['price']['currency'] ?? 'INR',
             'status' => 'successful',
         ]);
@@ -685,8 +759,8 @@ class FlightController extends Controller
         \App\Models\Invoice::create([
             'booking_id' => $booking->id,
             'invoice_number' => 'INV-' . date('Ymd') . '-' . $booking->id,
-            'amount' => $booking->selling_price,
-            'tax_amount' => $booking->selling_price * 0.18, // 18% GST simulation
+            'amount' => $booking->total_amount,
+            'tax_amount' => $booking->total_amount * 0.18, // 18% GST simulation
             'status' => 'paid',
         ]);
 
