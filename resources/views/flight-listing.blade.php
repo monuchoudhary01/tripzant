@@ -143,7 +143,7 @@
 
         // 3. Fetch Data
         try {
-            const res = await fetch(`{{ url('/flights/fare-classes') }}?id=${flightId}&price=${price}`);
+            const res = await fetch(`{{ localized_url('/flights/fare-classes') }}?id=${flightId}&price=${price}`);
             const data = await res.json();
             if (data.success) {
                 window.currentFareData = data.fares;
@@ -219,7 +219,7 @@
         const btn = document.getElementById('confirmFareBtn');
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...'; }
 
-        fetch('{{ url('/flights/select-fare') }}', {
+        fetch('{{ localized_url('/flights/select-fare') }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1253,7 +1253,7 @@
                                             <div class="lh-sm">
                                                 <div class="text-white-50 uppercase fw-800" style="font-size: 10px; letter-spacing: 0.5px;">{{ $i == 0 ? 'ONWARD' : 'RETURN' }}</div>
                                                 <div class="text-white fw-900" style="font-size: 16px;">{{ $origins[$i] }} <i class="fas fa-long-arrow-alt-right mx-1 opacity-50"></i> {{ $dests[$i] }}</div>
-                                                <div class="badge bg-primary bg-opacity-25 text-primary mt-1" id="mc-bar-info-{{ $i }}" style="font-size: 12px; font-weight: 800; background: rgba(37, 99, 235, 0.4) !important; color: #fff !important;">₹ ----</div>
+                                                <div class="badge bg-primary bg-opacity-25 text-primary mt-1" id="mc-bar-info-{{ $i }}" style="font-size: 12px; font-weight: 800; background: rgba(37, 99, 235, 0.4) !important; color: #fff !important;">{{ $currency }} ----</div>
                                             </div>
                                         </div>
                                     @endfor
@@ -1814,6 +1814,7 @@
     let selectedMCFlights = [];
     let selectedOnward = null;
     let selectedReturn = null;
+    window.currentCurrencySymbol = '{{ current_currency_symbol() }}';
 
     // Reset splitCart if it's a fresh search (optional logic)
     if(window.location.search.includes('reset_cart=1')) {
@@ -1877,7 +1878,7 @@
             `).join('');
 
             document.getElementById('splitRemainingCount').innerText = remaining;
-            document.getElementById('splitTotalPrice').innerText = '₹' + totalPrice.toLocaleString('en-IN');
+            document.getElementById('splitTotalPrice').innerText = window.currentCurrencySymbol + ' ' + totalPrice.toLocaleString();
 
             const btn = document.getElementById('splitBookBtn');
             if (remaining === 0) {
@@ -2051,7 +2052,7 @@
                     infoEl.innerText = "SELECTED";
                     infoEl.classList.replace('text-white-50', 'text-white');
                 } else {
-                    infoEl.innerText = `₹${price.toLocaleString()}`;
+                    infoEl.innerText = window.currentCurrencySymbol + ' ' + price.toLocaleString();
                     infoEl.classList.replace('text-white-50', 'text-white');
                 }
             }
@@ -2081,7 +2082,7 @@
                     // Reset Bottom Bar Segment
                     const infoEl = document.getElementById(`mc-bar-info-${index}`);
                     if(infoEl) {
-                        infoEl.innerText = "₹ ----";
+                        infoEl.innerText = window.currentCurrencySymbol + " ----";
                         infoEl.classList.replace('text-white', 'text-white-50');
                     }
                 } else {
@@ -2204,7 +2205,7 @@
                 totalDisplay.innerText = `${count}/${mcNumSegments} DONE`;
                 totalDisplay.style.fontSize = '22px';
             } else {
-                totalDisplay.innerText = `₹${total.toLocaleString()}`;
+                totalDisplay.innerText = window.currentCurrencySymbol + ' ' + total.toLocaleString();
             }
         }
         
@@ -2262,7 +2263,7 @@
 
                 const flightsData = selectedMCFlights.map(f => f.details);
                 
-                fetch('/checkout/init-split', {
+                fetch('{{ localized_url('/checkout/init-split') }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2388,7 +2389,7 @@
             }
 
             try {
-                const response = await fetch('/flights/group-booking', {
+                const response = await fetch('{{ localized_url('/flights/group-booking') }}', {
                     method: 'POST',
                     body: formData,
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -2909,7 +2910,7 @@
                 didOpen: () => { Swal.showLoading(); }
             });
 
-            fetch(`/flights/details?id=${gdsId}`)
+            fetch(`{{ localized_url('/flights/details') }}?id=${gdsId}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) throw new Error(data.error);

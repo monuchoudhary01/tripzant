@@ -20,19 +20,21 @@ class ActivityController extends Controller
 
     public function index(Request $request)
     {
+        $userCurrency = strtoupper($request->route('currency') ?? session('user_currency', \Illuminate\Support\Facades\Cookie::get('user_currency', 'AUD')));
         $params = [
             'latitude' => $request->lat ?? '48.8566',
             'longitude' => $request->lng ?? '2.3522',
             'destinationCode' => $request->destination ?? 'PMI',
             'from' => $request->from ?? date('Y-m-d', strtotime('+3 days')),
             'to' => $request->to ?? date('Y-m-d', strtotime('+10 days')),
+            'currency' => $userCurrency,
         ];
 
         $results = $this->activityService->search($params);
         $apiTours = $results['data'] ?? [];
 
         // Fetch local tours and map them to the UI structure
-        $localTours = \App\Models\Tour::where('is_active', true)->get()->map(function($tour) {
+        $localTours = \App\Models\Tour::where('is_active', true)->get()->map(function($tour) use ($userCurrency) {
             $images = is_array($tour->images) ? $tour->images : json_decode($tour->images, true);
             return [
                 'id' => $tour->id,
@@ -41,9 +43,9 @@ class ActivityController extends Controller
                 'duration' => $tour->duration,
                 'rating' => 4.8,
                 'reviews' => rand(50, 200),
-                'price' => $tour->price,
-                'original_price' => round($tour->price * 1.2, 0),
-                'currency' => 'INR',
+                'price' => \App\Helpers\CurrencyConverter::convertBetween($tour->price, 'INR', $userCurrency),
+                'original_price' => \App\Helpers\CurrencyConverter::convertBetween(round($tour->price * 1.2, 0), 'INR', $userCurrency),
+                'currency' => $userCurrency,
                 'image' => (isset($images[0]) && $images[0]) ? $images[0] : 'https://images.unsplash.com/photo-1548013146-72479768b921?w=800&auto=format&fit=crop&q=80',
                 'destinations' => $tour->location,
                 'discount' => '20% OFF'

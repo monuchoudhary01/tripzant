@@ -1070,7 +1070,7 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 // Redirect to booking/details (example URL)
-                window.location.href = `/flights/details?id=${id}`;
+                window.location.href = `{{ localized_url('/flights/details') }}?id=${id}`;
             }
         });
     }
@@ -1113,7 +1113,7 @@
                 // Map current search params to detail page
                 const checkIn = document.getElementById('depDateInput').value;
                 const checkOut = document.getElementById('retDateInput').value;
-                window.location.href = `/hotels/details?hotelCode=${id}&checkIn=${checkIn}&checkOut=${checkOut}&adults=${mmtAdults}&rooms=${mmtRooms}`;
+                window.location.href = `{{ localized_url('/hotels/details') }}?hotelCode=${id}&checkIn=${checkIn}&checkOut=${checkOut}&adults=${mmtAdults}&rooms=${mmtRooms}`;
             }
         });
     }
@@ -1247,7 +1247,7 @@
             didOpen: () => { Swal.showLoading(); }
         });
 
-        fetch(`/flights/details?id=${gdsId}`)
+        fetch(`{{ localized_url('/flights/details') }}?id=${gdsId}`)
             .then(res => res.json())
             .then(data => {
                 if (data.error) throw new Error(data.error);
@@ -1367,7 +1367,7 @@
                                 </div>
                             </div>
                             <div class="px-3 mt-4">
-                                <a href="/checkout?type=flight&id=${gdsId}" class="btn btn-primary rounded-pill w-100 fw-900 py-3 shadow-lg">
+                                <a href="{{ localized_url('/checkout') }}?type=flight&id=${gdsId}" class="btn btn-primary rounded-pill w-100 fw-900 py-3 shadow-lg">
                                     PROCEED TO BOOK THIS FLIGHT <i class="fas fa-arrow-right ms-2"></i>
                                 </a>
                             </div>

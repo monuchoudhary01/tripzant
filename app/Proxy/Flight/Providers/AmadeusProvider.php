@@ -25,6 +25,7 @@ class AmadeusProvider implements FlightProvider
         $destination = $params['to'] ?? 'BOM';
         $date = $params['date'] ?? date('Y-m-d');
         $paxCount = ($params['adults'] ?? 1) + ($params['children'] ?? 0);
+        $currency = strtoupper($params['currency'] ?? 'INR');
 
         $response = $this->amadeusSoap->searchFlightsStateless($origin, $destination, $date, $paxCount);
 
@@ -47,10 +48,10 @@ class AmadeusProvider implements FlightProvider
 
         Log::info('AmadeusProvider: Reply Content Keys', ['keys' => array_keys($reply)]);
 
-        return $this->mapSoapResponse($reply);
+        return $this->mapSoapResponse($reply, $currency);
     }
 
-    protected function mapSoapResponse($reply)
+    protected function mapSoapResponse($reply, $currency = 'INR')
     {
         $unified = [];
         Log::info('AmadeusProvider: Recommendations count in mapper', ['count' => count($reply['recommendation'] ?? [])]);
@@ -90,6 +91,9 @@ class AmadeusProvider implements FlightProvider
                     $price = (float)($monetary[0]['amount'] ?? 0);
                 }
             }
+
+            // Convert price from INR (SOAP native) to requested currency
+            $convertedPrice = \App\Helpers\CurrencyConverter::convertBetween($price, 'INR', $currency);
             
             // Normalize paxFareProduct
             $paxFareProducts = $rec['paxFareProduct'] ?? [];
@@ -147,9 +151,9 @@ class AmadeusProvider implements FlightProvider
                     'terminal' => $firstSeg['flightInformation']['location'][0]['terminal'] ?? ($firstSeg['flightInformation']['location'][1]['terminal'] ?? 'T1'),
                     'duration' => $duration, 
                     'stops' => count($flights) - 1,
-                    'price' => $price,
-                    'net_price' => $price,
-                    'currency' => 'INR',
+                    'price' => $convertedPrice,
+                    'net_price' => $convertedPrice,
+                    'currency' => $currency,
                     'cabin' => $unifiedCabin,
                     'baggage' => '15 KG', // Fallback, SOAP MasterPricer sometimes doesn't return this in simple replies
                     'source' => 'amadeus',

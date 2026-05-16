@@ -29,7 +29,8 @@ class AmadeusRestProvider implements FlightProvider
             'adults' => $params['adults'] ?? 1,
             'children' => $params['children'] ?? 0,
             'infants' => $params['infants'] ?? 0,
-            'cabin' => $params['cabin'] ?? 'ECONOMY'
+            'cabin' => $params['cabin'] ?? 'ECONOMY',
+            'currency' => $params['currency'] ?? 'INR'
         ];
 
         $response = $this->flightService->search($restParams);
@@ -51,21 +52,32 @@ class AmadeusRestProvider implements FlightProvider
 
             if (!$firstSeg) continue;
 
+            $offerCurrency = strtoupper(is_array($offer['price'] ?? null) ? ($offer['price']['currency'] ?? 'INR') : ($offer['currency'] ?? 'INR'));
+            $targetCurrency = strtoupper($params['currency'] ?? $offerCurrency);
+            $priceVal = (float) (is_array($offer['price'] ?? null) ? ($offer['price']['total'] ?? 0) : ($offer['price'] ?? 0));
+            $netPriceVal = (float) (is_array($offer['price'] ?? null) ? ($offer['price']['base'] ?? $offer['price']['total'] ?? 0) : ($offer['net_price'] ?? $offer['price'] ?? 0));
+
+            if ($offerCurrency !== $targetCurrency) {
+                $priceVal = \App\Helpers\CurrencyConverter::convertBetween($priceVal, $offerCurrency, $targetCurrency);
+                $netPriceVal = \App\Helpers\CurrencyConverter::convertBetween($netPriceVal, $offerCurrency, $targetCurrency);
+                $offerCurrency = $targetCurrency;
+            }
+
             $unified[] = new UnifiedFlight([
-                'id' => $offer['id'],
-                'airline_code' => $firstSeg['carrierCode'] ?? '??',
-                'airline_name' => $this->getAirlineName($firstSeg['carrierCode'] ?? ''),
-                'flight_number' => $firstSeg['number'] ?? '000',
-                'departure_at' => date('Y-m-d H:i:s', strtotime($firstSeg['departure']['at'])),
-                'arrival_at' => date('Y-m-d H:i:s', strtotime($lastSeg['arrival']['at'])),
-                'departure_city' => $firstSeg['departure']['iataCode'] ?? '???',
-                'arrival_city' => $lastSeg['arrival']['iataCode'] ?? '???',
-                'duration' => $itinerary['duration'] ?? 'N/A',
+                'id' => $offer['id'] ?? $offer['gds_id'] ?? uniqid('amadeus_'),
+                'airline_code' => $firstSeg['carrierCode'] ?? ($offer['airline_code'] ?? '??'),
+                'airline_name' => $this->getAirlineName($firstSeg['carrierCode'] ?? ($offer['airline_code'] ?? '')),
+                'flight_number' => $firstSeg['number'] ?? ($offer['flight_number'] ?? '000'),
+                'departure_at' => date('Y-m-d H:i:s', strtotime($firstSeg['departure']['at'] ?? ($offer['departure_at'] ?? 'now'))),
+                'arrival_at' => date('Y-m-d H:i:s', strtotime($lastSeg['arrival']['at'] ?? ($offer['arrival_at'] ?? 'now'))),
+                'departure_city' => $firstSeg['departure']['iataCode'] ?? ($offer['dep_city'] ?? '???'),
+                'arrival_city' => $lastSeg['arrival']['iataCode'] ?? ($offer['arr_city'] ?? '???'),
+                'duration' => $itinerary['duration'] ?? ($offer['duration'] ?? 'N/A'),
                 'stops' => count($segments) - 1,
-                'price' => (float)$offer['price']['total'],
-                'net_price' => (float)($offer['price']['base'] ?? $offer['price']['total']),
-                'currency' => $offer['price']['currency'] ?? 'INR',
-                'cabin' => $offer['travelerPricings'][0]['fareDetailsBySegment'][0]['cabin'] ?? 'ECONOMY',
+                'price' => $priceVal,
+                'net_price' => $netPriceVal,
+                'currency' => $offerCurrency,
+                'cabin' => $offer['travelerPricings'][0]['fareDetailsBySegment'][0]['cabin'] ?? ($offer['cabin'] ?? 'ECONOMY'),
                 'baggage' => '15 KG', // Default for REST
                 'source' => 'amadeus',
                 'raw_data' => $offer // Keep original for booking

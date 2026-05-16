@@ -101,6 +101,7 @@ class FlightController extends Controller
         $allRawData = [];
         $allDictionaries = [];
         $isRoundTrip = ($tripType === 'round' || !empty($returnDate)) && !$multiCity;
+        $reqCurrency = strtoupper($request->route('currency') ?? session('user_currency', \Illuminate\Support\Facades\Cookie::get('user_currency', 'AUD')));
 
         if ($multiCity) {
             $origins = $request->input('origin', []);
@@ -116,7 +117,8 @@ class FlightController extends Controller
                         'adults' => $params['adults'],
                         'children' => $params['children'],
                         'infants' => $params['infants'],
-                        'cabin' => $params['cabin_class']
+                        'cabin' => $params['cabin_class'],
+                        'currency' => $reqCurrency
                     ];
                     
                     $res = $this->hybridFlightService->search($legParams);
@@ -146,7 +148,8 @@ class FlightController extends Controller
                 'adults' => $params['adults'],
                 'children' => $params['children'],
                 'infants' => $params['infants'],
-                'cabin' => $params['cabin_class']
+                'cabin' => $params['cabin_class'],
+                'currency' => $reqCurrency
             ];
             $searchRes = $this->hybridFlightService->search($onwardParams);
             $onwardFlights = $searchRes['data'] ?? [];
@@ -217,16 +220,16 @@ class FlightController extends Controller
         }
 
         if (empty($allFlightsSorted)) {
-            $currency = 'INR';
+            $currency = $reqCurrency;
             if ($totalBeforeBudget > 0 && $maxBudget) {
                 $errorMessage = "We found " . $totalBeforeBudget . " flights, but none were within your budget of ₹" . number_format($maxBudget) . ".";
                 $isBudgetError = true;
             } else {
-                $errorMessage = "No real-time flights found for this route currently.";
+                $errorMessage = "No flights found for this route currently.";
                 $isBudgetError = false;
             }
         } else {
-            $currency = $allFlightsSorted[0]['currency'] ?? 'INR';
+            $currency = $allFlightsSorted[0]['currency'] ?? $reqCurrency;
             $isBudgetError = false;
         }
 
@@ -503,6 +506,62 @@ class FlightController extends Controller
         // Ensure it's an array for easier checking
         if (is_object($flightOffer)) {
             $flightOffer = method_exists($flightOffer, 'toArray') ? $flightOffer->toArray() : (array)$flightOffer;
+        }
+
+        if (isset($flightOffer['departure_city']) || !isset($flightOffer['itineraries'])) {
+            $flightOffer = array_merge($flightOffer, [
+                'id' => $flightOffer['id'] ?? $id,
+                'type' => 'flight-offer',
+                'source' => $flightOffer['source'] ?? 'amadeus',
+                'itineraries' => [
+                    [
+                        'duration' => $flightOffer['duration'] ?? 'PT2H',
+                        'segments' => [
+                            [
+                                'departure' => [
+                                    'iataCode' => $flightOffer['departure_city'] ?? ($flightOffer['from'] ?? '???'),
+                                    'at' => $flightOffer['departure_at'] ?? '',
+                                    'terminal' => $flightOffer['terminal'] ?? 'T1'
+                                ],
+                                'arrival' => [
+                                    'iataCode' => $flightOffer['arrival_city'] ?? ($flightOffer['to'] ?? '???'),
+                                    'at' => $flightOffer['arrival_at'] ?? ''
+                                ],
+                                'carrierCode' => $flightOffer['airline_code'] ?? '??',
+                                'number' => $flightOffer['flight_number'] ?? '000',
+                                'duration' => $flightOffer['duration'] ?? 'PT2H'
+                            ]
+                        ]
+                    ]
+                ],
+                'price' => [
+                    'currency' => $flightOffer['currency'] ?? strtoupper(session('user_currency', \Illuminate\Support\Facades\Cookie::get('user_currency', 'AUD'))),
+                    'total' => $flightOffer['price'] ?? 0,
+                    'base' => ($flightOffer['price'] ?? 0) * 0.8
+                ],
+                'travelerPricings' => [
+                    [
+                        'travelerId' => "1",
+                        'fareOption' => "STANDARD",
+                        'travelerType' => "ADULT",
+                        'price' => [
+                            'currency' => $flightOffer['currency'] ?? strtoupper(session('user_currency', \Illuminate\Support\Facades\Cookie::get('user_currency', 'AUD'))),
+                            'total' => $flightOffer['price'] ?? 0,
+                        ],
+                        'fareDetailsBySegment' => [
+                            [
+                                'segmentId' => "1",
+                                'cabin' => $flightOffer['cabin'] ?? 'ECONOMY',
+                                'class' => 'Y',
+                                'includedCheckedBags' => [
+                                    'weight' => (int)str_replace(' KG', '', $flightOffer['baggage'] ?? '15'),
+                                    'weightUnit' => 'KG'
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]);
         }
 
         return response()->json([

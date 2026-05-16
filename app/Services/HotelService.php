@@ -109,6 +109,7 @@ class HotelService
             $hotels = $data['hotels']['hotels'] ?? [];
             $formatted = [];
             $markupPct = $this->getMarkupPct();
+            $userCurrency = strtoupper($params['currency'] ?? session('user_currency', \Illuminate\Support\Facades\Cookie::get('user_currency', 'AUD')));
 
             foreach ($hotels as $h) {
                 $net = $h['minRate'] ?? 0;
@@ -117,6 +118,10 @@ class HotelService
                 }
                 
                 $sell = round($net * (1 + $markupPct / 100), 2);
+                $apiCurrency = strtoupper($h['currency'] ?? ($h['rooms'][0]['rates'][0]['currency'] ?? 'EUR'));
+                if ($apiCurrency !== $userCurrency) {
+                    $sell = \App\Helpers\CurrencyConverter::convertBetween($sell, $apiCurrency, $userCurrency);
+                }
 
                 $imgId = (int)$h['code'] % 20;
                 $mainImage = "https://images.unsplash.com/photo-" . ([
@@ -136,16 +141,20 @@ class HotelService
                     'price' => $sell,
                     'rating' => isset($h['categoryCode']) ? (int) substr($h['categoryCode'], 0, 1) : 4,
                     'facilities' => array_map(function($f) { return $f['description'] ?? $f; }, $h['facilities'] ?? []),
-                    'rooms' => array_map(function($r) use ($markupPct, $h) {
+                    'rooms' => array_map(function($r) use ($markupPct, $h, $apiCurrency, $userCurrency) {
                         return [
                             'name' => $r['name'],
-                            'rates' => array_map(function($rt) use ($markupPct, $h) {
+                            'rates' => array_map(function($rt) use ($markupPct, $h, $apiCurrency, $userCurrency) {
                                 $rtNet = (float) $rt['net'];
+                                $sellingRate = round($rtNet * (1 + $markupPct / 100), 2);
+                                if ($apiCurrency !== $userCurrency) {
+                                    $sellingRate = \App\Helpers\CurrencyConverter::convertBetween($sellingRate, $apiCurrency, $userCurrency);
+                                }
                                 return [
                                     'rateKey' => $rt['rateKey'],
                                     'net' => $rtNet,
-                                    'sellingRate' => round($rtNet * (1 + $markupPct / 100), 2),
-                                    'currency' => 'EUR', // Usually EUR in test
+                                    'sellingRate' => $sellingRate,
+                                    'currency' => $userCurrency,
                                     'boardName' => $rt['boardName'],
                                     'hotelCode' => $h['code']
                                 ];
@@ -208,6 +217,7 @@ class HotelService
             }
 
             $markupPct = $this->getMarkupPct();
+            $userCurrency = strtoupper(session('user_currency', \Illuminate\Support\Facades\Cookie::get('user_currency', 'AUD')));
             
             // Format Availability
             $avail = ['rooms' => []];
@@ -215,12 +225,17 @@ class HotelService
                 $avail['rooms'][] = [
                     'code' => $r['code'] ?? '',
                     'name' => $r['name'],
-                    'rates' => array_map(function($rt) use ($markupPct, $hAvail) {
+                    'rates' => array_map(function($rt) use ($markupPct, $hAvail, $userCurrency) {
+                        $apiCurrency = strtoupper($rt['currency'] ?? 'EUR');
+                        $sellingRate = round((float) $rt['net'] * (1 + $markupPct / 100), 2);
+                        if ($apiCurrency !== $userCurrency) {
+                            $sellingRate = \App\Helpers\CurrencyConverter::convertBetween($sellingRate, $apiCurrency, $userCurrency);
+                        }
                         return [
                             'rateKey' => $rt['rateKey'],
                             'net' => (float) $rt['net'],
-                            'sellingRate' => round((float) $rt['net'] * (1 + $markupPct / 100), 2),
-                            'currency' => $rt['currency'] ?? 'EUR',
+                            'sellingRate' => $sellingRate,
+                            'currency' => $userCurrency,
                             'boardName' => $rt['boardName'] ?? 'Room Only',
                             'hotelCode' => $hAvail['code']
                         ];
@@ -288,20 +303,26 @@ class HotelService
             $data = $response->json();
             $hotel = $data['hotel'];
             $markupPct = $this->getMarkupPct();
+            $userCurrency = strtoupper(session('user_currency', \Illuminate\Support\Facades\Cookie::get('user_currency', 'AUD')));
 
             return [
                 'hotel' => [
                     'code' => $hotel['code'],
                     'name' => $hotel['name'],
-                    'rooms' => array_map(function($r) use ($markupPct, $hotel) {
+                    'rooms' => array_map(function($r) use ($markupPct, $hotel, $userCurrency) {
                         return [
                             'name' => $r['name'],
-                            'rates' => array_map(function($rt) use ($markupPct, $hotel) {
+                            'rates' => array_map(function($rt) use ($markupPct, $hotel, $userCurrency) {
+                                $apiCurrency = strtoupper($rt['currency'] ?? 'EUR');
+                                $sellingRate = round((float) $rt['net'] * (1 + $markupPct / 100), 2);
+                                if ($apiCurrency !== $userCurrency) {
+                                    $sellingRate = \App\Helpers\CurrencyConverter::convertBetween($sellingRate, $apiCurrency, $userCurrency);
+                                }
                                 return [
                                     'rateKey' => $rt['rateKey'],
                                     'net' => (float) $rt['net'],
-                                    'sellingRate' => round((float) $rt['net'] * (1 + $markupPct / 100), 2),
-                                    'currency' => $rt['currency'] ?? 'EUR',
+                                    'sellingRate' => $sellingRate,
+                                    'currency' => $userCurrency,
                                     'boardName' => $rt['boardName'],
                                     'hotelCode' => $hotel['code']
                                 ];

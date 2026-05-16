@@ -58,4 +58,42 @@ class CurrencyConverter
 
         return $symbol . number_format($convertedAmount, 2);
     }
+
+    /**
+     * Convert an amount between any two currencies
+     *
+     * @param float $amount The amount in fromCurrency
+     * @param string $fromCurrency The source currency code (e.g. USD, INR)
+     * @param string $toCurrency The target currency code (e.g. EUR, AUD)
+     * @return float The converted amount
+     */
+    public static function convertBetween($amount, $fromCurrency, $toCurrency)
+    {
+        $fromCurrency = strtoupper($fromCurrency);
+        $toCurrency = strtoupper($toCurrency);
+
+        if ($fromCurrency === $toCurrency) {
+            return (float) $amount;
+        }
+
+        // Fetch rate for source currency
+        $fromRate = Cache::remember('currency_rate_' . $fromCurrency, 3600, function () use ($fromCurrency) {
+            $currency = Currency::where('code', $fromCurrency)->first();
+            return $currency ? $currency->exchange_rate : 1.0;
+        });
+
+        // Fetch rate for target currency
+        $toRate = Cache::remember('currency_rate_' . $toCurrency, 3600, function () use ($toCurrency) {
+            $currency = Currency::where('code', $toCurrency)->first();
+            return $currency ? $currency->exchange_rate : 1.0;
+        });
+
+        if ($fromRate == 0) {
+            $fromRate = 1.0;
+        }
+
+        // Convert to base currency first, then to target currency
+        $baseAmount = (float) $amount / $fromRate;
+        return $baseAmount * $toRate;
+    }
 }

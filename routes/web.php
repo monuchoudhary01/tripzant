@@ -91,7 +91,33 @@ Route::group([
     Route::get('/event', [App\Http\Controllers\EventLandingController::class, 'showMelbourneEvent'])->name('event');
     Route::get('/coming-soon', function () { return view('coming-soon'); })->name('coming-soon');
     Route::post('/event/submit', [App\Http\Controllers\EventLandingController::class, 'storeLead'])->name('event.submit');
+
+    // Flights & Hotels Checkout / Actions
+    Route::post('/flights/group-booking', [App\Http\Controllers\GroupBookingController::class, 'store'])->name('flights.group-booking');
+    Route::post('/hotels/coupon/apply', [App\Http\Controllers\HotelController::class, 'applyCoupon'])->middleware('auth')->name('hotel.coupon.apply');
+    Route::get('/hotels/payment', [App\Http\Controllers\HotelController::class, 'showPaymentGateway'])->middleware('auth')->name('hotel.payment');
+    Route::get('/hotels/payment/mpgs', [App\Http\Controllers\HotelController::class, 'showMpgsCheckout'])->middleware('auth')->name('hotel.payment.mpgs');
+    Route::get('/hotels/payment/process', [App\Http\Controllers\HotelController::class, 'processPayment'])->middleware('auth')->name('hotel.payment.process');
+    Route::get('/hotels/confirmation', [App\Http\Controllers\HotelController::class, 'showConfirmation'])->middleware('auth')->name('hotel.confirmation');
+    Route::get('/hotel-map', function () { return view('hotel-map'); })->name('hotels.map');
+
+    Route::get('/checkout', [App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout');
+    Route::post('/checkout/init-split', [App\Http\Controllers\CheckoutController::class, 'initSplit'])->name('checkout.init-split');
+    Route::post('/checkout/save-travelers', [App\Http\Controllers\CheckoutController::class, 'saveTravelers'])->name('checkout.save-travelers');
+    Route::post('/checkout/process', [App\Http\Controllers\CheckoutController::class, 'process'])->name('checkout.process');
+    Route::get('/checkout/success', [App\Http\Controllers\CheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('/checkout/mpgs', [App\Http\Controllers\CheckoutController::class, 'showMpgsCheckout'])->name('checkout.mpgs');
+    Route::post('/booking/initiate-payment', [App\Http\Controllers\CheckoutController::class, 'initiatePayment'])->name('booking.initiate-payment');
+
+    Route::get('/seat-selection', [App\Http\Controllers\SeatSelectionController::class, 'index'])->name('seat.selection');
+    Route::get('/add-ons', [App\Http\Controllers\SeatSelectionController::class, 'customize'])->name('add.ons');
+    Route::get('/booking-confirmation', [App\Http\Controllers\BookingFinalizeController::class, 'show'])->name('booking.confirmation');
+    Route::get('/booking-confirmation/pdf', [App\Http\Controllers\BookingFinalizeController::class, 'downloadPdf'])->name('booking.pdf');
+    Route::get('/booking-confirmation/whatsapp', [App\Http\Controllers\BookingFinalizeController::class, 'sendWhatsappTicket'])->name('booking.whatsapp');
+
+    Route::get('/payment', function () { return view('payment'); })->name('payment');
 });
+
 
 // ====== NON-LOCALIZED ROUTES (Admin, Auth, Dashboards) ======
 
@@ -172,13 +198,6 @@ Route::prefix('dev')->name('dev.')->group(function () {
 });
 
 // Other Non-Localized routes
-Route::post('/flights/group-booking', [App\Http\Controllers\GroupBookingController::class, 'store'])->name('flights.group-booking');
-Route::post('/hotels/coupon/apply', [HotelController::class, 'applyCoupon'])->middleware('auth')->name('hotel.coupon.apply');
-Route::get('/hotels/payment', [HotelController::class, 'showPaymentGateway'])->middleware('auth')->name('hotel.payment');
-Route::get('/hotels/payment/mpgs', [HotelController::class, 'showMpgsCheckout'])->middleware('auth')->name('hotel.payment.mpgs');
-Route::get('/hotels/payment/process', [HotelController::class, 'processPayment'])->middleware('auth')->name('hotel.payment.process');
-Route::get('/hotels/confirmation', [HotelController::class, 'showConfirmation'])->middleware('auth')->name('hotel.confirmation');
-Route::get('/hotel-map', function () { return view('hotel-map'); })->name('hotels.map');
 
 
 // Cargo System
@@ -219,22 +238,7 @@ Route::post('/cargo/estimate', [App\Http\Controllers\CargoController::class, 'ca
 
 
 
-Route::get('/checkout', [App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout');
-Route::post('/checkout/init-split', [App\Http\Controllers\CheckoutController::class, 'initSplit'])->name('checkout.init-split');
-Route::post('/checkout/save-travelers', [App\Http\Controllers\CheckoutController::class, 'saveTravelers'])->name('checkout.save-travelers');
-Route::post('/checkout/process', [App\Http\Controllers\CheckoutController::class, 'process'])->name('checkout.process');
-Route::get('/checkout/success', [App\Http\Controllers\CheckoutController::class, 'success'])->name('checkout.success');
-Route::get('/checkout/mpgs', [App\Http\Controllers\CheckoutController::class, 'showMpgsCheckout'])->name('checkout.mpgs');
-Route::post('/booking/initiate-payment', [App\Http\Controllers\CheckoutController::class, 'initiatePayment'])->name('booking.initiate-payment');
 Route::post('/webhooks/stripe', [StripeWebhookController::class, 'handle'])->name('webhook.stripe');
-
-Route::get('/seat-selection', [App\Http\Controllers\SeatSelectionController::class, 'index'])->name('seat.selection');
-Route::get('/add-ons', [App\Http\Controllers\SeatSelectionController::class, 'customize'])->name('add.ons');
-Route::get('/booking-confirmation', [App\Http\Controllers\BookingFinalizeController::class, 'show'])->name('booking.confirmation');
-Route::get('/booking-confirmation/pdf', [App\Http\Controllers\BookingFinalizeController::class, 'downloadPdf'])->name('booking.pdf');
-Route::get('/booking-confirmation/whatsapp', [App\Http\Controllers\BookingFinalizeController::class, 'sendWhatsappTicket'])->name('booking.whatsapp');
-
-Route::get('/payment', function () { return view('payment'); })->name('payment');
 Route::prefix('test-payments')->group(function() {
     Route::get('/mpgs', [\App\Http\Controllers\PaymentController::class, 'testMpgs'])->name('test.mpgs');
     Route::get('/stripe', [\App\Http\Controllers\PaymentController::class, 'testStripe'])->name('test.stripe');

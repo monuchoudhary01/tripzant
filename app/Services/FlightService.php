@@ -53,6 +53,7 @@ class FlightService
         if (!empty($params['children'])) $queryParams['children'] = $params['children'];
         if (!empty($params['infants'])) $queryParams['infants'] = $params['infants'];
         if (!empty($params['cabin'])) $queryParams['travelClass'] = strtoupper($params['cabin']);
+        if (!empty($params['currency'])) $queryParams['currencyCode'] = strtoupper($params['currency']);
 
         $response = $this->amadeus->get('/v2/shopping/flight-offers', $queryParams);
 
@@ -72,7 +73,14 @@ class FlightService
             $grouped = [];
             
             foreach ($data['data'] as $offer) {
+                $offerCurrency = strtoupper($offer['price']['currency'] ?? 'INR');
+                $targetCurrency = strtoupper($params['currency'] ?? $offerCurrency);
+                
                 $baseAmount = (float) $offer['price']['total'];
+                if ($offerCurrency !== $targetCurrency) {
+                    $baseAmount = \App\Helpers\CurrencyConverter::convertBetween($baseAmount, $offerCurrency, $targetCurrency);
+                    $offerCurrency = $targetCurrency;
+                }
                 $sellPrice = round($baseAmount * (1 + $markupPct / 100));
                 
                 $itineries = $offer['itineraries'][0] ?? null;
@@ -100,7 +108,7 @@ class FlightService
                         'arrival_at' => $lastSeg['arrival']['at'] ?? null,
                         'price' => $sellPrice, // Cheapest so far
                         'net_price' => $baseAmount,
-                        'currency' => $offer['price']['currency'],
+                        'currency' => $offerCurrency,
                         'number_of_changes' => count($segments) - 1,
                         'duration' => $this->formatDuration($itineraryKey),
                         'fare_class' => $class,

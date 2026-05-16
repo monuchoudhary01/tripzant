@@ -57,7 +57,7 @@ class TravelPayoutsProvider implements FlightProvider
                     'price' => [
                         'total' => $f['price'],
                         'base' => $f['net_price'] ?? ($f['price'] * 0.9),
-                        'currency' => $f['currency'] ?? 'INR'
+                        'currency' => $f['currency'] ?? strtoupper($params['currency'] ?? 'INR')
                     ],
                     'travelerPricings' => [
                         [
@@ -91,7 +91,7 @@ class TravelPayoutsProvider implements FlightProvider
                     'stops' => $f['number_of_changes'] ?? 0,
                     'price' => (float) $f['price'],
                     'net_price' => (float) ($f['net_price'] ?? $f['price']),
-                    'currency' => $f['currency'] ?? 'INR',
+                    'currency' => $f['currency'] ?? strtoupper($params['currency'] ?? 'INR'),
                     'cabin' => $f['cabin'] ?? 'ECONOMY',
                     'baggage' => $f['baggage'] ?? '15',
                     'baggage_unit' => $f['baggage_unit'] ?? 'KG',

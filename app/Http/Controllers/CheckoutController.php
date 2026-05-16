@@ -75,7 +75,7 @@ class CheckoutController extends Controller
                             ]
                         ],
                         'price' => [
-                            'currency' => $item['currency'] ?? 'INR',
+                            'currency' => $item['currency'] ?? strtoupper(session('user_currency', \Illuminate\Support\Facades\Cookie::get('user_currency', 'AUD'))),
                             'total' => $item['price'],
                             'base' => $item['price'] * 0.8
                         ],
@@ -218,7 +218,7 @@ class CheckoutController extends Controller
                 'reference'    => $reference,
                 'gateway'      => $gateway,
                 'user_id'      => auth()->id(),
-                'currency'     => ($gateway === 'mpgs') ? 'LKR' : 'INR'
+                'currency'     => ($gateway === 'mpgs') ? 'LKR' : strtoupper(session('user_currency', \Illuminate\Support\Facades\Cookie::get('user_currency', 'AUD')))
             ];
 
             session(['pending_generic_booking' => $bookingData]);

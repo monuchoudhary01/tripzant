@@ -69,6 +69,7 @@ class HotelController extends Controller
 
         $destCode = $request->city_code ?? ($request->destination ?? ($request->destinationCode ?? 'DEL'));
         $destName = $request->city ?? ($cityMap[$destCode] ?? $destCode);
+        $userCurrency = strtoupper($request->route('currency') ?? session('user_currency', \Illuminate\Support\Facades\Cookie::get('user_currency', 'AUD')));
 
         $params = [
             'checkIn'         => $checkIn,
@@ -78,6 +79,7 @@ class HotelController extends Controller
             'adults'          => $request->adults ?? 2,
             'children'        => $request->children ?? 0,
             'rooms'           => $request->rooms ?? 1,
+            'currency'        => $userCurrency,
         ];
 
         $results = $this->hotelService->search($params);
@@ -99,10 +101,13 @@ class HotelController extends Controller
                 'BLR' => [12.97, 77.59]
             ];
             $c = $coords[$params['destinationCode']] ?? [28.6, 77.2];
+            $currencyObj = \App\Models\Currency::where('code', $userCurrency)->first();
+            $sym = $currencyObj ? $currencyObj->symbol : '$';
+
             foreach($hotels as $h) {
                 $formatted[] = [
                     'id' => $h['code'], 'type' => 'hotel', 'title' => $h['name'],
-                    'price' => '₹' . number_format($h['price'] ?? 0, 0), 'rating' => $h['rating'] ?? 4,
+                    'price' => $sym . number_format($h['price'] ?? 0, 0), 'rating' => $h['rating'] ?? 4,
                     'image' => $h['main_image'] ?? ($h['image'] ?? null), 'lat' => $h['latitude'] ?? ($c[0] + rand(-50,50)/1000),
                     'lng' => $h['longitude'] ?? ($c[1] + rand(-50,50)/1000), 'meta' => ($h['rating'] ?? 4) . ' Star | ' . ($h['location'] ?? 'City Center')
                 ];

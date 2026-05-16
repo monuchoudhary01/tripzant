@@ -130,7 +130,7 @@ class HybridFlightService
         $finalResponse = [
             'success' => true,
             'total' => count($allResults),
-            'currency' => 'INR',
+            'currency' => strtoupper($params['currency'] ?? 'INR'),
             'data' => $allResults,
             'meta' => $metadata,
             'dictionaries' => $metadata['dictionaries'] ?? [],

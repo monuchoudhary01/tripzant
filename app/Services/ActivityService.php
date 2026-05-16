@@ -76,6 +76,7 @@ class ActivityService
 
             $markupPct = (float) config('tripzant.markups.b2c', 10);
             $formatted = [];
+            $userCurrency = strtoupper($params['currency'] ?? session('user_currency', \Illuminate\Support\Facades\Cookie::get('user_currency', 'AUD')));
 
             foreach ($activities as $activity) {
                 // Determine price
@@ -83,10 +84,15 @@ class ActivityService
                 $currency = 'USD';
                 if (!empty($activity['amountsFrom'])) {
                     $net = (float) $activity['amountsFrom'][0]['amount'];
-                    $currency = $activity['currency'] ?? 'USD';
+                    $currency = strtoupper($activity['currency'] ?? 'USD');
                 }
                 
                 $sell = round($net * (1 + $markupPct / 100), 2);
+                if ($currency !== $userCurrency) {
+                    $sell = \App\Helpers\CurrencyConverter::convertBetween($sell, $currency, $userCurrency);
+                    $net = \App\Helpers\CurrencyConverter::convertBetween($net, $currency, $userCurrency);
+                    $currency = $userCurrency;
+                }
                 
                 $img = $activity['content']['media']['images'][0]['urls'][0]['dp1100'] ?? 
                        'https://images.unsplash.com/photo-1548013146-72479768b921?w=800&auto=format&fit=crop&q=80';

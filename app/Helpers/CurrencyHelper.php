@@ -10,14 +10,13 @@ if (!function_exists('format_price')) {
         // Strip commas and non-numeric characters except decimals
         $cleanAmount = preg_replace('/[^0-9.]/', '', $amount);
         
-        // Get currency data from cache/DB
+        $convertedAmount = \App\Helpers\CurrencyConverter::convertBetween((float)$cleanAmount, $fromCurrency, $currencyCode);
+        
+        // Get currency symbol
         $currency = \App\Models\Currency::where('code', $currencyCode)->first();
-        $rate = $currency ? $currency->exchange_rate : 1;
         $symbol = $currency ? $currency->symbol : '$';
 
-        $convertedAmount = (float)$cleanAmount * $rate;
-
-        return $symbol . ' ' . number_format($convertedAmount, 2);
+        return $symbol . ' ' . number_format($convertedAmount, 0);
     }
 }
 
