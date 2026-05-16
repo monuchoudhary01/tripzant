@@ -18,18 +18,10 @@ class MoneyTransferService
      */
     public function getExchangeRate($from, $to)
     {
-        // Mocking rates for now - normally would call Wise or ExchangeRate-API
-        $mockRates = [
-            'AUD_INR' => 55.42,
-            'AUD_USD' => 0.65,
-            'USD_INR' => 83.21,
-            'INR_AUD' => 0.018,
-            'USD_AUD' => 1.54,
-            'INR_USD' => 0.012
-        ];
-
-        $key = "{$from}_{{$to}}";
-        return $mockRates[$key] ?? 1.0;
+        // Real-time exchange rate API integration required (e.g. Wise, ExchangeRate-API).
+        // Mock rates removed for production integrity.
+        \Log::warning("MoneyTransferService: getExchangeRate requested for {$from} to {$to} but API not integrated.");
+        return 1.0; 
     }
 
     /**
@@ -37,7 +29,9 @@ class MoneyTransferService
      */
     public function getProviders($fromCountry, $fromCurrency, $toCountry, $toCurrency, $amount)
     {
-        $providers = [
+        // Hardcoded mock providers removed.
+        // Return internal wallet provider only if functional.
+        return [
             [
                 'id' => 1,
                 'name' => 'TripZant Wallet',
@@ -48,47 +42,8 @@ class MoneyTransferService
                 'delivery' => 'Instant',
                 'score' => 9.5,
                 'best_deal' => true
-            ],
-            [
-                'id' => 2,
-                'name' => 'Wise',
-                'slug' => 'wise',
-                'type' => 'Bank Transfer',
-                'rate' => $this->getExchangeRate($fromCurrency, $toCurrency) * 0.995,
-                'fee' => $amount * 0.005,
-                'delivery' => '1-2 Days',
-                'score' => 9.0,
-                'best_deal' => false
-            ],
-            [
-                'id' => 3,
-                'name' => 'Stripe Payout',
-                'slug' => 'stripe',
-                'type' => 'Card/Bank',
-                'rate' => $this->getExchangeRate($fromCurrency, $toCurrency) * 0.98,
-                'fee' => $amount * 0.015,
-                'delivery' => 'Instant',
-                'score' => 8.5,
-                'best_deal' => false
             ]
         ];
-
-        // Filter based on currencies (Mock logic)
-        if ($toCountry === 'India') {
-            $providers[] = [
-                'id' => 4,
-                'name' => 'Razorpay / IMPS',
-                'slug' => 'razorpay',
-                'type' => 'Local Bank',
-                'rate' => $this->getExchangeRate($fromCurrency, $toCurrency) * 0.99,
-                'fee' => 50, // Flat fee in INR? 
-                'delivery' => 'In Minutes',
-                'score' => 9.2,
-                'best_deal' => false
-            ];
-        }
-
-        return $providers;
     }
 
     /**
@@ -153,27 +108,16 @@ class MoneyTransferService
         $transfer->update(['status' => 'processing']);
         
         try {
-            // Logic for different providers
-            $provider = $transfer->provider;
-            
             if ($transfer->type === 'wallet_to_wallet') {
                 return $this->processInternalTransfer($transfer);
             }
 
-            // Mock external calls
-            // if ($provider->slug === 'wise') { ... }
-            
-            // Success mock
-            $transfer->update([
-                'status' => 'success',
-                'status_history' => array_merge($transfer->status_history, [['status' => 'success', 'time' => now()]])
-            ]);
-
-            return ['success' => true, 'transfer' => $transfer];
+            // External provider logic should be implemented with real API calls.
+            // Failing by default as mock execution is removed.
+            throw new \Exception("External provider integration not available.");
 
         } catch (\Exception $e) {
-            $transfer->update(['status' => 'failed', 'metadata' => array_merge($transfer->metadata, ['error' => $e->getMessage()])]);
-            // Reverse funds? or leave it for manual admin intervention
+            $transfer->update(['status' => 'failed', 'metadata' => array_merge($transfer->metadata ?? [], ['error' => $e->getMessage()])]);
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }

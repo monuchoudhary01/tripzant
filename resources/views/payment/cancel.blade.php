@@ -16,7 +16,7 @@
 
                     <div class="d-flex justify-content-center gap-3">
                         <a href="{{ route('test.mpgs') }}" class="btn btn-outline-primary px-4">Try Again</a>
-                        <a href="{{ route('home') }}" class="btn btn-primary px-4">Back to Home</a>
+                        <a href="{{ localized_url('/') }}" class="btn btn-primary px-4">Back to Home</a>
                     </div>
                 </div>
             </div>

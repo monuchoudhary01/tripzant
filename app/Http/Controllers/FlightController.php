@@ -216,7 +216,6 @@ class FlightController extends Controller
             });
         }
 
-        // --- Cleaned: Mock Data Fallback Removed ---
         if (empty($allFlightsSorted)) {
             $currency = 'INR';
             if ($totalBeforeBudget > 0 && $maxBudget) {
@@ -397,8 +396,6 @@ class FlightController extends Controller
         $id = $request->input('id');
         $basePrice = (float) $request->input('price');
         
-        // Simulation: In real apps, we'd call the API to check availability/price for other cabins
-        // Here we apply multipliers based on industry averages
         $cabins = [
             'ECONOMY' => ['multiplier' => 1.0, 'name' => 'Economy', 'seats' => 9],
             'PREMIUM_ECONOMY' => ['multiplier' => 1.5, 'name' => 'Premium Economy', 'seats' => 4],
@@ -508,55 +505,6 @@ class FlightController extends Controller
             $flightOffer = method_exists($flightOffer, 'toArray') ? $flightOffer->toArray() : (array)$flightOffer;
         }
 
-        // If it's a UnifiedFlight (from SOAP) or a partial array, wrap it in a mock REST structure
-        // We check for 'departure_city' or missing 'itineraries' to trigger the wrapper
-        if (isset($flightOffer['departure_city']) || !isset($flightOffer['itineraries'])) {
-            $mockOffer = array_merge($flightOffer, [
-                'id' => $flightOffer['id'] ?? $id,
-                'itineraries' => [
-                    [
-                        'duration' => $flightOffer['duration'] ?? 'PT2H',
-                        'segments' => [
-                            [
-                                'departure' => [
-                                    'iataCode' => $flightOffer['departure_city'] ?? ($flightOffer['from'] ?? '???'),
-                                    'at' => $flightOffer['departure_at'] ?? '',
-                                    'terminal' => $flightOffer['terminal'] ?? 'T1'
-                                ],
-                                'arrival' => [
-                                    'iataCode' => $flightOffer['arrival_city'] ?? ($flightOffer['to'] ?? '???'),
-                                    'at' => $flightOffer['arrival_at'] ?? ''
-                                ],
-                                'carrierCode' => $flightOffer['airline_code'] ?? '??',
-                                'number' => $flightOffer['flight_number'] ?? '000',
-                                'duration' => $flightOffer['duration'] ?? 'PT2H'
-                            ]
-                        ]
-                    ]
-                ],
-                'price' => [
-                    'currency' => $flightOffer['currency'] ?? 'INR',
-                    'total' => $flightOffer['price'] ?? 0,
-                    'base' => ($flightOffer['price'] ?? 0) * 0.8
-                ],
-                'travelerPricings' => [
-                    [
-                        'fareDetailsBySegment' => [
-                            [
-                                'cabin' => $flightOffer['cabin'] ?? 'ECONOMY',
-                                'class' => 'Y',
-                                'includedCheckedBags' => [
-                                    'weight' => str_replace(' KG', '', $flightOffer['baggage'] ?? '15'),
-                                    'weightUnit' => 'KG'
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]);
-            $flightOffer = $mockOffer;
-        }
-
         return response()->json([
             'success' => true,
             'data' => $flightOffer,
@@ -582,54 +530,6 @@ class FlightController extends Controller
 
         if (!$flightOffer) {
             return response()->json(['error' => 'Flight selection expired. Please search again.'], 404);
-        }
-
-        // If it's a UnifiedFlight (from SOAP), wrap it in a mock REST structure
-        if (isset($flightOffer['departure_city'])) {
-            $mockOffer = array_merge($flightOffer, [
-                'id' => $flightOffer['id'],
-                'itineraries' => [
-                    [
-                        'duration' => $flightOffer['duration'] ?? 'PT2H',
-                        'segments' => [
-                            [
-                                'departure' => [
-                                    'iataCode' => $flightOffer['departure_city'],
-                                    'at' => $flightOffer['departure_at'],
-                                    'terminal' => $flightOffer['terminal'] ?? 'T1'
-                                ],
-                                'arrival' => [
-                                    'iataCode' => $flightOffer['arrival_city'],
-                                    'at' => $flightOffer['arrival_at']
-                                ],
-                                'carrierCode' => $flightOffer['airline_code'],
-                                'number' => $flightOffer['flight_number'],
-                                'duration' => $flightOffer['duration'] ?? 'PT2H'
-                            ]
-                        ]
-                    ]
-                ],
-                'price' => [
-                    'currency' => $flightOffer['currency'] ?? 'INR',
-                    'total' => $flightOffer['price'],
-                    'base' => $flightOffer['price'] * 0.8
-                ],
-                'travelerPricings' => [
-                    [
-                        'fareDetailsBySegment' => [
-                            [
-                                'cabin' => $flightOffer['cabin'] ?? 'ECONOMY',
-                                'class' => 'Y',
-                                'includedCheckedBags' => [
-                                    'weight' => str_replace(' KG', '', $flightOffer['baggage'] ?? '15'),
-                                    'weightUnit' => 'KG'
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]);
-            $flightOffer = $mockOffer;
         }
 
         $frontendTravelers = $request->input('travelers', []);
@@ -658,7 +558,7 @@ class FlightController extends Controller
                 ],
                 'documents' => [[
                     'documentType' => 'PASSPORT',
-                    'birthPlace' => 'DELHI', // Standardized for demo
+                    'birthPlace' => 'DELHI',
                     'issuanceCountry' => 'IN',
                     'expiryDate' => $t['p_expiry'] ?? '2030-01-01',
                     'number' => $t['passport'] ?? 'Z1234567',
@@ -669,7 +569,6 @@ class FlightController extends Controller
             ];
         }
 
-        // TravelPayouts usually redirects to their site, but if they hit book here, we should probably warn or redirect
         if (($flightOffer['source'] ?? '') === 'travelpayouts') {
              return response()->json(['error' => 'This flight must be booked via our partner site.', 'redirect' => $flightOffer['booking_link'] ?? '#'], 400);
         }
@@ -677,12 +576,16 @@ class FlightController extends Controller
         // Process Amadeus Booking
         $orderResponse = $this->flightService->createOrder($flightOffer, $amadeusTravelers);
 
-            if (isset($orderResponse['error']) || isset($orderResponse['errors'])) {
-                return response()->json(['error' => 'Amadeus API Error: ' . json_encode($orderResponse['errors'])], 400);
-            }
+        if (isset($orderResponse['error']) || isset($orderResponse['errors'])) {
+            return response()->json(['error' => 'Amadeus API Error: ' . json_encode($orderResponse['errors'] ?? $orderResponse['error'])], 400);
+        }
 
         $bookingData = $orderResponse['data'] ?? [];
-        $pnr = $bookingData['associatedRecords'][0]['reference'] ?? ('PNR-' . rand(1000, 9000));
+        $pnr = $bookingData['associatedRecords'][0]['reference'] ?? null;
+        
+        if (!$pnr) {
+            return response()->json(['error' => 'Booking failed: No PNR returned from airline.'], 400);
+        }
 
         // 2. Create Internal Record (Main Booking)
         $primaryContact = $frontendTravelers[0] ?? [];
@@ -724,7 +627,7 @@ class FlightController extends Controller
             'flight_number' => $firstSeg['number'] ?? '000',
             'cabin_class' => $flightOffer['travelerPricings'][0]['fareDetailsBySegment'][0]['cabin'] ?? 'ECONOMY',
             'itinerary_details' => json_encode($allItineraries), // Save ALL itineraries for round-trip/multi-city
-            'fare_rules' => json_encode($flightOffer['travelerPricings'][0]['fareDetailsBySegment'] ?? [])
+            'fare_details' => json_encode($flightOffer['travelerPricings'][0]['fareDetailsBySegment'] ?? [])
         ]);
 
         // 2b. Create Passenger Records
@@ -780,66 +683,6 @@ class FlightController extends Controller
         ]);
     }
 
-    private function getMockFlightOffer($id)
-    {
-        $isVueling = strpos($id, '2') !== false;
-        return [
-            'type' => 'flight-offer',
-            'id' => $id,
-            'source' => 'GDS',
-            'lastTicketingDate' => date('Y-m-d', strtotime('+3 days')),
-            'itineraries' => [
-                [
-                    'duration' => $isVueling ? 'PT3H30M' : 'PT2H30M',
-                    'segments' => [
-                        [
-                            'departure' => [
-                                'iataCode' => 'STN',
-                                'terminal' => 'T1',
-                                'at' => date('Y-m-d\T06:15:00'),
-                            ],
-                            'arrival' => [
-                                'iataCode' => 'DBV',
-                                'at' => date('Y-m-d\T09:45:00'),
-                            ],
-                            'carrierCode' => $isVueling ? 'VY' : 'W9',
-                            'number' => $isVueling ? '6127' : '4452',
-                            'aircraft' => ['code' => '32A'],
-                            'duration' => 'PT2H30M',
-                            'id' => '1',
-                            'numberOfStops' => 0,
-                        ]
-                    ]
-                ]
-            ],
-            'price' => [
-                'currency' => 'INR',
-                'total' => $isVueling ? '1250.00' : '946.00',
-                'base' => $isVueling ? '1000.00' : '800.00',
-            ],
-            'travelerPricings' => [
-                [
-                    'travelerId' => '1',
-                    'fareOption' => 'STANDARD',
-                    'travelerType' => 'ADULT',
-                    'price' => [
-                        'currency' => 'INR',
-                        'total' => $isVueling ? '1250.00' : '946.00',
-                    ],
-                    'fareDetailsBySegment' => [
-                        [
-                            'segmentId' => '1',
-                            'cabin' => 'ECONOMY',
-                            'fareBasis' => 'WEBOW',
-                            'class' => 'W',
-                            'includedCheckedBags' => ['weight' => 20, 'weightUnit' => 'KG']
-                        ]
-                    ]
-                ]
-            ]
-        ];
-    }
-
     public function mapSearch(Request $request)
     {
         $origin = $request->input('origin', 'DEL');
@@ -865,12 +708,7 @@ class FlightController extends Controller
         $result = app(\App\Services\AmadeusService::class)->locationSearch($keyword);
 
         if (isset($result['error'])) {
-            // Mock fallback for autocomplete if API is down
-            return response()->json([
-                ['iataCode' => 'DEL', 'name' => 'Indira Gandhi International', 'address' => ['cityName' => 'Delhi']],
-                ['iataCode' => 'BOM', 'name' => 'Chhatrapati Shivaji International', 'address' => ['cityName' => 'Mumbai']],
-                ['iataCode' => 'LHR', 'name' => 'London Heathrow', 'address' => ['cityName' => 'London']],
-            ]);
+            return response()->json([]);
         }
 
         return response()->json($result['data'] ?? []);

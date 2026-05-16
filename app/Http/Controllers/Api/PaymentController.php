@@ -13,28 +13,6 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
-    /**
-     * @OA\Post(
-     *     path="/payment/initiate",
-     *     tags={"Payment"},
-     *     summary="Initialize Payment (Mobile App)",
-     *     description="Create a payment session for Stripe or MPGS (Commercial Bank)",
-     *     security={{"sanctum":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"type", "total_amount", "gateway", "travelers"},
-     *             @OA\Property(property="type", type="string", example="flight"),
-     *             @OA\Property(property="total_amount", type="number", example=5000),
-     *             @OA\Property(property="gateway", type="string", enum={"stripe", "mpgs"}),
-     *             @OA\Property(property="travelers", type="array", @OA\Items(type="object")),
-     *             @OA\Property(property="item_data", type="object"),
-     *             @OA\Property(property="reference", type="string")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Payment session created")
-     * )
-     */
     public function initiate(Request $request)
     {
         $validated = $request->validate([
@@ -111,25 +89,6 @@ class PaymentController extends Controller
         return response()->json(['success' => false, 'message' => 'Invalid gateway'], 400);
     }
 
-    /**
-     * @OA\Post(
-     *     path="/payment/success",
-     *     tags={"Payment"},
-     *     summary="Confirm Payment (Mobile App)",
-     *     description="Verify payment status and confirm the booking record",
-     *     security={{"sanctum":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"reference"},
-     *             @OA\Property(property="reference", type="string", example="API-ABC123"),
-     *             @OA\Property(property="transaction_id", type="string"),
-     *             @OA\Property(property="gateway", type="string", enum={"stripe", "mpgs"})
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Booking confirmed")
-     * )
-     */
     public function success(Request $request)
     {
         $reference = $request->input('reference');

@@ -152,7 +152,7 @@
             </div>
         </div>
         <!-- Center Floating Search Button -->
-        <a href="{{ route('visa.listing') }}" class="btn-search-v">SEARCH</a>
+        <a href="{{ localized_url('/visa/listing') }}" class="btn-search-v">SEARCH</a>
     </div>
 </div>
 

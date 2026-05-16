@@ -539,11 +539,11 @@
                 if ($currentTab == 'hotels') $routeName = 'hotels.index';
                 elseif ($currentTab == 'tours') $routeName = 'tours.index';
             @endphp
-            <a href="{{ route($routeName, request()->except('mode')) }}" class="btn btn-outline-secondary rounded-pill px-3 fw-800 d-flex align-items-center gap-2" style="border-width: 2px;">
+            <a href="{{ route($routeName, array_merge(['locale' => $currentLocale, 'currency' => $currentCurrency], request()->except('mode'))) }}" class="btn btn-outline-secondary rounded-pill px-3 fw-800 d-flex align-items-center gap-2" style="border-width: 2px;">
                 <i class="fas fa-list"></i> <span class="d-none d-md-inline">List View</span>
             </a>
         </div>
-        <form action="{{ route('explore.map') }}" method="GET" class="map-search-engine" id="mapSearchForm" style="max-width: 1200px; position: relative;">
+        <form action="{{ route('explore.map', ['locale' => $currentLocale, 'currency' => $currentCurrency]) }}" method="GET" class="map-search-engine" id="mapSearchForm" style="max-width: 1200px; position: relative;">
             <input type="hidden" name="mode" value="map">
             <input type="hidden" name="activeTab" id="activeTabHidden" value="{{ $activeTab ?? 'flights' }}">
 
@@ -704,26 +704,8 @@
                 <button class="map-layer-btn" title="My Location">
                     <i class="fas fa-location-arrow"></i>
                 </button>
-                <button class="map-layer-btn" id="toggleWeather" onclick="toggleWeatherLayer()" title="Weather Overlay">
-                    <i class="fas fa-cloud-sun text-info"></i>
-                </button>
             </div>
 
-            <!-- Weather Global Pill (Map View) -->
-            <div id="mapWeatherPill" class="d-none animate-in" style="position: absolute; top: 24px; left: 50%; transform: translateX(-50%); z-index: 1000; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 12px 24px; border-radius: 99px; border: 1.5px solid #0ea5e9; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
-                <div class="d-flex align-items-center gap-4">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="fas fa-sun text-warning fs-5"></i>
-                        <span class="fw-900 text-navy" style="font-size: 14px;">25°C - Sunny</span>
-                    </div>
-                    <div style="width: 1px; height: 20px; background: #e2e8f0;"></div>
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="text-center"><div style="font-size: 8px; font-weight: 800;" class="text-muted">SAT</div><i class="fas fa-cloud text-info small"></i></div>
-                        <div class="text-center"><div style="font-size: 8px; font-weight: 800;" class="text-muted">SUN</div><i class="fas fa-sun text-warning small"></i></div>
-                        <div class="text-center"><div style="font-size: 8px; font-weight: 800;" class="text-muted">MON</div><i class="fas fa-cloud-rain text-primary small"></i></div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -969,11 +951,11 @@
     document.getElementById('mapSearchForm').addEventListener('submit', function(e) {
         // Change action based on active tab so the correct controller handles the search
         if (currentTab === 'hotels') {
-            this.action = "{{ route('hotels.index') }}";
+            this.action = "{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency]) }}";
         } else if (currentTab === 'tours') {
-            this.action = "{{ route('tours.index') }}";
+            this.action = "{{ route('tours.index', ['locale' => $currentLocale, 'currency' => $currentCurrency]) }}";
         } else {
-            this.action = "{{ route('explore.map') }}";
+            this.action = "{{ route('explore.map', ['locale' => $currentLocale, 'currency' => $currentCurrency]) }}";
         }
     });
 

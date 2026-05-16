@@ -133,7 +133,7 @@
                 <a href="{{ route('hotel_dashboard.search') }}" class="ps-nav-link {{ request()->routeIs('hotel_dashboard.search') ? 'active' : '' }}">
                     <i class="fas fa-plane-departure"></i> Flight Engine
                 </a>
-                <a href="{{ route('hotels.index') }}" class="ps-nav-link {{ request()->routeIs('hotels.index') ? 'active' : '' }}">
+                <a href="{{ localized_url('/hotels') }}" class="ps-nav-link {{ request()->routeIs('hotels.index') ? 'active' : '' }}">
                     <i class="fas fa-building"></i> Marketplace Hotels
                 </a>
                 <a href="{{ route('hotel.tours') }}" class="ps-nav-link {{ request()->routeIs('hotel.tours') ? 'active' : '' }}">

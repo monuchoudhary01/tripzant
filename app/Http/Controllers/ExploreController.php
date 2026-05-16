@@ -140,25 +140,6 @@ class ExploreController extends Controller
         ]);
     }
 
-    private function getMockInspirations($origin)
-    {
-        $destinations = ['BOM', 'DEL', 'BLR', 'MAA', 'HYD', 'CCU', 'GOI', 'AMD', 'COK', 'DXB', 'LHR', 'SIN', 'JFK', 'SFO', 'SYD', 'BKK', 'HKG', 'HND', 'CDG', 'FRA', 'AMS', 'DOH', 'AUH', 'JAI', 'UDR', 'IXC', 'ATQ', 'VNS'];
-        
-        // Remove origin from destinations
-        $destinations = array_diff($destinations, [$origin]);
-        shuffle($destinations);
-        $selected = array_slice($destinations, 0, 12);
-
-        $mock = [];
-        foreach ($selected as $dest) {
-            $mock[] = [
-                'destination' => $dest,
-                'departureDate' => date('Y-m-d', strtotime('+' . rand(5, 30) . ' days')),
-                'price' => ['total' => rand(4000, 45000)]
-            ];
-        }
-        return $mock;
-    }
 
     private function getCityName($code)
     {

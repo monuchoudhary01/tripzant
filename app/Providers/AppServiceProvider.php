@@ -15,7 +15,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->extend('translator', function ($translator, $app) {
+            $trans = new \App\Translation\AutoSavingTranslator($translator->getLoader(), $translator->getLocale());
+            $trans->setFallback($translator->getFallback());
+            return $trans;
+        });
     }
 
     /**

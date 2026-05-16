@@ -58,15 +58,7 @@ class FlightService
 
         if (isset($response['error'])) {
              \Log::error('Amadeus Search Error', ['params' => $queryParams, 'error' => $response]);
-             
-             // Fallback to Dynamic Mocks for "Dynamic Flow Check" if API is unstable (500 errors)
-             if (($response['status'] ?? 0) >= 500 || ($response['status'] ?? 0) == 404) {
-                 $data = $this->getDynamicMockPayload($queryParams);
-                 $data['is_mock'] = true;
-                 $data['msg'] = 'Showing simulated results (Amadeus Sandbox is currently unstable).';
-             } else {
-                 return ['success' => false, 'data' => [], 'error' => $response['message'] ?? 'API Error', 'raw_data' => []];
-             }
+             return ['success' => false, 'data' => [], 'error' => $response['message'] ?? 'API Error', 'raw_data' => []];
         }
 
         $data = $response;
@@ -81,7 +73,6 @@ class FlightService
             
             foreach ($data['data'] as $offer) {
                 $baseAmount = (float) $offer['price']['total'];
-                $markupPct = (float) config('tripzant.markups.b2c', 5);
                 $sellPrice = round($baseAmount * (1 + $markupPct / 100));
                 
                 $itineries = $offer['itineraries'][0] ?? null;
@@ -202,130 +193,5 @@ class FlightService
                 'travelers' => $travelers
             ]
         ]);
-    }
-
-    private function getDynamicMockPayload($queryParams)
-    {
-        $origin = $queryParams['originLocationCode'] ?? 'DEL';
-        $dest = $queryParams['destinationLocationCode'] ?? 'BOM';
-        $date = $queryParams['departureDate'] ?? date('Y-m-d');
-        
-        $airlines = ['6E' => 'IndiGo', 'UK' => 'Vistara', 'AI' => 'Air India', 'SG' => 'SpiceJet', 'QP' => 'Akasa Air'];
-        $codes = array_keys($airlines);
-        
-        $flights = [];
-        for ($i = 0; $i < 15; $i++) {
-            $code = $codes[array_rand($codes)];
-            $basePrice = rand(3500, 15000);
-            
-            // Random times
-            $depHour = rand(0, 23);
-            $depMin = rand(0, 5) * 10;
-            $arrHour = $depHour + rand(1, 4);
-            if ($arrHour >= 24) $arrHour -= 24;
-            
-            $depDateStr = $date . 'T' . str_pad($depHour, 2, '0', STR_PAD_LEFT) . ':' . str_pad($depMin, 2, '0', STR_PAD_LEFT) . ':00';
-            $arrDateStr = $date . 'T' . str_pad($arrHour, 2, '0', STR_PAD_LEFT) . ':' . str_pad($depMin, 2, '0', STR_PAD_LEFT) . ':00';
-            
-            $numChanges = (rand(0, 10) > 7) ? 1 : 0; // 30% chance of 1 stop
-            $segments = [];
-            
-            if ($numChanges === 0) {
-                $segments[] = [
-                    'carrierCode' => $code,
-                    'number' => rand(100, 999),
-                    'departure' => [
-                        'iataCode' => strtoupper($queryParams['originLocationCode']),
-                        'at' => $depDateStr, 
-                        'terminal' => 'T1'
-                    ],
-                    'arrival' => [
-                        'iataCode' => strtoupper($queryParams['destinationLocationCode']),
-                        'at' => $arrDateStr
-                    ]
-                ];
-            } else {
-                $segments[] = [
-                    'carrierCode' => $code,
-                    'number' => rand(100, 999),
-                    'departure' => [
-                        'iataCode' => strtoupper($queryParams['originLocationCode']),
-                        'at' => $depDateStr, 
-                        'terminal' => 'T1'
-                    ],
-                    'arrival' => [
-                        'iataCode' => 'BOM', // Intermediate
-                        'at' => $date . 'T12:00:00'
-                    ]
-                ];
-                $segments[] = [
-                    'carrierCode' => $code,
-                    'number' => rand(100, 999),
-                    'departure' => [
-                        'iataCode' => 'BOM',
-                        'at' => $date . 'T14:00:00', 
-                        'terminal' => 'T2'
-                    ],
-                    'arrival' => [
-                        'iataCode' => strtoupper($queryParams['destinationLocationCode']),
-                        'at' => $arrDateStr
-                    ]
-                ];
-            }
-
-            $flights[] = [
-                'type' => 'flight-offer',
-                'id' => (string)rand(100000, 999999),
-                'source' => 'amadeus',
-                'instantTicketingRequired' => false,
-                'nonHomogeneous' => false,
-                'oneWay' => true,
-                'lastTicketingDate' => $date,
-                'numberOfBookableSeats' => rand(2, 9),
-                'itineraries' => [
-                    [
-                        'duration' => 'PT' . rand(1, 4) . 'H' . rand(0, 59) . 'M',
-                        'segments' => $segments
-                    ]
-                ],
-                'price' => [
-                    'currency' => 'INR',
-                    'total' => (string)$basePrice,
-                    'base' => (string)($basePrice * 0.8)
-                ],
-                'pricingOptions' => [
-                    'fareType' => ['PUBLISHED'],
-                    'includedCheckedBagsOnly' => true,
-                    'noRestrictionFare' => (rand(0, 1) == 1) // 50% refundable
-                ],
-                'validatingAirlineCodes' => [$code],
-                'travelerPricings' => [
-                    [
-                        'travelerId' => "1",
-                        'fareOption' => "STANDARD",
-                        'travelerType' => "ADULT",
-                        'price' => [
-                            'currency' => 'INR',
-                            'total' => (string)$basePrice,
-                            'base' => (string)($basePrice * 0.8)
-                        ],
-                        'fareDetailsBySegment' => [
-                            [
-                                'segmentId' => "1",
-                                'cabin' => $queryParams['travelClass'] ?? 'ECONOMY',
-                                'fareBasis' => "TIX001",
-                                'class' => ['J', 'C', 'D', 'Y', 'B', 'M', 'L', 'K'][array_rand(['J', 'C', 'D', 'Y', 'B', 'M', 'L', 'K'])],
-                                'includedCheckedBags' => [
-                                    'weight' => rand(15, 30),
-                                    'weightUnit' => "KG"
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ];
-        }
-        
-        return ['data' => $flights];
     }
 }

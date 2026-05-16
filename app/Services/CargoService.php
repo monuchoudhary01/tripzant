@@ -13,27 +13,10 @@ class CargoService
      */
     public function autoImportProviders($city, $country)
     {
-        // Mocking API call to a logistics aggregator like Google Places or specific Logistics APIs
-        // In a real scenario, this would use Http::get('https://api.logistics.com/v1/providers', [...])
+        // Real-time Logistics API integration required for provider auto-import.
+        // Mock data removed to ensure strictly real-time data flow.
+        \Log::info('CargoService: autoImportProviders requested for ' . $city . ', but API not yet integrated.');
         
-        $mockRes = [
-            ['name' => 'ShipGlobal ' . $city, 'rate' => 55.00],
-            ['name' => 'TransitPro ' . $country, 'rate' => 48.00]
-        ];
-
-        foreach($mockRes as $res) {
-            CargoProvider::firstOrCreate(
-                ['name' => $res['name']],
-                [
-                    'base_rate' => $res['rate'],
-                    'per_kg_rate' => 5.00,
-                    'rating' => 4.4,
-                    'supported_countries' => [$country],
-                    'is_active' => true
-                ]
-            );
-        }
-
         return true;
     }
 

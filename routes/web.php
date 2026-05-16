@@ -10,6 +10,9 @@ use App\Http\Controllers\IataController;
 use App\Http\Controllers\B2bAgentController;
 use App\Http\Controllers\CorporateController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\AffiliateController;
+use App\Http\Controllers\MarketplaceController;
+use App\Http\Controllers\Dev\SmtpTestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,49 +20,87 @@ use App\Http\Controllers\StripeWebhookController;
 |--------------------------------------------------------------------------
 */
 
-// Home & Deals
-Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/deals', [HomeController::class, 'deals'])->name('deals.index');
+// Localization-Aware Routes Group (Frontend Only)
+Route::group([
+    'prefix' => '{locale}/{currency}',
+    'where' => [
+        'locale' => '[a-z]{2}', 
+        'currency' => '[a-z]{3}'
+    ]
+], function() {
+    // Home & Deals
+    Route::get('/', [HomeController::class, 'index'])->name('home');
+    Route::get('/deals', [HomeController::class, 'deals'])->name('deals.index');
 
-// Flight + Hotel Bundle
-Route::get('/flight-hotel', [App\Http\Controllers\FlightHotelController::class, 'index'])->name('flight-hotel.index');
-Route::get('/flight-hotel/search', [App\Http\Controllers\FlightHotelController::class, 'search'])->name('flight-hotel.search');
+    // Flight + Hotel Bundle
+    Route::get('/flight-hotel', [App\Http\Controllers\FlightHotelController::class, 'index'])->name('flight-hotel.index');
+    Route::get('/flight-hotel/search', [App\Http\Controllers\FlightHotelController::class, 'search'])->name('flight-hotel.search');
 
-// Utility to clear cache on production
-Route::get('/clear-cache', function() {
-    \Illuminate\Support\Facades\Artisan::call('cache:clear');
-    \Illuminate\Support\Facades\Artisan::call('route:clear');
-    \Illuminate\Support\Facades\Artisan::call('config:clear');
-    \Illuminate\Support\Facades\Artisan::call('view:clear');
-    return "Cache cleared successfully!";
+    // Flights
+    Route::get('/flights', [FlightController::class, 'index'])->name('flights.index');
+    Route::get('/flights/fare-classes', [FlightController::class, 'getFareClasses'])->name('flights.fare-classes');
+    Route::post('/flights/select-fare', [FlightController::class, 'selectFare'])->name('flights.select-fare');
+    Route::post('/flights/search', [FlightController::class, 'search'])->name('flights.search');
+    Route::get('/flights/details', [FlightController::class, 'details'])->name('flights.details');
+    Route::post('/flights/book', [FlightController::class, 'book'])->name('flights.book');
+    Route::get('/flights/map-search', [FlightController::class, 'mapSearch'])->name('flights.map-search');
+    Route::get('/flights/airport-search', [FlightController::class, 'airportSearch'])->name('flights.airport-search');
+
+    // Hotels
+    Route::get('/hotels', [HotelController::class, 'index'])->name('hotels.index');
+    Route::post('/hotels/search', [HotelController::class, 'search'])->name('hotels.search');
+    Route::get('/hotels/details', [HotelController::class, 'details'])->name('hotel.details');
+    Route::get('/hotels/checkout', [HotelController::class, 'checkout'])->middleware('auth')->name('hotel.checkout');
+    Route::post('/hotels/book', [HotelController::class, 'book'])->middleware('auth')->name('hotel.book');
+
+    // Marketplace
+    Route::prefix('marketplace')->name('marketplace.')->group(function () {
+        Route::get('/', [MarketplaceController::class, 'index'])->name('index');
+        Route::get('/provider/{id}', [MarketplaceController::class, 'providerProfile'])->name('provider');
+    });
+
+    // Explorer
+    Route::prefix('explorer')->name('travel.')->group(function () {
+        Route::get('/trends', function () { return view('explorer.trends'); })->name('trends');
+        Route::get('/festivals', function () { return view('explorer.festivals'); })->name('festivals');
+    });
+
+    Route::get('/explore-map', [App\Http\Controllers\ExploreController::class, 'index'])->name('explore.map');
+    Route::get('/homestays', [App\Http\Controllers\HomestayController::class, 'index'])->name('homestays.index');
+    Route::get('/homestays/details/{id}', [App\Http\Controllers\HomestayController::class, 'show'])->name('homestays.show');
+    Route::get('/cabs', [App\Http\Controllers\CabController::class, 'index'])->name('cabs.index');
+    Route::get('/trains', [App\Http\Controllers\TrainController::class, 'index'])->name('trains.index');
+    
+    Route::prefix('esim')->name('esim.')->group(function () {
+        Route::get('/', [App\Http\Controllers\EsimController::class, 'index'])->name('index');
+        Route::get('/listings', [App\Http\Controllers\EsimController::class, 'index'])->name('listings');
+    });
+
+    Route::prefix('tours')->name('tours.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ActivityController::class, 'index'])->name('index');
+        Route::get('/listings', function () { return view('tours.listings'); })->name('listings');
+        Route::get('/details/{id?}', [App\Http\Controllers\ActivityController::class, 'show'])->name('details');
+    });
+
+    Route::prefix('visa')->name('visa.')->group(function () {
+        Route::get('/', function () { return view('visa.index'); })->name('index');
+        Route::get('/listing', function () { return view('visa.listing'); })->name('listing');
+        Route::get('/detail/{country}', function ($country) { return view('visa.detail', ['country' => $country]); })->name('detail');
+    });
+
+    Route::get('/event', [App\Http\Controllers\EventLandingController::class, 'showMelbourneEvent'])->name('event');
+    Route::get('/coming-soon', function () { return view('coming-soon'); })->name('coming-soon');
+    Route::post('/event/submit', [App\Http\Controllers\EventLandingController::class, 'storeLead'])->name('event.submit');
 });
 
-// Amadeus SOAP Test Route
-Route::get('/test-amadeus-soap', function() {
-    $soap = new \App\Services\AmadeusSoapService('IN');
-    $mockXml = '
-    <Fare_MasterPricerTravelBoardSearch xmlns="http://xml.amadeus.com/FMPTBQ_24_6_1A">
-        <numberOfUnit>
-            <unitNumberDetail>
-                <numberOfUnits>1</numberOfUnits>
-                <typeOfUnit>PX</typeOfUnit>
-            </unitNumberDetail>
-        </numberOfUnit>
-        <paxReference>
-            <ptc>ADT</ptc>
-            <traveller>
-                <ref>1</ref>
-            </traveller>
-        </paxReference>
-    </Fare_MasterPricerTravelBoardSearch>';
-    
-    $result = $soap->masterPricerSearch($mockXml);
-    
-    return response($result['data'] ?? $result['body'] ?? json_encode($result), 200)
-        ->header('Content-Type', 'text/xml');
+// ====== NON-LOCALIZED ROUTES (Admin, Auth, Dashboards) ======
+
+// Root Redirect to Default Locale/Currency for Frontend
+Route::get('/', function() {
+    return redirect('/en/aud');
 });
 
-// // ====== ROLE-BASED AUTH ROUTES (Standardized) ======
+// Auth Routes (Login, Register, etc.)
 Route::get('/login', [AuthController::class, 'showUserLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/login-unified', [AuthController::class, 'loginUnified'])->name('login.unified');
@@ -98,52 +139,49 @@ Route::get('/logout', [AuthController::class, 'logout']);
 Route::get('/verify-otp', function() { return view('auth.verify-otp'); })->name('verify.otp');
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->name('verify.otp.post');
 
-// Flights
-Route::get('/flights', [FlightController::class, 'index'])->name('flights.index');
-Route::get('/flights/fare-classes', [FlightController::class, 'getFareClasses'])->name('flights.fare-classes');
-Route::post('/flights/select-fare', [FlightController::class, 'selectFare'])->name('flights.select-fare');
-Route::post('/flights/search', [FlightController::class, 'search'])->name('flights.search');
-Route::get('/flights/details', [FlightController::class, 'details'])->name('flights.details');
-Route::post('/flights/book', [FlightController::class, 'book'])->name('flights.book');
-Route::get('/flights/map-search', [FlightController::class, 'mapSearch'])->name('flights.map-search');
-Route::get('/flights/airport-search', [FlightController::class, 'airportSearch'])->name('flights.airport-search');
+// Admin Dashboard & Management
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/localization', function() { return view('admin.localization'); })->name('localization');
+    
+    // Admin Cargo Management
+    Route::prefix('cargo')->name('cargo.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\CargoController::class, 'index'])->name('index');
+        Route::get('/providers', [App\Http\Controllers\Admin\CargoController::class, 'providers'])->name('providers');
+        Route::get('/bookings', [App\Http\Controllers\Admin\CargoController::class, 'bookings'])->name('bookings');
+        Route::get('/promo-codes', [App\Http\Controllers\Admin\CargoController::class, 'promo-codes'])->name('promo-codes');
+        Route::get('/rates', [App\Http\Controllers\Admin\CargoController::class, 'rates'])->name('rates');
+        Route::post('/rates', [App\Http\Controllers\Admin\CargoController::class, 'storeRate'])->name('rates.store');
+        Route::post('/update-status', [App\Http\Controllers\Admin\CargoController::class, 'updateStatus'])->name('update.status');
+    });
+
+    Route::get('/event-leads', [App\Http\Controllers\Admin\EventLeadController::class, 'index'])->name('event-leads.index');
+    Route::delete('/event-leads/{id}', [App\Http\Controllers\Admin\EventLeadController::class, 'destroy'])->name('event-leads.destroy');
+});
+
+// Utility Routes
+Route::post('/localization/set', [\App\Http\Controllers\LocalizationController::class, 'setLocalization'])->name('localization.set');
+Route::get('/clear-cache', function() {
+    Artisan::call('cache:clear');
+    return "Cache cleared!";
+});
+
+// DEV TOOLS
+Route::prefix('dev')->name('dev.')->group(function () {
+    Route::get('/smtp-test',       [SmtpTestController::class, 'show'])->name('smtp.test');
+    Route::post('/smtp-test/send', [SmtpTestController::class, 'send'])->name('smtp.send');
+});
+
+// Other Non-Localized routes
 Route::post('/flights/group-booking', [App\Http\Controllers\GroupBookingController::class, 'store'])->name('flights.group-booking');
-
-// Hotels
-Route::get('/hotels', [HotelController::class, 'index'])->name('hotels.index');
-Route::post('/hotels/search', [HotelController::class, 'search'])->name('hotels.search');
-
-// Hotel Dynamic Flow
-Route::get('/hotels/details', [HotelController::class, 'details'])->name('hotel.details');
-Route::get('/hotels/checkout', [HotelController::class, 'checkout'])->middleware('auth')->name('hotel.checkout');
-Route::post('/hotels/book', [HotelController::class, 'book'])->middleware('auth')->name('hotel.book');
 Route::post('/hotels/coupon/apply', [HotelController::class, 'applyCoupon'])->middleware('auth')->name('hotel.coupon.apply');
 Route::get('/hotels/payment', [HotelController::class, 'showPaymentGateway'])->middleware('auth')->name('hotel.payment');
 Route::get('/hotels/payment/mpgs', [HotelController::class, 'showMpgsCheckout'])->middleware('auth')->name('hotel.payment.mpgs');
 Route::get('/hotels/payment/process', [HotelController::class, 'processPayment'])->middleware('auth')->name('hotel.payment.process');
 Route::get('/hotels/confirmation', [HotelController::class, 'showConfirmation'])->middleware('auth')->name('hotel.confirmation');
+Route::get('/hotel-map', function () { return view('hotel-map'); })->name('hotels.map');
 
-// Hotel Map View
-Route::get('/hotel-map', function () {
-    return view('hotel-map');
-})->name('hotels.map');
 
-// Explore on Map (Flights & Hotels)
-Route::get('/explore-map', [App\Http\Controllers\ExploreController::class, 'index'])->name('explore.map');
-
-// Homestays
-Route::get('/homestays', [App\Http\Controllers\HomestayController::class, 'index'])->name('homestays.index');
-Route::get('/homestays/details/{id}', [App\Http\Controllers\HomestayController::class, 'show'])->name('homestays.show');
-Route::get('/homestay/details/{id}', [App\Http\Controllers\HomestayController::class, 'show']); // Alias
-Route::post('/homestays/book', [App\Http\Controllers\HomestayController::class, 'book'])->name('homestays.book');
-
-// Cabs
-Route::get('/cabs', [App\Http\Controllers\CabController::class, 'index'])->name('cabs.index');
-
-// Trains
-Route::get('/trains', [App\Http\Controllers\TrainController::class, 'index'])->name('trains.index');
-
-// --- TRIPZANT CARGO SYSTEM (MODULE 1-10) ---
+// Cargo System
 Route::prefix('user-cargo')->name('cargo.dashboard.')->middleware(['auth', 'role:cargo,admin'])->group(function () {
     Route::get('/', [App\Http\Controllers\User\CargoDashboardController::class, 'index'])->name('index');
     Route::get('/book', [App\Http\Controllers\User\CargoDashboardController::class, 'create'])->name('book');
@@ -155,15 +193,12 @@ Route::prefix('user-cargo')->name('cargo.dashboard.')->middleware(['auth', 'role
     Route::get('/ticket/{ref}', [App\Http\Controllers\User\CargoDashboardController::class, 'tracking'])->name('ticket'); // Alias
 });
 
-// --- CARGO AGENT (DRIVER) MODULE (Module 6) ---
 Route::prefix('cargo-agent')->name('cargo.agent.')->middleware(['auth', 'role:cargo,admin'])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\User\CargoAgentController::class, 'dashboard'])->name('dashboard');
     Route::get('/earnings', [App\Http\Controllers\User\CargoAgentController::class, 'earnings'])->name('earnings');
     Route::get('/history', [App\Http\Controllers\User\CargoAgentController::class, 'history'])->name('history');
     Route::post('/accept', [App\Http\Controllers\User\CargoAgentController::class, 'acceptPickup'])->name('accept');
     Route::post('/update-location', [App\Http\Controllers\User\CargoAgentController::class, 'updateLocation'])->name('location');
-    
-    // API Builder (B2B)
     Route::prefix('developer-portal')->name('api.')->group(function() {
         Route::get('/', [App\Http\Controllers\User\CargoApiController::class, 'index'])->name('index');
         Route::post('/request', [App\Http\Controllers\User\CargoApiController::class, 'requestAccess'])->name('request');
@@ -171,39 +206,19 @@ Route::prefix('cargo-agent')->name('cargo.agent.')->middleware(['auth', 'role:ca
     });
 });
 
-// --- CARGO HUB & SUPPORT (Module 4) ---
 Route::prefix('cargo-hub')->name('cargo.support.')->middleware(['auth', 'role:cargo,admin'])->group(function () {
     Route::get('/warehouse', [App\Http\Controllers\User\CargoSupportController::class, 'warehouseDashboard'])->name('warehouse');
     Route::get('/customs', [App\Http\Controllers\User\CargoSupportController::class, 'customsDashboard'])->name('customs');
     Route::post('/process', [App\Http\Controllers\User\CargoSupportController::class, 'processStatus'])->name('status');
 });
 
-// --- PUBLIC CARGO LANDING PAGE (Module 1) ---
 Route::get('/cargo', [App\Http\Controllers\CargoController::class, 'landing'])->name('cargo.landing');
 Route::get('/cargo/track', [App\Http\Controllers\CargoController::class, 'trackView'])->name('cargo.track');
 Route::get('/cargo/verify/{tracking_id}', [App\Http\Controllers\User\CargoDashboardController::class, 'verifyShipment'])->name('cargo.verify.public');
 Route::post('/cargo/estimate', [App\Http\Controllers\CargoController::class, 'calculate']);
 
-// Admin Cargo Management
-Route::prefix('admin/cargo')->name('admin.cargo.')->group(function () {
-    Route::get('/', [App\Http\Controllers\Admin\CargoController::class, 'index'])->name('index');
-    Route::get('/providers', [App\Http\Controllers\Admin\CargoController::class, 'providers'])->name('providers');
-    Route::get('/bookings', [App\Http\Controllers\Admin\CargoController::class, 'bookings'])->name('bookings');
-    Route::get('/promo-codes', [App\Http\Controllers\Admin\CargoController::class, 'promoCodes'])->name('promo-codes');
-    Route::get('/rates', [App\Http\Controllers\Admin\CargoController::class, 'rates'])->name('rates');
-    Route::post('/rates', [App\Http\Controllers\Admin\CargoController::class, 'storeRate'])->name('rates.store');
-    Route::post('/update-status', [App\Http\Controllers\Admin\CargoController::class, 'updateStatus'])->name('update.status');
-});
 
-// eSIM
-Route::prefix('esim')->name('esim.')->group(function () {
-    Route::get('/', [App\Http\Controllers\EsimController::class, 'index'])->name('index');
 
-    Route::get('/listings', [App\Http\Controllers\EsimController::class, 'index'])->name('listings');
-    Route::post('/book', [App\Http\Controllers\EsimController::class, 'book'])->name('book.post');
-});
-
-// Checkout Flow
 Route::get('/checkout', [App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout');
 Route::post('/checkout/init-split', [App\Http\Controllers\CheckoutController::class, 'initSplit'])->name('checkout.init-split');
 Route::post('/checkout/save-travelers', [App\Http\Controllers\CheckoutController::class, 'saveTravelers'])->name('checkout.save-travelers');
@@ -219,63 +234,29 @@ Route::get('/booking-confirmation', [App\Http\Controllers\BookingFinalizeControl
 Route::get('/booking-confirmation/pdf', [App\Http\Controllers\BookingFinalizeController::class, 'downloadPdf'])->name('booking.pdf');
 Route::get('/booking-confirmation/whatsapp', [App\Http\Controllers\BookingFinalizeController::class, 'sendWhatsappTicket'])->name('booking.whatsapp');
 
-Route::get('/payment', function () {
-    return view('payment');
-})->name('payment');
-
-// Payment Gateway Integration Testing Routes
+Route::get('/payment', function () { return view('payment'); })->name('payment');
 Route::prefix('test-payments')->group(function() {
     Route::get('/mpgs', [\App\Http\Controllers\PaymentController::class, 'testMpgs'])->name('test.mpgs');
     Route::get('/stripe', [\App\Http\Controllers\PaymentController::class, 'testStripe'])->name('test.stripe');
-    
-    // Callbacks
     Route::get('/mpgs/callback', [\App\Http\Controllers\PaymentController::class, 'mpgsCallback'])->name('mpgs.callback');
     Route::get('/mpgs/cancel', [\App\Http\Controllers\PaymentController::class, 'mpgsCancel'])->name('mpgs.cancel');
-    
     Route::get('/success', [\App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
     Route::get('/cancel', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
 });
 
-// Tours & Packages
-Route::prefix('tours')->name('tours.')->group(function () {
-    Route::get('/', [App\Http\Controllers\ActivityController::class, 'index'])->name('index');
 
-    Route::get('/listings', function () {
-        return view('tours.listings');
-    })->name('listings');
 
-    Route::post('/book', [App\Http\Controllers\ActivityController::class, 'book'])->name('book');
-
-    Route::get('/details/{id?}', [App\Http\Controllers\ActivityController::class, 'show'])->name('details');
-});
-
-// Booking Confirmation
-
-Route::get('/enhance-trip', function () {
-    return view('enhance-trip');
-})->name('enhance.trip');
-
-// Booking Details
-Route::get('/booking-details', function () {
-    return view('booking-details');
-})->name('booking.details');
-
-// Travel Insurance selection
+Route::get('/enhance-trip', function () { return view('enhance-trip'); })->name('enhance.trip');
+Route::get('/booking-details', function () { return view('booking-details'); })->name('booking.details');
 Route::get('/booking-insurance', [App\Http\Controllers\InsuranceController::class, 'index'])->name('booking.insurance');
 Route::post('/booking-insurance', [App\Http\Controllers\InsuranceController::class, 'book'])->name('booking.insurance.post');
-
-// --- HOTEL QUOTE REQUEST FLOW ---
 Route::get('/hotel-quote/{id?}', function () { return view('hotel-quote-form'); })->name('hotel.quote.form');
 Route::post('/enquiry/store', [App\Http\Controllers\EnquiryController::class, 'store'])->name('enquiry.store');
 Route::get('/agent/hotel-requests', function () { return view('agent-hotel-requests'); })->name('agent.hotel.requests');
 Route::get('/hotel/dashboard-requests', function () { return view('hotel-dashboard-requests'); })->name('hotel.dashboard.requests');
 Route::get('/hotel/quote-response/{id?}', function () { return view('hotel-quote-response'); })->name('hotel.quote.response');
-
-// --- HOTEL INSTANT BOOKING (BNB) FLOW --- (Legacy aliases removed or updated)
-Route::get('/agent/hotel-bookings', function () { return view('agent-hotel-bookings'); })->name('agent.hotel.bookings');
 Route::get('/agent/hotel-bookings', function () { return view('agent-hotel-bookings'); })->name('agent.hotel.bookings');
 
-// 1. Individual (B2C) Dashboard
 Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'role:user,admin'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('index');
     Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
@@ -295,14 +276,9 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'role:user,a
     Route::get('/wallet', [DashboardController::class, 'wallet'])->name('wallet');
 });
 
-// 2. Standard B2B Agent Dashboard
 Route::get('/agent-dashboard', [B2bAgentController::class, 'dashboard'])->middleware(['auth', 'role:agent,b2b,admin'])->name('agent.dashboard');
-
-// 5. IATA Agent Dashboard & Sub-modules
 Route::prefix('iata-dashboard')->name('iata.')->middleware(['auth', 'role:iata,admin'])->group(function () {
     Route::get('/', function () { return view('agent.dashboard'); })->name('dashboard');
-    
-    // Flight Booking Flow
     Route::prefix('flight')->name('flight.')->group(function () {
         Route::get('/search', [FlightController::class, 'index'])->name('search');
         Route::get('/availability', [FlightController::class, 'index'])->name('availability');
@@ -310,25 +286,17 @@ Route::prefix('iata-dashboard')->name('iata.')->middleware(['auth', 'role:iata,a
         Route::get('/issue-ticket', function () { return view('iata.issue-ticket'); })->name('issue-ticket');
         Route::get('/pnr-list', function () { return view('iata.pnr-list'); })->name('pnr-list');
     });
-
-    // Ticket Management
     Route::prefix('tickets')->name('tickets.')->group(function () {
         Route::get('/all', function () { return view('iata.all-tickets'); })->name('all');
         Route::get('/details', function () { return view('iata.ticket-details'); })->name('details');
         Route::get('/void', function () { return view('iata.void-ticket'); })->name('void');
     });
-
-    // BSP (Billing & Settlement Plan)
     Route::prefix('bsp')->name('bsp.')->group(function () {
         Route::get('/sales', function () { return view('iata.bsp-sales'); })->name('sales');
         Route::get('/ledger', function () { return view('iata.bsp-ledger'); })->name('ledger');
     });
-
-    // Accounting & Reports
     Route::get('/accounting', function () { return view('iata.accounting'); })->name('accounting');
     Route::get('/reports', function () { return view('iata.reports'); })->name('reports');
-    
-    // Agent Network & Collaboration
     Route::prefix('network')->name('network.')->group(function () {
         Route::get('/search', function () { return view('iata.network.search'); })->name('search');
         Route::get('/requests', function () { return view('iata.network.requests'); })->name('requests');
@@ -336,14 +304,11 @@ Route::prefix('iata-dashboard')->name('iata.')->middleware(['auth', 'role:iata,a
         Route::get('/profits', function () { return view('iata.network.profits'); })->name('profits');
         Route::get('/issue-partner/{pnr}', function ($pnr) { return view('iata.network.issue-partner', ['pnr' => $pnr]); })->name('issue-partner');
     });
-
-    // Legacy/Other
     Route::get('/network-old', function () { return view('iata.network'); })->name('network-old');
     Route::get('/connections', function () { return view('iata.connections'); })->name('connections');
     Route::get('/settings', function () { return view('iata.settings'); })->name('settings');
 });
 
-// 5. Corporate Dashboard & Sub-modules
 Route::middleware(['auth', 'role:corporate,admin'])->group(function() {
     Route::get('/corporate-dashboard', function () { return view('corporate.dashboard'); })->name('corporate.dashboard');
     Route::get('/corporate-dashboard/groups', function () { return view('corporate.groups'); })->name('corporate.groups');
@@ -354,7 +319,6 @@ Route::middleware(['auth', 'role:corporate,admin'])->group(function() {
     Route::get('/corporate-dashboard/settings', function () { return view('corporate.settings'); })->name('corporate.settings');
 });
 
-// 6. Tour Builder / Supplier Dashboard
 Route::prefix('tourbuilder-dashboard')->middleware(['auth', 'role:tour-builder,supplier,admin'])->group(function () {
     Route::get('/', function () { return view('partner.manage-tours'); })->name('tourbuilder.dashboard');
     Route::get('/packages', function () { return view('partner.tourbuilder-packages'); })->name('tourbuilder.packages');
@@ -363,51 +327,34 @@ Route::prefix('tourbuilder-dashboard')->middleware(['auth', 'role:tour-builder,s
     Route::get('/earnings', function () { return view('partner.tourbuilder-earnings'); })->name('tourbuilder.earnings');
 });
 
-// 7. Amadeus GDS Partner Dashboard & Operatons Suite
 Route::prefix('amadeus-dashboard')->name('amadeus.')->middleware(['auth', 'role:amadeus-partner,admin'])->group(function () {
     Route::get('/', function () { return view('amadeus.dashboard'); })->name('dashboard');
     Route::get('/booking', function () { return view('amadeus.booking'); })->name('booking');
     Route::get('/issue-ticket', function () { return view('amadeus.issue_ticket'); })->name('issue-ticket');
     Route::get('/requests', function () { return view('amadeus.requests'); })->name('requests');
-    
-    // Group Booking
     Route::get('/group-request', function () { return view('amadeus.group_request'); })->name('group-request');
     Route::get('/manage-requests', function () { return view('amadeus.manage_requests'); })->name('manage-requests');
-    
-    // GDS Advanced
     Route::get('/gds', function () { return view('amadeus.gds_command'); })->name('gds');
     Route::get('/gds/monitoring', function () { return view('amadeus.gds_monitoring'); })->name('gds-monitoring');
-
-    // Queues
     Route::get('/queues/pending', function () { return view('amadeus.queues_pending'); })->name('queues-pending');
     Route::get('/queues/cancellations', function () { return view('amadeus.queues_cancellations'); })->name('queues-cancellations');
     Route::get('/queues/reissue', function () { return view('amadeus.queues_reissue'); })->name('queues-reissue');
-
-    // Financials
     Route::get('/wallet', function () { return view('amadeus.wallet'); })->name('wallet');
     Route::get('/wallet/add-balance', function () { return view('amadeus.wallet_add'); })->name('wallet-add');
     Route::get('/wallet/credit', function () { return view('amadeus.credit_limit'); })->name('wallet-credit');
     Route::get('/markup', function () { return view('amadeus.markup'); })->name('markup');
     Route::get('/commissions-fees', function () { return view('amadeus.commissions'); })->name('commissions');
     Route::get('/news-promos', function () { return view('amadeus.news_promos'); })->name('news');
-    // Hotel Settings
     Route::get('/settings/spm', function () { return view('amadeus.settings_spm'); })->name('settings-spm');
     Route::get('/settings/email-sms', function () { return view('amadeus.settings_email'); })->name('settings-email');
     Route::get('/settings/staff', function () { return view('amadeus.settings_staff'); })->name('settings-staff');
-
-    // Management
     Route::get('/agents', function () { return view('amadeus.agents'); })->name('agents');
-    
-    // Reports 센터
     Route::get('/reports', function () { return view('amadeus.reports'); })->name('reports');
     Route::get('/reports/profit', function () { return view('amadeus.reports_profit'); })->name('reports-profit');
     Route::get('/reports/performance', function () { return view('amadeus.reports_performance'); })->name('reports-performance');
-
-    // System
     Route::get('/settings', function () { return view('amadeus.settings'); })->name('settings');
 });
 
-// Dedicated Hotel Module (Standalone)
 Route::prefix('hotel-dashboard')->name('hotel_dashboard.')->middleware(['auth', 'role:hotel-partner,admin'])->group(function () {
     Route::get('/', function () { return view('hotel.dashboard'); })->name('dashboard');
     Route::get('/search', function () { return view('hotel.search'); })->name('search');
@@ -415,18 +362,15 @@ Route::prefix('hotel-dashboard')->name('hotel_dashboard.')->middleware(['auth', 
     Route::get('/details', [HotelController::class, 'details'])->name('details');
     Route::get('/booking', function () { return view('hotel.booking'); })->name('booking');
     Route::get('/confirm', function () { return view('hotel.confirm'); })->name('confirm');
-    
     Route::prefix('management')->name('management.')->group(function () {
         Route::get('/all', function () { return view('hotel.bookings_all'); })->name('all');
         Route::get('/pending', function () { return view('hotel.bookings_pending'); })->name('pending');
         Route::get('/confirmed', function () { return view('hotel.bookings_confirmed'); })->name('confirmed');
         Route::get('/cancelled', function () { return view('hotel.bookings_cancelled'); })->name('cancelled');
     });
-
     Route::get('/cancellation', function () { return view('hotel.cancellation'); })->name('cancellation');
     Route::get('/refund-status', function () { return view('hotel.refund_status'); })->name('refund-status');
     Route::get('/refund-history', function () { return view('hotel.refund_history'); })->name('refund-history');
-    
     Route::get('/wallet', function () { return view('hotel.wallet'); })->name('wallet');
     Route::get('/earnings', function () { return view('hotel.earnings'); })->name('earnings');
     Route::get('/reports', function () { return view('hotel.reports'); })->name('reports');
@@ -439,8 +383,6 @@ Route::prefix('hotel-dashboard')->name('hotel_dashboard.')->middleware(['auth', 
     Route::get('/customer-preview', function () { return view('hotel.customer_preview'); })->name('customer-preview');
     Route::get('/portal-settings', function () { return view('hotel.portal_settings'); })->name('portal-settings');
     Route::get('/webhook-logs', function () { return view('hotel.webhook_logs'); })->name('webhook-logs');
-    
-    // Travel Services (B2B Marketplace)
     Route::get('/flights', function () { return view('hotel.flight_engine'); })->name('flight-engine');
     Route::get('/external-hotels', function () { return view('hotel.external_hotels'); })->name('external-hotels');
     Route::get('/activities', function () { return view('hotel.activities'); })->name('activities');
@@ -452,195 +394,63 @@ Route::prefix('hotel-dashboard')->name('hotel_dashboard.')->middleware(['auth', 
     Route::get('/ota-mapping', function () { return view('hotel.ota_mapping'); })->name('ota-mapping');
     Route::get('/sync-status', function () { return view('hotel.sync_status'); })->name('sync-status');
     Route::get('/automation-rules', function () { return view('hotel.automation_rules'); })->name('automation-rules');
-    Route::get('/webhook-logs', function () { return view('hotel.webhook_logs'); })->name('webhook-logs');
     Route::get('/notification-templates', function () { return view('hotel.notification_templates'); })->name('notification-templates');
     Route::get('/quotations', function () { return view('hotel.quotations_sent'); })->name('quotations');
     Route::get('/deals', function () { return view('hotel.deals_finalized'); })->name('deals');
     Route::get('/pipeline', function () { return view('hotel.pipeline'); })->name('pipeline');
     Route::get('/voucher', function () { return view('hotel.voucher_view'); })->name('voucher');
     Route::get('/tours', function () { return view('hotel.tours'); })->name('tours');
-    Route::get('/transfers', function () { return view('hotel.transfers'); })->name('transfers');
-    Route::get('/cars', function () { return view('hotel.cars'); })->name('cars');
-    Route::get('/external-hotels', function () { return view('hotel.external_hotels'); })->name('external-hotels');
 });
 
-// Master Admin & Accounting routes moved to routes/admin.php
-
-// Partner B2B Portal Routes (Accessible directly for preview)
 Route::prefix('partner')->name('partner.')->middleware(['auth', 'role:partner,admin'])->group(function () {
-    // Auth routes are handled above in the main auth section
-
-    Route::get('/dashboard', function () {
-        return view('partner.dashboard');
-    })->name('dashboard');
-
-    Route::get('/flights', function () {
-        return view('partner.manage-flights');
-    })->name('flights');
-
-    Route::get('/hotels', function () {
-        return view('partner.manage-hotels');
-    })->name('hotels');
-
+    Route::get('/dashboard', function () { return view('partner.dashboard'); })->name('dashboard');
+    Route::get('/flights', function () { return view('partner.manage-flights'); })->name('flights');
+    Route::get('/hotels', function () { return view('partner.manage-hotels'); })->name('hotels');
     Route::get('/homestays', [App\Http\Controllers\Supplier\HomestayController::class, 'index'])->name('homestays');
     Route::post('/homestays', [App\Http\Controllers\Supplier\HomestayController::class, 'store'])->name('homestays.store');
-
     Route::get('/tours', [App\Http\Controllers\Supplier\TourController::class, 'index'])->name('tours');
     Route::post('/tours', [App\Http\Controllers\Supplier\TourController::class, 'store'])->name('tours.store');
-
-    Route::get('/cabs', function () {
-        return view('partner.manage-cabs');
-    })->name('cabs');
-
-    Route::get('/trains', function () {
-        return view('partner.manage-trains');
-    })->name('trains');
-
-    Route::get('/events', function () {
-        return view('partner.manage-events');
-    })->name('events');
-
-    Route::get('/event-seating', function () {
-        return view('partner.event-seating');
-    })->name('event-seating');
-
-    Route::get('/bookings', function () {
-        return view('partner.bookings');
-    })->name('bookings');
-
-    Route::get('/profile', function () {
-        return view('partner.profile');
-    })->name('profile');
+    Route::get('/cabs', function () { return view('partner.manage-cabs'); })->name('cabs');
+    Route::get('/trains', function () { return view('partner.manage-trains'); })->name('trains');
+    Route::get('/events', function () { return view('partner.manage-events'); })->name('events');
+    Route::get('/event-seating', function () { return view('partner.event-seating'); })->name('event-seating');
+    Route::get('/bookings', function () { return view('partner.bookings'); })->name('bookings');
+    Route::get('/profile', function () { return view('partner.profile'); })->name('profile');
 });
 
-// Smart Travel Explorer Routes
-Route::prefix('explorer')->name('travel.')->group(function () {
-    Route::get('/trends', function () {
-        return view('explorer.trends');
-    })->name('trends');
 
-    Route::get('/festivals', function () {
-        return view('explorer.festivals');
-    })->name('festivals');
 
-    Route::get('/country', function () {
-        return view('explorer.country');
-    })->name('country');
-});
-
-// Visa Services Routes
-Route::prefix('visa')->name('visa.')->group(function () {
-    Route::get('/', function () {
-        return view('visa.index');
-    })->name('index');
-
-    Route::get('/listing', function () {
-        return view('visa.listing');
-    })->name('listing');
-
-    Route::get('/detail/{country}', function ($country) {
-        return view('visa.detail', ['country' => $country]);
-    })->name('detail');
-});
-
-// Corporate & Group Booking Portal
 Route::prefix('corporate')->name('corporate.')->group(function () {
-    Route::get('/login', function () {
-        return view('corporate.login');
-    })->name('login');
-
-    Route::get('/dashboard', function () {
-        return view('corporate.dashboard');
-    })->name('dashboard');
-
-    Route::get('/group-booking', function () {
-        return view('corporate.group-booking');
-    })->name('group-booking');
-
-    Route::get('/group-detail/{id}', function ($id) {
-        return view('corporate.group-detail', ['id' => $id]);
-    })->name('group-detail');
+    Route::get('/login', function () { return view('corporate.login'); })->name('login');
+    Route::get('/dashboard', function () { return view('corporate.dashboard'); })->name('dashboard');
+    Route::get('/group-booking', function () { return view('corporate.group-booking'); })->name('group-booking');
+    Route::get('/group-detail/{id}', function ($id) { return view('corporate.group-detail', ['id' => $id]); })->name('group-detail');
 });
 
-// Investor Module Routes
 Route::prefix('investor')->name('investor.')->middleware(['auth', 'role:investor,admin'])->group(function () {
-    Route::get('/login', function () {
-        return view('investor.login');
-    })->name('login');
-
-    Route::get('/dashboard', function () {
-        return view('investor.dashboard');
-    })->name('dashboard');
-
-    Route::get('/wallet', function () {
-        return view('investor.wallet');
-    })->name('wallet');
-
-    Route::get('/earnings', function () {
-        return view('investor.earnings');
-    })->name('earnings');
-
-    Route::get('/segments', function () {
-        return view('investor.segments');
-    })->name('segments');
-
-    Route::get('/transactions', function () {
-        return view('investor.transactions');
-    })->name('transactions');
+    Route::get('/login', function () { return view('investor.login'); })->name('login');
+    Route::get('/dashboard', function () { return view('investor.dashboard'); })->name('dashboard');
+    Route::get('/wallet', function () { return view('investor.wallet'); })->name('wallet');
+    Route::get('/earnings', function () { return view('investor.earnings'); })->name('earnings');
+    Route::get('/segments', function () { return view('investor.segments'); })->name('segments');
+    Route::get('/transactions', function () { return view('investor.transactions'); })->name('transactions');
 });
 
-// IATA Agent Global Partner Network Routes
 Route::prefix('agent')->name('agent.')->middleware(['auth', 'role:iata-network,admin'])->group(function () {
-    Route::get('/login', function () {
-        return view('agent.login');
-    })->name('login')->withoutMiddleware('auth');
-
+    Route::get('/login', function () { return view('agent.login'); })->name('login')->withoutMiddleware('auth');
     Route::get('/dashboard', [App\Http\Controllers\IataController::class, 'index'])->name('dashboard');
-
-    Route::get('/network', function () {
-        return view('agent.network');
-    })->name('network');
-
-    Route::get('/connections', function () {
-        return view('agent.connections');
-    })->name('connections');
-
-    Route::get('/ticketing', function () {
-        return view('agent.ticketing');
-    })->name('ticketing');
-
-    Route::get('/profit-sharing', function () {
-        return view('agent.profit-sharing');
-    })->name('profit-sharing');
-
-    Route::get('/profile/{id}', function ($id) {
-        return view('agent.profile', ['id' => $id]);
-    })->name('profile');
-
-    Route::get('/chat/{id}', function ($id) {
-        return view('agent.chat', ['id' => $id]);
-    })->name('chat');
-
-    Route::get('/deals', function () {
-        return view('agent.deals');
-    })->name('deals');
-
-    Route::get('/transactions', function () {
-        return view('agent.transactions');
-    })->name('transactions');
+    Route::get('/network', function () { return view('agent.network'); })->name('network');
+    Route::get('/connections', function () { return view('agent.connections'); })->name('connections');
+    Route::get('/ticketing', function () { return view('agent.ticketing'); })->name('ticketing');
+    Route::get('/profit-sharing', function () { return view('agent.profit-sharing'); })->name('profit-sharing');
+    Route::get('/profile/{id}', function ($id) { return view('agent.profile', ['id' => $id]); })->name('profile');
+    Route::get('/chat/{id}', function ($id) { return view('agent.chat', ['id' => $id]); })->name('chat');
+    Route::get('/deals', function () { return view('agent.deals'); })->name('deals');
+    Route::get('/transactions', function () { return view('agent.transactions'); })->name('transactions');
 });
 
-// Consolidator routes removed in favor of Amadeus routes
-
-// =========================================================================
-// TRIPZANT B2B AGENT PORTAL - FULL OPERATIONAL SUITE
-// =========================================================================
 Route::prefix('agent-dashboard')->name('agent.b2b.')->middleware('auth')->group(function () {
-    
-    // 1. Dashboard (Home)
     Route::get('/', [B2bAgentController::class, 'dashboard'])->name('index');
-
-    // 2. Flight Booking Flow
     Route::prefix('flight')->group(function () {
         Route::get('/search', [B2bAgentController::class, 'searchPage'])->name('search');
         Route::get('/listing', [B2bAgentController::class, 'flightListing'])->name('listing');
@@ -650,52 +460,32 @@ Route::prefix('agent-dashboard')->name('agent.b2b.')->middleware('auth')->group(
         Route::get('/success/{id}', [B2bAgentController::class, 'bookingSuccess'])->name('success');
         Route::get('/my-bookings', [B2bAgentController::class, 'myBookings'])->name('bookings');
     });
-
-    // 3. Wallet System
     Route::prefix('wallet')->group(function () {
         Route::get('/add-money', [B2bAgentController::class, 'addMoney'])->name('wallet.add');
         Route::post('/topup', [B2bAgentController::class, 'topUp'])->name('wallet.topup');
         Route::get('/history', [B2bAgentController::class, 'walletHistory'])->name('wallet.history');
         Route::get('/credit-request', [B2bAgentController::class, 'creditRequest'])->name('wallet.credit-request');
     });
-
-    // 4. Reports Section
     Route::prefix('reports')->group(function () {
         Route::get('/bookings', [B2bAgentController::class, 'reportBookings'])->name('reports.bookings');
         Route::get('/transactions', [B2bAgentController::class, 'reportTransactions'])->name('reports.transactions');
         Route::get('/profit-margin', [B2bAgentController::class, 'reportProfit'])->name('reports.profit');
     });
-
-    // 5. Management
     Route::get('/passengers', [B2bAgentController::class, 'paxList'])->name('manage.passengers');
     Route::get('/markup-settings', [B2bAgentController::class, 'markupSettings'])->name('manage.markups');
-
-    // 6. Support
     Route::get('/support/tickets', [B2bAgentController::class, 'supportTickets'])->name('support.tickets');
     Route::get('/support/help-center', [B2bAgentController::class, 'helpCenter'])->name('support.help');
-
-    // 7. Account
     Route::get('/account/profile', [B2bAgentController::class, 'profile'])->name('account.profile');
     Route::get('/account/password', [B2bAgentController::class, 'changePassword'])->name('account.password');
-
-    // 8. Fare Monitoring
     Route::get('/fare-alerts', [B2bAgentController::class, 'fareAlerts'])->name('fare-alerts');
     Route::get('/fare-alerts/create', [B2bAgentController::class, 'createFareAlert'])->name('fare-alerts.create');
     Route::post('/fare-alerts/store', [B2bAgentController::class, 'storeFareAlert'])->name('fare-alerts.store');
     Route::delete('/fare-alerts/{id}', [B2bAgentController::class, 'deleteFareAlert'])->name('fare-alerts.delete');
 });
 
-// =========================================================================
-// TRIPZANT CORPORATE PORTAL - APPROVAL & POLICY DRIVEN FLOW
-// =========================================================================
 Route::get('/corporate-dashboard', function() { return redirect()->route('corporate.index'); });
-
 Route::prefix('corporate')->name('corporate.')->middleware(['auth'])->group(function () {
-    
-    // 1. Dashboard (Role-based: Admin/Employee)
     Route::get('/', [CorporateController::class, 'dashboard'])->name('index');
-
-    // 2. Corporate Booking Flow (Employee)
     Route::prefix('booking')->group(function () {
         Route::get('/search', [CorporateController::class, 'searchPage'])->name('search');
         Route::get('/listing', [CorporateController::class, 'flightListing'])->name('listing');
@@ -705,51 +495,37 @@ Route::prefix('corporate')->name('corporate.')->middleware(['auth'])->group(func
         Route::get('/request-status/{id}', [CorporateController::class, 'requestStatus'])->name('status');
         Route::get('/my-trips', [CorporateController::class, 'myTrips'])->name('my-trips');
     });
-
-    // 3. Admin Approval & Tracking
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/approvals', [CorporateController::class, 'pendingApprovals'])->name('approvals');
         Route::post('/approve/{id}', [CorporateController::class, 'processApproval'])->name('approve');
         Route::post('/reject/{id}', [CorporateController::class, 'processRejection'])->name('reject');
         Route::get('/all-bookings', [CorporateController::class, 'allBookings'])->name('all-bookings');
     });
-
-    // 4. Employee Management
     Route::prefix('employees')->group(function () {
         Route::get('/', [CorporateController::class, 'manageEmployees'])->name('employees.index');
         Route::get('/add', [CorporateController::class, 'addEmployeePage'])->name('employees.add');
         Route::post('/store', [CorporateController::class, 'storeEmployee'])->name('employees.store');
     });
-
-    // 5. Travel Policies
     Route::prefix('policies')->group(function () {
         Route::get('/', [CorporateController::class, 'policySettings'])->name('policies');
         Route::get('/budget-limits', [CorporateController::class, 'budgetLimits'])->name('budget');
     });
-
-    // 6. Billing & Payments
     Route::prefix('billing')->group(function () {
         Route::get('/invoices', [CorporateController::class, 'invoices'])->name('billing.invoices');
         Route::get('/payments', [CorporateController::class, 'payments'])->name('billing.payments');
     });
-
-    // 7. Analytics & Reports
     Route::prefix('reports')->group(function () {
         Route::get('/expense-reports', [CorporateController::class, 'expenseReports'])->name('reports.expense');
         Route::get('/booking-reports', [CorporateController::class, 'bookingReports'])->name('reports.bookings');
     });
-
-    // 8. Support & Account
     Route::get('/support', [CorporateController::class, 'supportHub'])->name('support');
     Route::get('/account', [CorporateController::class, 'accountSettings'])->name('account');
 });
 
-// --- MONEY TRANSFER SYSTEM ---
 Route::get('/money-transfer', [App\Http\Controllers\MoneyTransferController::class, 'index'])->name('money-transfer.index');
 Route::get('/money-transfer/comparison', [App\Http\Controllers\MoneyTransferController::class, 'comparison'])->name('money-transfer.comparison');
 Route::get('/money-transfer/form/{provider}', [App\Http\Controllers\MoneyTransferController::class, 'showTransferForm'])->name('money-transfer.form');
 
-// 10. Local Service Provider Module
 Route::prefix('local-provider')->name('provider.')->middleware(['auth', 'role:local-provider,admin'])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\LocalServiceProviderController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [App\Http\Controllers\LocalServiceProviderController::class, 'profile'])->name('profile');
@@ -760,32 +536,14 @@ Route::prefix('local-provider')->name('provider.')->middleware(['auth', 'role:lo
     Route::get('/bookings', [App\Http\Controllers\LocalServiceProviderController::class, 'bookings'])->name('bookings');
     Route::get('/earnings', [App\Http\Controllers\LocalServiceProviderController::class, 'earnings'])->name('earnings');
     Route::get('/reviews', [App\Http\Controllers\LocalServiceProviderController::class, 'reviews'])->name('reviews');
-    
-    // Hotel / Tour Builder Side
     Route::get('/search-providers', [App\Http\Controllers\LocalServiceProviderController::class, 'searchProviders'])->name('search-providers');
 });
 
-// Event Landing Page
-Route::get('/event', [App\Http\Controllers\EventLandingController::class, 'showMelbourneEvent'])->name('event');
-Route::post('/event/submit', [App\Http\Controllers\EventLandingController::class, 'storeLead'])->name('event.submit');
 
-// Coming Soon Page
-Route::get('/coming-soon', function () {
-    return view('coming-soon');
-})->name('coming-soon');
-
-// Admin Event Leads Management
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/event-leads', [App\Http\Controllers\Admin\EventLeadController::class, 'index'])->name('event-leads.index');
-    Route::delete('/event-leads/{id}', [App\Http\Controllers\Admin\EventLeadController::class, 'destroy'])->name('event-leads.destroy');
-});
 
 // ==========================================
 // AFFILIATE & MARKETPLACE SYSTEM (Final Flow)
 // ==========================================
-
-use App\Http\Controllers\AffiliateController;
-use App\Http\Controllers\MarketplaceController;
 
 // Marketplace (Service Listings)
 Route::prefix('marketplace')->name('marketplace.')->group(function () {
@@ -814,7 +572,6 @@ Route::prefix('admin/affiliates')->name('admin.affiliates.')->middleware(['auth'
 // ==========================================
 // DEV TOOLS (local/development only)
 // ==========================================
-use App\Http\Controllers\Dev\SmtpTestController;
 
 Route::prefix('dev')->name('dev.')->group(function () {
     Route::get('/smtp-test',       [SmtpTestController::class, 'show'])->name('smtp.test');

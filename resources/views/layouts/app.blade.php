@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @if(app()->getLocale() == 'ar') dir="rtl" @endif>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,6 +16,10 @@
     <link rel="stylesheet" href="/css/main.css">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        window.currentLocale = '{{ $currentLocale ?? 'en' }}';
+        window.currentCurrency = '{{ $currentCurrency ?? 'AUD' }}';
+    </script>
     <style>
         :root {
             --navy: #002f55;
@@ -225,6 +229,12 @@
         }
     </style>
     @yield('styles')
+    <script>
+        window.currentLocale = '{{ $global_lang ?? 'en' }}';
+        window.currentCurrency = '{{ $global_currency ?? 'aud' }}';
+        window.currentCurrencyCode = '{{ current_currency_code() }}';
+        window.currentCurrencySymbol = '{{ current_currency_symbol() }}';
+    </script>
 </head>
 <body class="bg-light">
     @php
@@ -235,21 +245,21 @@
     <header id="siteHeader" style="background:#fff; border-bottom:1px solid #f1f5f9; position:sticky; top:0; z-index:1000;">
         <div class="container d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center">
-                <a href="/" class="navbar-brand py-0 me-4">
+                <a href="{{ localized_url('/') }}" class="navbar-brand py-0 me-4">
                     <img src="/img/logo.svg" alt="Tripzant.com" height="60" style="object-fit: contain;">
                 </a>
                 
                 <nav class="d-none d-lg-flex align-items-center gap-1">
                     @php
                         $navServices = [
-                            ['id' => 'flights', 'label' => 'Flights', 'icon' => 'plane', 'url' => '/flights'],
-                            ['id' => 'hotels', 'label' => 'Hotels', 'icon' => 'hotel', 'url' => '/hotels'],
-                            ['id' => 'flight_hotel', 'label' => 'Flight + Hotel', 'icon' => 'suitcase-rolling', 'url' => '/flight-hotel'],
-                            ['id' => 'homestays', 'label' => 'Homestays', 'icon' => 'house-chimney', 'url' => '/homestays'],
-                            ['id' => 'cabs', 'label' => 'Cabs', 'icon' => 'car-side', 'url' => '/cabs'],
-                            ['id' => 'trains', 'label' => 'Trains', 'icon' => 'train', 'url' => '/trains'],
-                            ['id' => 'holidays', 'label' => 'Tours', 'icon' => 'camera-retro', 'url' => route('tours.index')],
-                            ['id' => 'cargo', 'label' => 'Cargo', 'icon' => 'boxes-packing', 'url' => '/cargo'],
+                            ['id' => 'flights', 'label' => __('menu.flights'), 'icon' => 'plane', 'url' => localized_url('/flights')],
+                            ['id' => 'hotels', 'label' => __('menu.hotels'), 'icon' => 'hotel', 'url' => localized_url('/hotels')],
+                            ['id' => 'flight_hotel', 'label' => __('menu.flight_hotel', [], 'Flight + Hotel'), 'icon' => 'suitcase-rolling', 'url' => localized_url('/flight-hotel')],
+                            ['id' => 'homestays', 'label' => __('menu.homestays', [], 'Homestays'), 'icon' => 'house-chimney', 'url' => localized_url('/homestays')],
+                            ['id' => 'cabs', 'label' => __('menu.cabs', [], 'Cabs'), 'icon' => 'car-side', 'url' => localized_url('/cabs')],
+                            ['id' => 'trains', 'label' => __('menu.trains', [], 'Trains'), 'icon' => 'train', 'url' => localized_url('/trains')],
+                            ['id' => 'holidays', 'label' => __('menu.tours'), 'icon' => 'camera-retro', 'url' => localized_url('/tours')],
+                            ['id' => 'cargo', 'label' => __('menu.cargo'), 'icon' => 'boxes-packing', 'url' => localized_url('/cargo')],
                         ];
                     @endphp
 
@@ -281,9 +291,9 @@
                             <span>More</span>
                         </a>
                         <ul class="dropdown-menu border-0 shadow-lg p-2 mt-2" style="border-radius: 12px; min-width: 200px;">
-                            <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy" href="/explore-map"><i class="fas fa-map-location-dot me-2 text-primary"></i> Explore</a></li>
+                            <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy" href="{{ localized_url('/explore-map') }}"><i class="fas fa-map-location-dot me-2 text-primary"></i> Explore</a></li>
                             @php $isEsimEnabled = \App\Models\GlobalSetting::get('service_esim_enabled', '1') == '1'; @endphp
-                            <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy {{ !$isEsimEnabled ? 'disabled-service' : '' }}" href="{{ $isEsimEnabled ? '/esim' : 'javascript:void(0)' }}" @if(!$isEsimEnabled) data-bs-toggle="tooltip" title="Coming Soon" @endif><i class="fas fa-sim-card me-2 text-primary"></i> eSIM</a></li>
+                            <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy {{ !$isEsimEnabled ? 'disabled-service' : '' }}" href="{{ $isEsimEnabled ? localized_url('/esim') : 'javascript:void(0)' }}" @if(!$isEsimEnabled) data-bs-toggle="tooltip" title="Coming Soon" @endif><i class="fas fa-sim-card me-2 text-primary"></i> eSIM</a></li>
                             
                             @php $isVisaEnabled = \App\Models\GlobalSetting::get('service_visa_enabled', '1') == '1'; @endphp
                             <li><a class="dropdown-item rounded-3 py-2 fw-700 text-navy {{ !$isVisaEnabled ? 'disabled-service' : '' }}" href="{{ $isVisaEnabled ? route('visa.index') : 'javascript:void(0)' }}" @if(!$isVisaEnabled) data-bs-toggle="tooltip" title="Coming Soon" @endif><i class="fas fa-id-card me-2 text-primary"></i> Visa</a></li>
@@ -297,6 +307,29 @@
             
             <div class="d-flex align-items-center gap-3">
                 <div class="d-none d-lg-flex align-items-center gap-3">
+                    <!-- Localization Selector -->
+                    <div class="dropdown me-1">
+                        <button class="btn btn-light rounded-pill border-0 px-3 fw-800 d-flex align-items-center gap-2 shadow-sm transition-fast hvr-grow" type="button" data-bs-toggle="dropdown" style="background: rgba(241, 245, 249, 0.9); height: 42px; font-size: 12px;">
+                            <img src="https://flagcdn.com/w20/{{ strtolower($global_country ?? 'au') }}.png" width="18" class="rounded-1 shadow-sm" alt="{{ $global_country ?? 'AU' }}">
+                            <span class="text-navy tracking-wider">{{ $global_currency ?? 'AUD' }} <span class="opacity-50 mx-1">|</span> {{ strtoupper($global_lang ?? 'EN') }}</span>
+                            <i class="fas fa-chevron-down ms-1" style="font-size: 10px; color: #64748b;"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2" style="border-radius: 12px; min-width: 220px; animation: slideInUp 0.3s ease;">
+                            <div class="px-3 py-2 text-muted x-small fw-900 tracking-wider">POPULAR REGIONS</div>
+                            @foreach($all_countries->take(5) as $c)
+                            <li>
+                                <a class="dropdown-item rounded-3 py-2 px-3 fw-700 text-navy d-flex align-items-center gap-3" href="javascript:void(0)" onclick="quickSetRegion('{{ $c->iso_code }}', '{{ $c->currency_code }}', '{{ $c->language_code ?? 'en' }}')">
+                                    <img src="https://flagcdn.com/w20/{{ strtolower($c->iso_code) }}.png" width="18" class="rounded-1"> 
+                                    <span class="flex-grow-1">{{ $c->name }}</span> 
+                                    <span class="text-muted small">{{ $c->currency_code }}</span>
+                                </a>
+                            </li>
+                            @endforeach
+                            <li><hr class="dropdown-divider opacity-50"></li>
+                            <li><a class="dropdown-item rounded-3 py-2 px-3 fw-800 text-primary text-center" href="#" data-bs-toggle="modal" data-bs-target="#localizationModal">View All Regions <i class="fas fa-arrow-right ms-1"></i></a></li>
+                        </ul>
+                    </div>
+
                     @if(!auth()->check() || auth()->user()->role !== 'user')
 
 
@@ -326,12 +359,12 @@
                             </div>
                             <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2" style="border-radius: 12px; width: 220px;">
                                 <li>
-                                    <a class="dropdown-item rounded-3 py-2 px-3 fw-700 text-navy d-flex align-items-center gap-2" href="/dashboard">
+                                    <a class="dropdown-item rounded-3 py-2 px-3 fw-700 text-navy d-flex align-items-center gap-2" href="{{ localized_url('/dashboard') }}">
                                         <i class="fas fa-th-large text-primary opacity-50"></i> My Dashboard
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item rounded-3 py-2 px-3 fw-700 text-navy d-flex align-items-center gap-2" href="/dashboard/profile">
+                                    <a class="dropdown-item rounded-3 py-2 px-3 fw-700 text-navy d-flex align-items-center gap-2" href="{{ localized_url('/dashboard/profile') }}">
                                         <i class="fas fa-user-edit text-primary opacity-50"></i> My Profile
                                     </a>
                                 </li>
@@ -382,7 +415,7 @@
                     <!-- Very Large QR Code in Middle -->
                     <div class="qr-code-section mb-3 text-center">
                         <div class="bg-white p-3 rounded-5 shadow-lg d-inline-block border border-3 border-navy animate__animated animate__zoomIn">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ urlencode(route('event')) }}" alt="QR Code" width="200" class="img-fluid">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ urlencode(localized_url('/event')) }}" alt="QR Code" width="200" class="img-fluid">
                             <div class="mt-2 text-navy fw-900 fs-4">SCAN TO WIN</div>
                             <p class="text-muted mb-0 fw-bold fs-6">Scan to enter the Lucky Draw!</p>
                         </div>
@@ -390,14 +423,14 @@
 
                     <div class="flyer-section animate__animated animate__fadeInUp">
                         <p class="text-muted fw-bold mb-3 small text-uppercase letter-spacing-1">Event Flyer</p>
-                        <div class="flyer-container bg-white p-2 rounded-4 shadow-sm d-inline-block border border-warning" style="cursor: pointer; max-width: 280px;" onclick="window.location.href='{{ route('event') }}'">
+                        <div class="flyer-container bg-white p-2 rounded-4 shadow-sm d-inline-block border border-warning" style="cursor: pointer; max-width: 280px;" onclick="window.location.href='{{ localized_url('/event') }}'">
                             <img src="/img/image.jpeg?v={{ time() }}" alt="Event Flyer" class="img-fluid rounded-3 shadow">
                             <div class="mt-2 text-primary x-small fw-bold"><i class="fas fa-mouse-pointer me-1"></i> Click to Open Form</div>
                         </div>
                     </div>
 
                     <div class="mt-3">
-                        <a href="{{ route('event') }}" class="btn btn-navy rounded-pill px-5 py-3 fw-bold w-100 shadow-lg hvr-grow">
+                        <a href="{{ localized_url('/event') }}" class="btn btn-navy rounded-pill px-5 py-3 fw-bold w-100 shadow-lg hvr-grow">
                              OPEN REGISTRATION FORM <i class="fas fa-external-link-alt ms-2"></i>
                         </a>
                     </div>
@@ -413,7 +446,7 @@
     <!-- Mobile Offcanvas Menu -->
     <div class="offcanvas offcanvas-end" tabindex="-1" id="mobileMenu">
         <div class="offcanvas-header border-bottom">
-            <a href="/" class="navbar-brand"><img src="/img/logo.svg" alt="Tripzant.com" height="120"></a>
+            <a href="{{ localized_url('/') }}" class="navbar-brand"><img src="/img/logo.svg" alt="Tripzant.com" height="120"></a>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body">
@@ -447,13 +480,13 @@
                 <hr>
                 @php
                     $mobileServices = [
-                        ['id' => 'flights', 'label' => 'Flights', 'icon' => 'plane-departure', 'url' => '/flights'],
-                        ['id' => 'hotels', 'label' => 'Hotels', 'icon' => 'hotel', 'url' => '/hotels'],
-                        ['id' => 'homestays', 'label' => 'Homestays', 'icon' => 'house-chimney', 'url' => '/homestays'],
-                        ['id' => 'cabs', 'label' => 'Cabs', 'icon' => 'car-side', 'url' => '/cabs'],
-                        ['id' => 'trains', 'label' => 'Trains', 'icon' => 'train', 'url' => '/trains'],
-                        ['id' => 'holidays', 'label' => 'Tours & Activities', 'icon' => 'camera-retro', 'url' => '/tours/listings'],
-                        ['id' => 'esim', 'label' => 'Travel eSIM', 'icon' => 'sim-card', 'url' => '/esim'],
+                        ['id' => 'flights', 'label' => 'Flights', 'icon' => 'plane-departure', 'url' => localized_url('/flights')],
+                        ['id' => 'hotels', 'label' => 'Hotels', 'icon' => 'hotel', 'url' => localized_url('/hotels')],
+                        ['id' => 'homestays', 'label' => 'Homestays', 'icon' => 'house-chimney', 'url' => localized_url('/homestays')],
+                        ['id' => 'cabs', 'label' => 'Cabs', 'icon' => 'car-side', 'url' => localized_url('/cabs')],
+                        ['id' => 'trains', 'label' => 'Trains', 'icon' => 'train', 'url' => localized_url('/trains')],
+                        ['id' => 'holidays', 'label' => 'Tours & Activities', 'icon' => 'camera-retro', 'url' => localized_url('/tours')],
+                        ['id' => 'esim', 'label' => 'Travel eSIM', 'icon' => 'sim-card', 'url' => localized_url('/esim')],
                         ['id' => 'insurance', 'label' => 'Travel Insurance', 'icon' => 'shield-alt', 'url' => route('booking.insurance')],
                     ];
                 @endphp
@@ -466,7 +499,7 @@
                         <i class="fas fa-{{ $s['icon'] }}"></i> {{ $s['label'] }}
                     </a>
                 @endforeach
-                <a href="/explore-map" class="dash-nav-link text-primary fw-bold"><i class="fas fa-map-location-dot"></i> Explore on Map</a>
+                <a href="{{ localized_url('/explore-map') }}" class="dash-nav-link text-primary fw-bold"><i class="fas fa-map-location-dot"></i> Explore on Map</a>
             </div>
         </div>
     </div>
@@ -507,34 +540,34 @@
                     </div>
                     <div class="grid-body">
                         <div class="link-col">
-                            <a href="{{ route('hotels.index', ['city_code' => 'JAI', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Jaipur</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'GOI', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Goa</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'DEL', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Delhi</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'UDR', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Udaipur</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'JAI', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Jaipur</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'GOI', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Goa</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'DEL', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Delhi</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'UDR', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Udaipur</a>
                         </div>
                         <div class="link-col">
-                            <a href="{{ route('hotels.index', ['city_code' => 'BOM', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Mumbai</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'BLR', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Bangalore</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'DED', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Rishikesh</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'AGR', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Agra</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'BOM', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Mumbai</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'BLR', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Bangalore</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'DED', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Rishikesh</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'AGR', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Agra</a>
                         </div>
                         <div class="link-col">
-                            <a href="{{ route('hotels.index', ['city_code' => 'MAA', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Chennai</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'IXC', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Kasauli</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'CCU', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Kolkata</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'PNQ', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Pune</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'MAA', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Chennai</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'IXC', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Kasauli</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'CCU', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Kolkata</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'PNQ', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Pune</a>
                         </div>
                         <div class="link-col">
-                            <a href="{{ route('hotels.index', ['city_code' => 'KUU', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Manali</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'PNQ', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Lonavala</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'SLV', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Shimla</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'COK', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Munnar</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'KUU', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Manali</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'PNQ', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Lonavala</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'SLV', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Shimla</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'COK', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Munnar</a>
                         </div>
                         <div class="link-col">
-                            <a href="{{ route('hotels.index', ['city_code' => 'AYJ', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Ayodhya</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'SXR', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Gulmarg</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'IXL', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Leh</a>
-                            <a href="{{ route('hotels.index', ['city_code' => 'HYD', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Hyderabad</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'AYJ', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Ayodhya</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'SXR', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Gulmarg</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'IXL', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Leh</a>
+                            <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => 'HYD', 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}">Hyderabad</a>
                         </div>
                     </div>
                 </div>
@@ -547,24 +580,24 @@
                     </div>
                     <div class="grid-body">
                         <div class="link-col">
-                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'DEL', 'destination' => 'BOM', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Delhi Mumbai</a>
-                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'BLR', 'destination' => 'DEL', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Bangalore Delhi</a>
+                            <a href="{{ route('flights.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'trip' => 'one', 'origin' => 'DEL', 'destination' => 'BOM', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Delhi Mumbai</a>
+                            <a href="{{ route('flights.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'trip' => 'one', 'origin' => 'BLR', 'destination' => 'DEL', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Bangalore Delhi</a>
                         </div>
                         <div class="link-col">
-                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'BOM', 'destination' => 'GOI', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Mumbai Goa</a>
-                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'MAA', 'destination' => 'HYD', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Chennai Hyderabad</a>
+                            <a href="{{ route('flights.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'trip' => 'one', 'origin' => 'BOM', 'destination' => 'GOI', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Mumbai Goa</a>
+                            <a href="{{ route('flights.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'trip' => 'one', 'origin' => 'MAA', 'destination' => 'HYD', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Chennai Hyderabad</a>
                         </div>
                         <div class="link-col">
-                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'CCU', 'destination' => 'DEL', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Kolkata Delhi</a>
-                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'DXB', 'destination' => 'BOM', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Dubai Mumbai</a>
+                            <a href="{{ route('flights.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'trip' => 'one', 'origin' => 'CCU', 'destination' => 'DEL', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Kolkata Delhi</a>
+                            <a href="{{ route('flights.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'trip' => 'one', 'origin' => 'DXB', 'destination' => 'BOM', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Dubai Mumbai</a>
                         </div>
                         <div class="link-col">
-                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'DEL', 'destination' => 'LHR', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Delhi London</a>
-                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'BOM', 'destination' => 'JFK', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Mumbai New York</a>
+                            <a href="{{ route('flights.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'trip' => 'one', 'origin' => 'DEL', 'destination' => 'LHR', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Delhi London</a>
+                            <a href="{{ route('flights.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'trip' => 'one', 'origin' => 'BOM', 'destination' => 'JFK', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Mumbai New York</a>
                         </div>
                         <div class="link-col">
-                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'BLR', 'destination' => 'SIN', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Bangalore Singapore</a>
-                            <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => 'DEL', 'destination' => 'DXB', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Delhi Dubai</a>
+                            <a href="{{ route('flights.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'trip' => 'one', 'origin' => 'BLR', 'destination' => 'SIN', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Bangalore Singapore</a>
+                            <a href="{{ route('flights.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'trip' => 'one', 'origin' => 'DEL', 'destination' => 'DXB', 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}">Delhi Dubai</a>
                         </div>
                     </div>
                 </div>
@@ -624,13 +657,13 @@
                     <ul class="footer-links">
                         @php
                             $footerProducts = [
-                                ['id' => 'flights', 'label' => 'Flights', 'url' => '/flights'],
-                                ['id' => 'hotels', 'label' => 'Hotels', 'url' => '/hotels'],
-                                ['id' => 'homestays', 'label' => 'Homestays & Villas', 'url' => '/homestays'],
-                                ['id' => 'cabs', 'label' => 'Cabs', 'url' => '/cabs'],
-                                ['id' => 'trains', 'label' => 'Trains', 'url' => '/trains'],
-                                ['id' => 'insurance', 'label' => 'Travel Insurance', 'url' => route('booking.insurance')],
-                                ['id' => 'holidays', 'label' => 'Holiday Packages', 'url' => '#'],
+                                ['id' => 'flights', 'label' => 'Flights', 'url' => localized_url('/flights')],
+                                ['id' => 'hotels', 'label' => 'Hotels', 'url' => localized_url('/hotels')],
+                                ['id' => 'homestays', 'label' => 'Homestays & Villas', 'url' => localized_url('/homestays')],
+                                ['id' => 'cabs', 'label' => 'Cabs', 'url' => localized_url('/cabs')],
+                                ['id' => 'trains', 'label' => 'Trains', 'url' => localized_url('/trains')],
+                                ['id' => 'insurance', 'label' => 'Travel Insurance', 'url' => localized_url('/booking-insurance')],
+                                ['id' => 'holidays', 'label' => 'Holiday Packages', 'url' => localized_url('/tours')],
                             ];
                         @endphp
                         @foreach($footerProducts as $p)
@@ -745,35 +778,50 @@
     </footer>
     @endunless
 
-    <!-- ====== LOCALIZATION MODAL (INR/Country) ====== -->
+    <!-- ====== LOCALIZATION MODAL ====== -->
     <div class="modal fade" id="localizationModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-900 text-navy">Country & Language</h5>
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 24px;">
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <h4 class="modal-title fw-900 text-navy outfit">Regional Settings</h4>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <label class="small fw-bold text-muted mb-2">CURRENCY</label>
-                            <div class="p-3 border rounded-3 bg-light d-flex align-items-center gap-3 cursor-pointer border-primary">
-                                <img src="https://flagcdn.com/w20/in.png" width="20">
-                                <span class="fw-bold text-navy">INR (₹)</span>
-                                <i class="fas fa-check-circle ms-auto text-primary"></i>
-                            </div>
+                    <form id="localizationForm">
+                        @csrf
+                        <p class="text-muted small fw-bold mb-4">Set your preferences. This determines your default timezone, pricing currency, and language.</p>
+                        
+                        <div class="mb-3">
+                            <label class="small fw-800 text-muted mb-2 tracking-wider">COUNTRY / REGION</label>
+                            <select name="country_code" class="form-select form-select-lg border-2 shadow-sm rounded-3 fw-bold text-navy" style="font-size: 14px;">
+                                @foreach($all_countries as $c)
+                                    <option value="{{ $c->iso_code }}" {{ ($global_country ?? 'AU') == $c->iso_code ? 'selected' : '' }}>{{ $c->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div class="col-6">
-                            <label class="small fw-bold text-muted mb-2">LANGUAGE</label>
-                            <div class="p-3 border rounded-3 bg-light d-flex align-items-center gap-3 cursor-pointer">
-                                <span class="fw-bold text-navy">English (US)</span>
-                                <i class="fas fa-chevron-down ms-auto text-muted small"></i>
-                            </div>
+
+                        <div class="mb-3">
+                            <label class="small fw-800 text-muted mb-2 tracking-wider">CURRENCY</label>
+                            <select name="currency_code" class="form-select form-select-lg border-2 shadow-sm rounded-3 fw-bold text-navy" style="font-size: 14px;">
+                                @foreach($all_currencies as $curr)
+                                    <option value="{{ $curr->code }}" {{ ($global_currency ?? 'AUD') == $curr->code ? 'selected' : '' }}>{{ $curr->code }} - {{ $curr->symbol }}</option>
+                                @endforeach
+                            </select>
                         </div>
-                    </div>
-                    <div class="mt-4">
-                        <button class="btn btn-navy w-100 py-3 rounded-pill fw-bold shadow" data-bs-dismiss="modal">Apply & Continue</button>
-                    </div>
+
+                        <div class="mb-4">
+                            <label class="small fw-800 text-muted mb-2 tracking-wider">LANGUAGE</label>
+                            <select name="language_code" class="form-select form-select-lg border-2 shadow-sm rounded-3 fw-bold text-navy" style="font-size: 14px;">
+                                @foreach($all_languages as $lang)
+                                    <option value="{{ $lang->code }}" {{ ($global_lang ?? 'en') == $lang->code ? 'selected' : '' }}>{{ $lang->name }} ({{ $lang->code }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="mt-4 pt-2">
+                            <button type="submit" class="btn btn-navy w-100 py-3 rounded-pill fw-900 shadow-sm hvr-grow">SAVE PREFERENCES</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -781,6 +829,47 @@
 
     <!-- Bootstrap JS (CRITICAL) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function quickSetRegion(country, currency, lang) {
+            const formData = new FormData();
+            formData.append('country_code', country);
+            formData.append('currency_code', currency);
+            formData.append('language_code', lang);
+            formData.append('_token', '{{ csrf_token() }}');
+            
+            submitLocalization(formData);
+        }
+
+        function submitLocalization(formData) {
+            fetch('{{ route("localization.set") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    alert('Error saving preferences');
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        document.getElementById('localizationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = this.querySelector('button[type="submit"]');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SAVING...';
+            btn.disabled = true;
+
+            const formData = new FormData(this);
+            submitLocalization(formData);
+        });
+    </script>
 
     <!-- ====== SCROLL REVEAL (CRITICAL FIX FOR WHITE SPACE) ====== -->
     <script>

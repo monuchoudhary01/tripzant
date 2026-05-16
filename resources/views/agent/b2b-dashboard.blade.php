@@ -34,7 +34,7 @@
                 <p class="text-muted fw-bold small uppercase tracking-wider">B2B NET FARE PORTAL | IATA AUTHORIZED</p>
             </div>
             <div class="d-flex gap-3">
-                <a href="{{ route('flights.index') }}" class="btn btn-navy rounded-pill px-4 fw-900 shadow-sm"><i class="fas fa-search me-2"></i> SEARCH FLIGHTS</a>
+                <a href="{{ localized_url('/flights') }}" class="btn btn-navy rounded-pill px-4 fw-900 shadow-sm"><i class="fas fa-search me-2"></i> SEARCH FLIGHTS</a>
             </div>
         </div>
 

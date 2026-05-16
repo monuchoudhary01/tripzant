@@ -327,7 +327,7 @@
         .then(data => {
             if (data.success) {
                 alert('Success! Your eSIM QR code will be sent to your email. Order ID: ' + data.booking_id);
-                window.location.href = "{{ route('home') }}";
+                window.location.href = "{{ localized_url('/') }}";
             } else {
                 alert('Error: ' + data.message);
             }

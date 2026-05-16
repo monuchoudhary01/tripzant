@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @if(app()->getLocale() == 'ar') dir="rtl" @endif>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -332,6 +332,9 @@
                 <span class="admin-nav-label">Configuration</span>
                 <a href="{{ route('admin.offers.index') }}" class="admin-nav-link {{ request()->is('admin/offers*') ? 'active' : '' }}">
                     <i class="bx bx-gift"></i> Offers Management
+                </a>
+                <a href="{{ route('admin.localization.index') }}" class="admin-nav-link {{ request()->is('admin/localization*') ? 'active' : '' }}">
+                    <i class="bx bx-globe"></i> Localization & Regions
                 </a>
                 <a href="/admin/settings" class="admin-nav-link {{ request()->is('admin/settings') ? 'active' : '' }}">
                     <i class="bx bx-cog"></i> Branding Settings

@@ -584,16 +584,36 @@ document.addEventListener('click', (e) => {
                             });
                             return;
                         }
+                    }
 
-                        const url = new URL(window.location.origin + '/hotels');
+                    // Localized Redirect Logic
+                    const locale = (window.currentLocale || 'en').toLowerCase();
+                    const currency = (window.currentCurrency || 'aud').toLowerCase();
+
+                    if (searchType === 'hotels') {
+                        const url = new URL(window.location.origin + `/${locale}/${currency}/hotels`);
                         url.searchParams.append('city_code', cityCode);
                         url.searchParams.append('checkin', checkIn);
                         url.searchParams.append('checkout', checkOut);
                         url.searchParams.append('rooms', document.getElementById('roomCount').value || 1);
                         url.searchParams.append('adults', document.getElementById('adultCount').value || 2);
                         url.searchParams.append('children', document.getElementById('childCount').value || 0);
-
                         window.location.href = url.toString();
+                        return;
+                    }
+
+                    // Generic redirect for other services
+                    const serviceMap = {
+                        'homestays': 'homestays',
+                        'combos': 'tours',
+                        'tours': 'tours',
+                        'esim': 'esim',
+                        'cabs': 'cabs',
+                        'trains': 'trains'
+                    };
+
+                    if (serviceMap[searchType]) {
+                        window.location.href = window.location.origin + `/${locale}/${currency}/${serviceMap[searchType]}`;
                         return;
                     }
 
@@ -603,19 +623,12 @@ document.addEventListener('click', (e) => {
                         const infants = parseInt(document.getElementById('infantCount').value) || 0;
                         const totalPassengers = adults + children;
                         const cabinClass = document.getElementById('cabinClass').value;
-                        
                         const tripType = document.querySelector('input[name="tripType"]:checked').value;
                         const activeModeBtn = document.querySelector('.m-mode-btn.active');
                         const modeText = activeModeBtn ? activeModeBtn.innerText.toLowerCase() : 'date';
                         const isBudgetMode = modeText.includes('budget');
                         const isBaggageMode = modeText.includes('baggage');
-                        
-                        const url = new URL(window.location.origin + '/flights');
-                        
-                        url.searchParams.append('adults', adults);
-                        url.searchParams.append('children', children);
-                        url.searchParams.append('infants', infants);
-                        url.searchParams.append('cabin_class', cabinClass);
+                        const url = new URL(window.location.origin + `/${locale}/${currency}/flights`);
 
                         if (isBudgetMode) {
                             const maxBudget = document.getElementById('globalMaxBudget').value;

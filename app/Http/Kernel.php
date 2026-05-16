@@ -39,6 +39,7 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\RestrictToPanelMiddleware::class,
             \App\Http\Middleware\AffiliateTrackingMiddleware::class,
+            \App\Http\Middleware\RegionalContextMiddleware::class,
         ],
 
         'api' => [

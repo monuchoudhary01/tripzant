@@ -49,75 +49,11 @@ class RapidAPIProvider
         $data = json_decode($response, true);
         $unified = [];
 
-        // FALLBACK: If API fails or returns no itineraries, inject a realistic sample for testing
         if ($httpCode !== 200 || !isset($data['itineraries']) || empty($data['itineraries']) || isset($data['error'])) {
-            Log::info("RapidAPIProvider: Using fallback sample data (API Error or Empty).");
-            
-            $unified = [];
-            // Generate some mock Metadata for the Date Slider
-            $outboundDays = [];
-            $searchDate = $params['date'] ?? date('Y-m-d');
-            for ($i = -3; $i <= 7; $i++) {
-                $d = date('Y-m-d', strtotime($searchDate . " +$i days"));
-                $outboundDays[] = [
-                    'date' => $d,
-                    'price' => 900 + (rand(10, 500))
-                ];
-            }
-
-            $unified[] = new UnifiedFlight([
-                'id' => 'sample_kiwi_1',
-                'gds_id' => 'sample_kiwi_1',
-                'airline_code' => 'W9',
-                'airline_name' => 'Wizz Air UK',
-                'flight_number' => 'W9 4452',
-                'departure_at' => date('Y-m-d 06:15:00', strtotime($searchDate)),
-                'arrival_at' => date('Y-m-d 09:45:00', strtotime($searchDate)),
-                'departure_city' => strtoupper($params['from']),
-                'arrival_city' => strtoupper($params['to']),
-                'duration' => '2h 30m',
-                'stops' => 0,
-                'price' => (float) 946.00,
-                'net_price' => (float) 946.00,
-                'currency' => 'INR',
-                'cabin' => 'ECONOMY',
-                'baggage' => '7 KG',
-                'baggage_unit' => '',
-                'terminal' => 'T1',
-                'source' => 'rapidapi',
-                'raw_data' => [],
-                'is_cheapest' => true
-            ]);
-
-            $unified[] = new UnifiedFlight([
-                'id' => 'sample_kiwi_2',
-                'gds_id' => 'sample_kiwi_2',
-                'airline_code' => 'VY',
-                'airline_name' => 'Vueling',
-                'flight_number' => 'VY 6127',
-                'departure_at' => date('Y-m-d 14:30:00', strtotime($searchDate)),
-                'arrival_at' => date('Y-m-d 17:50:00', strtotime($searchDate)),
-                'departure_city' => strtoupper($params['from']),
-                'arrival_city' => strtoupper($params['to']),
-                'duration' => '3h 20m',
-                'stops' => 1,
-                'price' => (float) 1250.00,
-                'net_price' => (float) 1250.00,
-                'currency' => 'INR',
-                'cabin' => 'ECONOMY',
-                'baggage' => '7 KG',
-                'baggage_unit' => '',
-                'terminal' => 'T2',
-                'source' => 'rapidapi',
-                'raw_data' => []
-            ]);
-
+            Log::info("RapidAPIProvider: API Error or Empty results.");
             return [
-                'flights' => $unified,
-                'meta' => [
-                    'outboundDays' => $outboundDays,
-                    'bestPrice' => 946
-                ]
+                'flights' => [],
+                'meta' => []
             ];
         }
 

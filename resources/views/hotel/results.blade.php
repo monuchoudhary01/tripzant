@@ -330,7 +330,7 @@
                         </div>
                         <h4 class="fw-900 outfit text-navy">No Properties Found</h4>
                         <p class="text-muted fw-bold">Try adjusting your filters, dates, or destination city.</p>
-                        <a href="{{ route('home') }}" class="btn btn-primary rounded-pill px-5 py-2 fw-800 mt-3">TRY ANOTHER SEARCH</a>
+                        <a href="{{ localized_url('/') }}" class="btn btn-primary rounded-pill px-5 py-2 fw-800 mt-3">TRY ANOTHER SEARCH</a>
                     </div>
                 </div>
                 @endforelse

@@ -31,7 +31,7 @@
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-2" style="font-size: 11px; font-weight: 800; text-transform: uppercase;">
                         <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Home</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('hotels.index') }}" class="text-decoration-none text-muted">Hotels</a></li>
+                        <li class="breadcrumb-item"><a href="{{ localized_url('/hotels') }}" class="text-decoration-none text-muted">Hotels</a></li>
                         <li class="breadcrumb-item active text-primary">{{ $hotelContent['name'] ?? 'Property' }}</li>
                     </ol>
                 </nav>

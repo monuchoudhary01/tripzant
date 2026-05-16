@@ -244,7 +244,7 @@
         .then(data => {
             if (data.success) {
                 alert('Success! Your insurance has been booked. Reference: ' + data.booking_id);
-                window.location.href = "{{ route('home') }}";
+                window.location.href = "{{ localized_url('/') }}";
             } else {
                 alert('Error: ' + data.message);
             }

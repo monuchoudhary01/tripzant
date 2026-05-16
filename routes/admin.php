@@ -68,7 +68,23 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::post('/settings/smtp', [SystemSettingsController::class, 'updateSmtp'])->name('settings.smtp.update');
         Route::post('/settings/markups', [SystemSettingsController::class, 'updateMarkups'])->name('settings.markups.update');
         Route::post('/settings/api-credentials', [SystemSettingsController::class, 'updateApiCredentials'])->name('settings.api-credentials.update');
-        Route::post('/settings/swagger/regenerate', [SystemSettingsController::class, 'regenerateSwagger'])->name('settings.swagger.regenerate');
+
+        // Localization & Translations
+        Route::prefix('localization')->name('localization.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\LocalizationController::class, 'index'])->name('index');
+            
+            Route::post('/translations', [\App\Http\Controllers\Admin\LocalizationController::class, 'storeTranslation'])->name('translations.store');
+            Route::delete('/translations/{id}', [\App\Http\Controllers\Admin\LocalizationController::class, 'destroyTranslation'])->name('translations.destroy');
+
+            Route::post('/countries', [\App\Http\Controllers\Admin\LocalizationController::class, 'storeCountry'])->name('countries.store');
+            Route::delete('/countries/{id}', [\App\Http\Controllers\Admin\LocalizationController::class, 'destroyCountry'])->name('countries.destroy');
+
+            Route::post('/currencies', [\App\Http\Controllers\Admin\LocalizationController::class, 'storeCurrency'])->name('currencies.store');
+            Route::delete('/currencies/{id}', [\App\Http\Controllers\Admin\LocalizationController::class, 'destroyCurrency'])->name('currencies.destroy');
+
+            Route::post('/languages', [\App\Http\Controllers\Admin\LocalizationController::class, 'storeLanguage'])->name('languages.store');
+            Route::delete('/languages/{id}', [\App\Http\Controllers\Admin\LocalizationController::class, 'destroyLanguage'])->name('languages.destroy');
+        });
 
         Route::get('/notifications', function () { return view('admin.notifications'); })->name('notifications');
         Route::get('/broadcasts', function () { return view('admin.broadcasts'); })->name('broadcasts');

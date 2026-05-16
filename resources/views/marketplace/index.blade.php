@@ -5,22 +5,22 @@
     <div class="container">
         <!-- Search & Filter Area -->
         <div class="text-center mb-5">
-            <h1 class="fw-bold text-dark display-5 mb-3">Service Marketplace</h1>
-            <p class="text-muted fs-5">Find the best local professionals near you</p>
+            <h1 class="fw-bold text-dark display-5 mb-3">{{ __('labels.marketplace_title', [], 'Service Marketplace') }}</h1>
+            <p class="text-muted fs-5">{{ __('labels.find_best_pro', [], 'Find the best local professionals near you') }}</p>
             
             <div class="search-bar-container mx-auto mt-5" style="max-width: 800px;">
                 <div class="search-bar p-2 bg-white shadow-lg rounded-pill border d-flex align-items-center">
                     <div class="flex-grow-1 px-4 border-end text-start">
-                        <label class="small fw-bold text-dark d-block">Where</label>
-                        <input type="text" placeholder="Search location" class="border-0 w-100 outline-none" style="outline: none;">
+                        <label class="small fw-bold text-dark d-block">{{ __('labels.where', [], 'Where') }}</label>
+                        <input type="text" placeholder="{{ __('labels.search_location', [], 'Search location') }}" class="border-0 w-100 outline-none" style="outline: none;">
                     </div>
                     <div class="flex-grow-1 px-4 border-end text-start">
-                        <label class="small fw-bold text-dark d-block">Service</label>
+                        <label class="small fw-bold text-dark d-block">{{ __('labels.service', [], 'Service') }}</label>
                         <select class="border-0 w-100 outline-none bg-transparent" style="outline: none;">
-                            <option>All Services</option>
-                            <option>Barber</option>
-                            <option>Tutor</option>
-                            <option>Cleaner</option>
+                            <option>{{ __('labels.all_services', [], 'All Services') }}</option>
+                            <option>{{ __('categories.barber', [], 'Barber') }}</option>
+                            <option>{{ __('categories.tutor', [], 'Tutor') }}</option>
+                            <option>{{ __('categories.cleaner', [], 'Cleaner') }}</option>
                         </select>
                     </div>
                     <div class="px-2">
@@ -34,11 +34,22 @@
 
         <!-- Categories -->
         <div class="categories-scroll d-flex gap-4 mb-5 overflow-auto pb-3 no-scrollbar justify-content-center">
-            @php $cats = ['Barber', 'Tutor', 'Cleaner', 'Plumber', 'Electrician', 'Gardener', 'Chef', 'Mover']; @endphp
+            @php 
+                $cats = [
+                    ['key' => 'barber', 'label' => 'Barber'],
+                    ['key' => 'tutor', 'label' => 'Tutor'],
+                    ['key' => 'cleaner', 'label' => 'Cleaner'],
+                    ['key' => 'plumber', 'label' => 'Plumber'],
+                    ['key' => 'electrician', 'label' => 'Electrician'],
+                    ['key' => 'gardener', 'label' => 'Gardener'],
+                    ['key' => 'chef', 'label' => 'Chef'],
+                    ['key' => 'mover', 'label' => 'Mover']
+                ]; 
+            @endphp
             @foreach($cats as $cat)
             <div class="category-item text-center cursor-pointer opacity-50 hover-opacity-100 transition">
                 <div class="mb-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-                <span class="small fw-bold">{{ $cat }}</span>
+                <span class="small fw-bold">{{ __('categories.' . $cat['key'], [], $cat['label']) }}</span>
             </div>
             @endforeach
         </div>
@@ -67,7 +78,7 @@
                             </div>
                             <p class="text-muted small mb-1">{{ $provider->service_category }} by {{ $provider->name }}</p>
                             <p class="text-muted small mb-2">Available Tomorrow</p>
-                            <p class="mb-0"><span class="fw-bold">₹{{ number_format($provider->pricing) }}</span> <span class="text-muted">hour</span></p>
+                            <p class="mb-0"><span class="fw-bold">{{ format_price($provider->pricing, 'INR') }}</span> <span class="text-muted">hour</span></p>
                         </div>
                     </div>
                 </a>

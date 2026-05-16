@@ -323,15 +323,15 @@
             <div class="hero-services animate-up animate-up-delay-2">
                 @php
                     $services = [
-                        ['id' => 'flights', 'label' => 'Flights', 'icon' => 'plane', 'class' => 'flight', 'url' => '/flights'],
-                        ['id' => 'hotels', 'label' => 'Hotels', 'icon' => 'hotel', 'class' => 'hotel', 'url' => '/hotels'],
-                        ['id' => 'flight_hotel', 'label' => 'Flight + Hotel', 'icon' => 'suitcase-rolling', 'class' => 'bundle', 'url' => '/flight-hotel'],
-                        ['id' => 'homestays', 'label' => 'Homestays', 'icon' => 'house-chimney', 'class' => 'homestay', 'url' => '/homestays'],
-                        ['id' => 'cabs', 'label' => 'Cabs', 'icon' => 'car-side', 'class' => 'cab', 'url' => '/cabs'],
-                        ['id' => 'trains', 'label' => 'Trains', 'icon' => 'train', 'class' => 'train', 'url' => '/trains'],
-                        ['id' => 'holidays', 'label' => 'Holidays', 'icon' => 'umbrella-beach', 'class' => 'holiday', 'url' => '#'],
-                        ['id' => 'insurance', 'label' => 'Insurance', 'icon' => 'shield-alt', 'class' => 'insurance', 'url' => route('booking.insurance')],
-                        ['id' => 'esim', 'label' => 'eSIM', 'icon' => 'sim-card', 'class' => 'esim', 'url' => '/esim/listings'],
+                        ['id' => 'flights', 'label' => 'Flights', 'icon' => 'plane', 'class' => 'flight', 'url' => localized_url('/flights')],
+                        ['id' => 'hotels', 'label' => 'Hotels', 'icon' => 'hotel', 'class' => 'hotel', 'url' => localized_url('/hotels')],
+                        ['id' => 'flight_hotel', 'label' => 'Flight + Hotel', 'icon' => 'suitcase-rolling', 'class' => 'bundle', 'url' => localized_url('/flight-hotel')],
+                        ['id' => 'homestays', 'label' => 'Homestays', 'icon' => 'house-chimney', 'class' => 'homestay', 'url' => localized_url('/homestays')],
+                        ['id' => 'cabs', 'label' => 'Cabs', 'icon' => 'car-side', 'class' => 'cab', 'url' => localized_url('/cabs')],
+                        ['id' => 'trains', 'label' => 'Trains', 'icon' => 'train', 'class' => 'train', 'url' => localized_url('/trains')],
+                        ['id' => 'holidays', 'label' => 'Holidays', 'icon' => 'umbrella-beach', 'class' => 'holiday', 'url' => localized_url('/tours')],
+                        ['id' => 'insurance', 'label' => 'Insurance', 'icon' => 'shield-alt', 'class' => 'insurance', 'url' => localized_url('/booking-insurance')],
+                        ['id' => 'esim', 'label' => 'eSIM', 'icon' => 'sim-card', 'class' => 'esim', 'url' => localized_url('/esim/listings')],
                     ];
                 @endphp
 
@@ -375,26 +375,24 @@
                 </div>
             </div>
 
-            <div class="calendar-scroll-wrap overflow-auto pb-4">
-                <div class="calendar-row d-flex gap-3">
+            <div class="calendar-slider-container position-relative px-md-5">
+                <div class="owl-carousel owl-theme" id="smartCalendarSlider">
                     @php
                     $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                     $months = [];
                     foreach($monthNames as $index => $name) {
                         $fullMonthName = date('F', mktime(0, 0, 0, $index + 1, 10));
-                        // Find festival for this month
                         $fest = \App\Models\Festival::where('month', 'like', '%' . $fullMonthName . '%')
                                     ->orWhere('month', 'like', '%' . $name . '%')
                                     ->first();
                         
-                        // Default values if no festival in DB
                         $festName = $fest ? $fest->icon . ' ' . $fest->name : '🏔️ Exploring';
-                        $price = rand(3000, 8000); // In real app, fetch from trends table
+                        $price = rand(3000, 8000);
                         $status = ($price < 4000) ? 'low' : (($price < 6000) ? 'medium' : 'high');
                         
                         $months[] = [
                             'name' => $name,
-                            'price' => number_format($price),
+                            'price' => $price,
                             'status' => $status,
                             'festival' => $festName,
                             'desc' => $fest ? $fest->description : 'Discover amazing destinations this month.'
@@ -402,20 +400,22 @@
                     }
                     @endphp
                     @foreach($months as $m)
-                    <a href="{{ route('travel.trends') }}?month={{ $m['name'] }}" class="text-decoration-none">
-                        <div class="month-card card-premium flex-shrink-0 text-center p-3 hvr-grow" 
-                             style="width: 160px; {{ $m['status'] == 'low' ? 'border: 2px solid var(--green);' : '' }}"
-                             data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $m['desc'] }}">
-                            <div class="fw-800 text-navy mb-2">{{ $m['name'] }}</div>
-                            <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
-                                <span class="dot {{ $m['status'] == 'low' ? 'green' : ($m['status'] == 'medium' ? 'yellow' : 'red') }}"></span>
-                                <span class="fw-900 text-navy fs-6">₹{{ $m['price'] }}</span>
+                    <div class="item">
+                        <a href="{{ localized_url('/explorer/trends?month=' . $m['name']) }}" class="text-decoration-none">
+                            <div class="month-card card-premium text-center p-3 hvr-grow w-100" 
+                                 style="{{ $m['status'] == 'low' ? 'border: 2px solid var(--green);' : '' }}"
+                                 data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $m['desc'] }}">
+                                <div class="fw-800 text-navy mb-2">{{ $m['name'] }}</div>
+                                <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
+                                    <span class="dot {{ $m['status'] == 'low' ? 'green' : ($m['status'] == 'medium' ? 'yellow' : 'red') }}"></span>
+                                    <span class="fw-900 text-navy fs-6">{{ format_price($m['price'], 'INR') }}</span>
+                                </div>
+                                <div class="badge rounded-pill bg-light text-navy border py-2 px-3 w-100" style="font-size: 10px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    {{ $m['festival'] }}
+                                </div>
                             </div>
-                            <div class="badge rounded-pill bg-light text-navy border py-2 px-3 w-100" style="font-size: 10px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                {{ $m['festival'] }}
-                            </div>
-                        </div>
-                    </a>
+                        </a>
+                    </div>
                     @endforeach
                 </div>
             </div>
@@ -427,8 +427,8 @@
                      <div class="d-flex align-items-center gap-2 small fw-bold text-muted"><div class="price-dot bg-danger" style="width:8px; height:8px; border-radius:50%;"></div> High/Peak</div>
                  </div>
                  <div class="d-flex gap-2">
-                     <a href="{{ route('travel.trends') }}" class="btn btn-outline-navy rounded-pill px-4 fw-bold small"><i class="fas fa-chart-line me-2"></i> Detailed Trends</a>
-                     <a href="{{ route('travel.festivals') }}" class="btn btn-navy rounded-pill px-4 fw-bold small">Explore Festivals <i class="fas fa-chevron-right ms-2"></i></a>
+                     <a href="{{ localized_url('/explorer/trends') }}" class="btn btn-outline-navy rounded-pill px-4 fw-bold small"><i class="fas fa-chart-line me-2"></i> Detailed Trends</a>
+                     <a href="{{ localized_url('/explorer/festivals') }}" class="btn btn-navy rounded-pill px-4 fw-bold small">Explore Festivals <i class="fas fa-chevron-right ms-2"></i></a>
                  </div>
             </div>
         </div>
@@ -461,7 +461,7 @@
                             <div class="d-flex align-items-center gap-2 small fw-bold text-white-50"><i class="fas fa-circle-check text-success"></i> 99.2% Approval Success Rate</div>
                             <div class="d-flex align-items-center gap-2 small fw-bold text-white-50"><i class="fas fa-circle-check text-success"></i> Express Processing Available</div>
                         </div>
-                        <a href="{{ route('visa.index') }}" class="btn btn-orange px-5 py-3 rounded-pill fw-bold" style="width:fit-content;">Search Requirements <i class="fas fa-arrow-right ms-2"></i></a>
+                        <a href="{{ localized_url('/visa') }}" class="btn btn-orange px-5 py-3 rounded-pill fw-bold" style="width:fit-content;">Search Requirements <i class="fas fa-arrow-right ms-2"></i></a>
                     </div>
                     <div class="col-lg-7 p-5 bg-white">
                         <h5 class="fw-900 text-navy mb-4">Quick Visa Check</h5>
@@ -492,7 +492,7 @@
                                 </div>
                             </div>
                             <div class="col-12 mt-4 text-center">
-                                <a href="{{ route('visa.listing') }}" class="btn btn-navy w-100 py-3 rounded-pill fw-bold shadow">CHECK VISA DETAILS <i class="fas fa-magnifying-glass ms-2"></i></a>
+                                <a href="{{ localized_url('/visa/listing') }}" class="btn btn-navy w-100 py-3 rounded-pill fw-bold shadow">CHECK VISA DETAILS <i class="fas fa-magnifying-glass ms-2"></i></a>
                             </div>
                         </div>
                     </div>
@@ -522,7 +522,7 @@
                         <button class="offer-filter" data-filter="eSIM"><i class="fas fa-sim-card"></i> eSIM</button>
                         <button class="offer-filter" data-filter="Bank Offer"><i class="fas fa-university"></i> Bank Offers</button>
                         
-                        <a href="{{ route('deals.index') }}" class="btn btn-sm btn-navy rounded-pill px-4 ms-3 shadow-sm d-none d-md-flex align-items-center gap-2">
+                        <a href="{{ localized_url('/deals') }}" class="btn btn-sm btn-navy rounded-pill px-4 ms-3 shadow-sm d-none d-md-flex align-items-center gap-2">
                             View All <i class="fas fa-arrow-right small"></i>
                         </a>
                     </div>
@@ -530,7 +530,7 @@
             </div>
             
             <div class="d-md-none mb-3 text-center">
-                <a href="{{ route('deals.index') }}" class="btn btn-sm btn-navy rounded-pill px-5 shadow-sm">
+                <a href="{{ localized_url('/deals') }}" class="btn btn-sm btn-navy rounded-pill px-5 shadow-sm">
                     View All Deals <i class="fas fa-arrow-right ms-1"></i>
                 </a>
             </div>
@@ -613,9 +613,9 @@
                             <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&auto=format&fit=crop&q=80" alt="Map Preview">
                             
                             <!-- Fake Price Badges -->
-                            <div class="price-badge-preview pb-1 animate-pulse" style="top: 30%; left: 40%;">₹4,250</div>
-                            <div class="price-badge-preview pb-2 animate-pulse" style="top: 55%; left: 25%; animation-delay: 0.5s;">₹3,400</div>
-                            <div class="price-badge-preview pb-3 animate-pulse" style="top: 45%; left: 70%; animation-delay: 1s;">₹5,100</div>
+                            <div class="price-badge-preview pb-1 animate-pulse" style="top: 30%; left: 40%;">{{ format_price(4250, 'INR') }}</div>
+                            <div class="price-badge-preview pb-2 animate-pulse" style="top: 55%; left: 25%; animation-delay: 0.5s;">{{ format_price(3400, 'INR') }}</div>
+                            <div class="price-badge-preview pb-3 animate-pulse" style="top: 45%; left: 70%; animation-delay: 1s;">{{ format_price(5100, 'INR') }}</div>
                             
                             <!-- Fake Path Lines -->
                             <svg class="map-paths" viewBox="0 0 400 300">
@@ -804,13 +804,13 @@
                     <h2 class="main-title">Hotels in India</h2>
                     <p class="section-subtitle">Trending places in India preferred by travellers this month</p>
                 </div>
-                <a href="/hotels" class="view-all-link">Explore All <i class="fas fa-arrow-right"></i></a>
+                <a href="{{ localized_url('/hotels') }}" class="view-all-link">Explore All <i class="fas fa-arrow-right"></i></a>
             </div>
 
             <div class="dest-carousel-container">
                 <div class="owl-carousel owl-theme" id="popularDestSlider">
                     @foreach($popularDestinations as $dest)
-                    <a href="{{ route('hotels.index', ['city_code' => $dest['code'], 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}" class="inline-dest-card">
+                    <a href="{{ route('hotels.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'city_code' => $dest['code'], 'checkin' => date('Y-m-d', strtotime('+7 days')), 'checkout' => date('Y-m-d', strtotime('+8 days'))]) }}" class="inline-dest-card">
                         <img src="{{ $dest['image'] }}" alt="{{ $dest['name'] }}" loading="eager" onerror="this.src='https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=800'">
                         <div class="inline-dest-overlay">
                             <h5>{{ $dest['name'] }}</h5>
@@ -838,7 +838,7 @@
                 </div>
                 <div class="col-lg-6 text-lg-end">
                     <p class="text-muted small mb-3">Build your own dream itinerary or choose from our best-sellers.</p>
-                    <a href="/tours/listings" class="btn btn-outline-navy rounded-pill px-4 fw-bold shadow-sm hvr-grow">Explore All Packages <i class="fas fa-chevron-right ms-2"></i></a>
+                    <a href="{{ localized_url('/tours') }}" class="btn btn-outline-navy rounded-pill px-4 fw-bold shadow-sm hvr-grow">Explore All Packages <i class="fas fa-chevron-right ms-2"></i></a>
                 </div>
             </div>
 
@@ -887,7 +887,7 @@
                     <h2 class="main-title mb-0 text-navy">Popular eSIM Countries</h2>
                 </div>
                 <div class="col-lg-6 text-lg-end">
-                    <a href="/esim/listings" class="btn btn-outline-navy rounded-pill px-4 fw-bold shadow-sm hvr-grow">All eSIM Plans <i class="fas fa-chevron-right ms-2"></i></a>
+                    <a href="{{ localized_url('/esim') }}" class="btn btn-outline-navy rounded-pill px-4 fw-bold shadow-sm hvr-grow">All eSIM Plans <i class="fas fa-chevron-right ms-2"></i></a>
                 </div>
             </div>
 
@@ -930,14 +930,14 @@
                     <h2 class="main-title">Top Rated Hotels</h2>
                     <p class="section-subtitle">Hand-picked premium hotels loved by guests</p>
                 </div>
-                <a href="/hotels" class="view-all-link">View All Hotels <i class="fas fa-arrow-right"></i></a>
+                <a href="{{ localized_url('/hotels') }}" class="view-all-link">View All Hotels <i class="fas fa-arrow-right"></i></a>
             </div>
 
             <div class="row g-4">
                 @foreach($hotels as $hotel)
                 <div class="col-lg-3 col-md-6">
                     <div class="card-premium hvr-float h-100">
-                        <a href="{{ route('hotel.details', ['hotel_code' => $hotel['code'], 'checkIn' => date('Y-m-d', strtotime('+7 days')), 'checkOut' => date('Y-m-d', strtotime('+8 days'))]) }}" class="text-decoration-none">
+                        <a href="{{ route('hotel.details', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'hotel_code' => $hotel['code'], 'checkIn' => date('Y-m-d', strtotime('+7 days')), 'checkOut' => date('Y-m-d', strtotime('+8 days'))]) }}" class="text-decoration-none">
                             <div class="card-img-wrap">
                                 <img src="{{ $hotel['main_image'] }}" alt="{{ $hotel['name'] }}">
                                 <span class="card-img-overlay-badge"><i class="fas fa-crown me-1" style="color:var(--primary)"></i> Luxury</span>
@@ -981,7 +981,7 @@
                     <h2 class="main-title">Homestays & Villas</h2>
                     <p class="section-subtitle">Escape to cozy homes in nature's lap</p>
                 </div>
-                <a href="/homestays" class="view-all-link">View All <i class="fas fa-arrow-right"></i></a>
+                <a href="{{ localized_url('/homestays') }}" class="view-all-link">View All <i class="fas fa-arrow-right"></i></a>
             </div>
 
             <div class="row g-4">
@@ -1126,7 +1126,7 @@
             <div class="route-carousel-container">
                 <div class="owl-carousel owl-theme" id="popularRouteSlider">
                     @foreach($popularRoutes as $route)
-                    <a href="{{ route('flights.index', ['trip' => 'one', 'origin' => $route->origin, 'destination' => $route->destination, 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}" class="inline-route-card">
+                    <a href="{{ route('flights.index', ['locale' => $currentLocale, 'currency' => $currentCurrency, 'trip' => 'one', 'origin' => $route->origin, 'destination' => $route->destination, 'departure_date' => date('Y-m-d', strtotime('+7 days')), 'adults' => 1, 'cabin_class' => 'Economy']) }}" class="inline-route-card">
                         <div class="d-flex align-items-center gap-3 mb-3">
                             <div style="width:40px;height:40px;border-radius:10px;background:rgba(0,168,225,0.1);display:flex;align-items:center;justify-content:center;">
                                 <i class="fas fa-plane text-primary"></i>
@@ -1176,6 +1176,20 @@ $(document).ready(function(){
             600: { items: 2 },
             1000: { items: 3 },
             1200: { items: 4 }
+        }
+    });
+
+    $("#smartCalendarSlider").owlCarousel({
+        loop: false,
+        margin: 15,
+        nav: true,
+        dots: false,
+        navText: ['<i class="fas fa-chevron-left"></i>', '<i class="fas fa-chevron-right"></i>'],
+        responsive: {
+            0: { items: 2 },
+            600: { items: 3 },
+            1000: { items: 5 },
+            1200: { items: 6 }
         }
     });
 

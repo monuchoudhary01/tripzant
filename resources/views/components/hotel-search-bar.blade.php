@@ -7,7 +7,7 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 
 <div class="h-search-bar-v2 shadow-lg">
-    <form action="{{ route('hotels.search') }}" method="POST" id="compactSearchForm">
+    <form action="{{ route('hotels.search', ['locale' => $currentLocale, 'currency' => $currentCurrency]) }}" method="POST" id="compactSearchForm">
         @csrf
         <div class="h-bar-container">
             <!-- Location -->

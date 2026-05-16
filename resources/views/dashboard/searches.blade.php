@@ -33,7 +33,7 @@
                     </p>
                 </div>
                 <div class="d-flex gap-2">
-                    <a href="{{ $s->item_type == 'flight' ? route('flights.search', $s->search_params) : '#' }}" class="btn btn-navy rounded-pill px-4 fw-bold small flex-grow-1">Relaunch Search</a>
+                    <a href="{{ $s->item_type == 'flight' ? route('flights.search', array_merge($s->search_params, ['locale' => $currentLocale, 'currency' => $currentCurrency])) : '#' }}" class="btn btn-navy rounded-pill px-4 fw-bold small flex-grow-1">Relaunch Search</a>
                     <form action="#" method="POST">
                         @csrf
                         @method('DELETE')

@@ -24,7 +24,7 @@ class AmadeusProvider implements FlightProvider
         $origin = $params['from'] ?? 'DEL';
         $destination = $params['to'] ?? 'BOM';
         $date = $params['date'] ?? date('Y-m-d');
-        $paxCount = $params['adults'] ?? 1;
+        $paxCount = ($params['adults'] ?? 1) + ($params['children'] ?? 0);
 
         $response = $this->amadeusSoap->searchFlightsStateless($origin, $destination, $date, $paxCount);
 

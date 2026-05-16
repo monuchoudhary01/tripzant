@@ -197,14 +197,4 @@ class SystemSettingsController extends Controller
 
         return back()->with('success', 'Payment gateway settings updated successfully!');
     }
-
-    public function regenerateSwagger()
-    {
-        try {
-            \Illuminate\Support\Facades\Artisan::call('l5-swagger:generate');
-            return back()->with('success', 'Swagger documentation regenerated successfully!');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Swagger regeneration failed: ' . $e->getMessage());
-        }
-    }
 }

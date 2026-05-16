@@ -160,9 +160,9 @@
         if (!window.currentFareData) return;
         const activeCabinData = window.currentFareData[window.selectedCabinClass];
         if (activeCabinData) {
-            if(document.getElementById('modalPriceRegular')) document.getElementById('modalPriceRegular').innerText = '₹' + activeCabinData.regular.toLocaleString();
-            if(document.getElementById('modalPriceStudent')) document.getElementById('modalPriceStudent').innerText = '₹' + activeCabinData.student.toLocaleString();
-            if(document.getElementById('modalPriceSenior')) document.getElementById('modalPriceSenior').innerText = '₹' + activeCabinData.senior.toLocaleString();
+            if(document.getElementById('modalPriceRegular')) document.getElementById('modalPriceRegular').innerText = window.currentCurrencySymbol + ' ' + activeCabinData.regular.toLocaleString();
+            if(document.getElementById('modalPriceStudent')) document.getElementById('modalPriceStudent').innerText = window.currentCurrencySymbol + ' ' + activeCabinData.student.toLocaleString();
+            if(document.getElementById('modalPriceSenior')) document.getElementById('modalPriceSenior').innerText = window.currentCurrencySymbol + ' ' + activeCabinData.senior.toLocaleString();
         }
         
         // Update Cabin Tabs
@@ -329,7 +329,7 @@
                                     </div>
                                 </div>
                                 <div class="text-end">
-                                    <div class="fw-900 text-navy h5 mb-0" id="modalPriceRegular">₹0</div>
+                                    <div class="fw-900 text-navy h5 mb-0" id="modalPriceRegular">{{ current_currency_symbol() }} 0</div>
                                     <span class="badge bg-success bg-opacity-10 text-success fw-800" style="font-size:9px;">AVAILABLE</span>
                                 </div>
                             </div>
@@ -345,7 +345,7 @@
                                     </div>
                                 </div>
                                 <div class="text-end">
-                                    <div class="fw-900 text-navy h5 mb-0" id="modalPriceStudent">₹0</div>
+                                    <div class="fw-900 text-navy h5 mb-0" id="modalPriceStudent">{{ current_currency_symbol() }} 0</div>
                                     <span class="badge bg-info bg-opacity-10 text-info fw-800" style="font-size:9px;">5% EXTRA OFF</span>
                                 </div>
                             </div>
@@ -361,7 +361,7 @@
                                     </div>
                                 </div>
                                 <div class="text-end">
-                                    <div class="fw-900 text-navy h5 mb-0" id="modalPriceSenior">₹0</div>
+                                    <div class="fw-900 text-navy h5 mb-0" id="modalPriceSenior">{{ current_currency_symbol() }} 0</div>
                                     <span class="badge bg-warning bg-opacity-10 text-warning fw-800" style="font-size:9px;">8% EXTRA OFF</span>
                                 </div>
                             </div>
@@ -565,7 +565,7 @@
                     <div class="ms-auto d-flex align-items-center gap-3 {{ !request('max_budget') ? 'd-none' : '' }} animate__animated animate__fadeIn" id="budgetModifierRow" style="padding-right: 10px;">
                         <span class="fw-900 text-muted uppercase" style="font-size: 9px; letter-spacing: 1px;">MAX BUDGET:</span>
                         <div class="d-flex align-items-center gap-1 bg-white px-3 py-1 rounded-pill border shadow-sm">
-                            <span class="fw-900 text-primary" style="font-size: 14px;">₹</span>
+                            <span class="fw-900 text-primary" style="font-size: 14px;">{{ current_currency_symbol() }}</span>
                             <input type="number" id="globalMaxBudget" class="border-0 fw-900 text-navy p-0" value="{{ request('max_budget', 20000) }}" step="500" style="outline: none; width: 80px; font-size: 15px; background: transparent;">
                         </div>
                     </div>

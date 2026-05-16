@@ -190,7 +190,17 @@ class HomeController extends Controller
     public function deals()
     {
         $offers = \App\Models\Offer::where('is_active', true)->orderBy('sort_order')->get();
-        $categories = ['Flights', 'Hotels', 'Homestays', 'Cabs', 'Trains', 'Holidays', 'Insurance', 'eSIM', 'Bank Offer'];
+        $categories = [
+            'flights' => __('categories.flights', [], 'Flights'),
+            'hotels' => __('categories.hotels', [], 'Hotels'),
+            'homestays' => __('categories.homestays', [], 'Homestays'),
+            'cabs' => __('categories.cabs', [], 'Cabs'),
+            'trains' => __('categories.trains', [], 'Trains'),
+            'holidays' => __('categories.tours', [], 'Holidays'),
+            'insurance' => __('categories.insurance', [], 'Insurance'),
+            'esim' => __('categories.esim', [], 'eSIM'),
+            'bank_offer' => __('categories.bank_offer', [], 'Bank Offer'),
+        ];
         
         return view('deals', compact('offers', 'categories'));
     }

@@ -25,7 +25,7 @@
                         @endif
                     </div>
 
-                    <a href="{{ route('home') }}" class="btn btn-primary btn-lg px-5">Back to Home</a>
+                    <a href="{{ localized_url('/') }}" class="btn btn-primary btn-lg px-5">Back to Home</a>
                 </div>
             </div>
         </div>

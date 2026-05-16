@@ -187,12 +187,8 @@
                         <div class="tab-pane fade" id="tab-api">
                             <!-- Provider Priority Table -->
                             <div class="card mb-4 shadow-sm border-0 rounded-4">
-                                <div class="card-header d-flex justify-content-between align-items-center border-bottom py-3">
+                                <div class="card-header border-bottom py-3">
                                     <h5 class="fw-bold mb-0">Internal API Controls (Priorities)</h5>
-                                    <form action="{{ route('admin.settings.swagger.regenerate') }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="btn btn-dark btn-sm fw-bold px-3 rounded-pill"><i class="bx bx-refresh"></i> Regenerate Swagger</button>
-                                    </form>
                                 </div>
                                 <div class="card-body pt-4">
                                     <form action="{{ route('admin.settings.api-configs.update') }}" method="POST">

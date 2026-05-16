@@ -177,20 +177,20 @@
             </button>
             @php
                 $icons = [
-                    'Flights' => 'fa-plane',
-                    'Hotels' => 'fa-hotel',
-                    'Homestays' => 'fa-home',
-                    'Cabs' => 'fa-taxi',
-                    'Trains' => 'fa-train',
-                    'Holidays' => 'fa-umbrella-beach',
-                    'Insurance' => 'fa-shield-alt',
-                    'eSIM' => 'fa-sim-card',
-                    'Bank Offer' => 'fa-university'
+                    'flights' => 'fa-plane',
+                    'hotels' => 'fa-hotel',
+                    'homestays' => 'fa-home',
+                    'cabs' => 'fa-taxi',
+                    'trains' => 'fa-train',
+                    'holidays' => 'fa-umbrella-beach',
+                    'insurance' => 'fa-shield-alt',
+                    'esim' => 'fa-sim-card',
+                    'bank_offer' => 'fa-university'
                 ];
             @endphp
-            @foreach($categories as $cat)
-                <button class="deal-tab-btn" onclick="filterDeals('{{ $cat }}', this)">
-                    <i class="fas {{ $icons[$cat] ?? 'fa-tag' }}"></i> {{ $cat }}
+            @foreach($categories as $key => $label)
+                <button class="deal-tab-btn" onclick="filterDeals('{{ $label }}', this)">
+                    <i class="fas {{ $icons[$key] ?? 'fa-tag' }}"></i> {{ $label }}
                 </button>
             @endforeach
         </div>

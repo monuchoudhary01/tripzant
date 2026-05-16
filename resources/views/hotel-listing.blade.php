@@ -77,7 +77,7 @@
                         <div class="px-2">
                             <input type="range" class="form-range" min="1000" max="50000" step="1000" value="20000">
                             <div class="d-flex justify-content-between TS-2" style="font-size:11px;color:var(--gray-300); font-weight:800;">
-                                <span>₹1,000</span><span>₹50,000+</span>
+                                <span>{{ format_price(1000, 'INR') }}</span><span>{{ format_price(50000, 'INR') }}+</span>
                             </div>
                         </div>
                     </div>
@@ -130,18 +130,18 @@
                     <div class="d-flex align-items-center gap-3">
                         <i class="fas fa-gift" style="color:var(--primary);font-size:20px;"></i>
                         <div>
-                            <span class="fw-700" style="font-size:13px;">Save extra ₹1,200</span>
+                            <span class="fw-700" style="font-size:13px;">Save extra {{ format_price(1200, 'INR') }}</span>
                             <span style="font-size:12px;color:var(--gray-400);"> with code <strong style="color:var(--primary);">GOAVIBES</strong></span>
                         </div>
                     </div>
                     <button class="btn btn-sm px-3" style="background:var(--primary);color:#fff;border-radius:8px;font-size:12px;font-weight:600;">Copy Code</button>
                 </div>
 
-                <x-listing-card type="hotel" title="Taj Exotica Resort & Spa" subtitle="Benaulim, South Goa" price="28,500" rating="4.9" reviews="480" image="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&auto=format&fit=crop&q=80" />
-                <x-listing-card type="hotel" title="Novotel Goa Resort & Spa" subtitle="Candolim, North Goa" price="12,200" rating="4.5" reviews="920" image="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=500&auto=format&fit=crop&q=80" />
-                <x-listing-card type="hotel" title="The Leela Goa" subtitle="Cavelossim, South Goa" price="32,900" rating="4.8" reviews="340" image="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=500&auto=format&fit=crop&q=80" />
-                <x-listing-card type="hotel" title="Radisson Blu Resort" subtitle="Cavelossim, South Goa" price="9,800" rating="4.3" reviews="1240" image="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=500&auto=format&fit=crop&q=80" />
-                <x-listing-card type="hotel" title="Hyatt Centric Goa" subtitle="Bambolim, Goa" price="15,400" rating="4.6" reviews="560" image="https://images.unsplash.com/photo-1582719508461-905c673771fd?w=500&auto=format&fit=crop&q=80" />
+                <x-listing-card type="hotel" title="Taj Exotica Resort & Spa" subtitle="Benaulim, South Goa" :price="format_price(28500, 'INR')" rating="4.9" reviews="480" image="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&auto=format&fit=crop&q=80" />
+                <x-listing-card type="hotel" title="Novotel Goa Resort & Spa" subtitle="Candolim, North Goa" :price="format_price(12200, 'INR')" rating="4.5" reviews="920" image="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=500&auto=format&fit=crop&q=80" />
+                <x-listing-card type="hotel" title="The Leela Goa" subtitle="Cavelossim, South Goa" :price="format_price(32900, 'INR')" rating="4.8" reviews="340" image="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=500&auto=format&fit=crop&q=80" />
+                <x-listing-card type="hotel" title="Radisson Blu Resort" subtitle="Cavelossim, South Goa" :price="format_price(9800, 'INR')" rating="4.3" reviews="1240" image="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=500&auto=format&fit=crop&q=80" />
+                <x-listing-card type="hotel" title="Hyatt Centric Goa" subtitle="Bambolim, Goa" :price="format_price(15400, 'INR')" rating="4.6" reviews="560" image="https://images.unsplash.com/photo-1582719508461-905c673771fd?w=500&auto=format&fit=crop&q=80" />
 
                 <div class="text-center TS-4">
                     <button class="btn btn-outline-custom px-5 py-3"><i class="fas fa-plus me-2"></i> Load More Hotels</button>

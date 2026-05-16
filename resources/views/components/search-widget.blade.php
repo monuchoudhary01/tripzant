@@ -61,7 +61,7 @@
                 </div>
             </div>
             
-            <a href="/explore-map" class="map-view-toggle-btn hvr-grow">
+            <a href="{{ localized_url('/explore-map') }}" class="map-view-toggle-btn hvr-grow">
                 <i class="fas fa-map-location-dot"></i> EXPLORE ON MAP
             </a>
         </div>

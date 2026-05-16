@@ -13,13 +13,15 @@ class HybridFlightService
     protected $pricingService;
 
     public function __construct(
-        AmadeusProvider $amadeus,
+        AmadeusProvider $amadeusSoap,
+        \App\Proxy\Flight\Providers\AmadeusRestProvider $amadeusRest,
         TravelPayoutsProvider $travelPayouts,
         PricingService $pricingService
     ) {
-        // We now only use Amadeus and TravelPayouts
+        // We now use Amadeus (SOAP + REST) and TravelPayouts
         $this->providers = [
-            'amadeus' => $amadeus,
+            'amadeus_soap' => $amadeusSoap,
+            'amadeus_rest' => $amadeusRest,
             'travelpayouts' => $travelPayouts
         ];
 
@@ -107,14 +109,22 @@ class HybridFlightService
         // --- Baggage Filtering ---
         if (isset($params['baggage']) && $params['baggage'] !== '') {
             $requiredBags = (int)$params['baggage'];
-            $allResults = array_values(array_filter($allResults, function($f) use ($requiredBags) {
-                // If weight is numeric, compare. If it's a string like "15 KG", extract number.
-                $bagVal = is_object($f) ? ($f->baggage ?? 0) : ($f['baggage'] ?? 0);
-                if (is_string($bagVal)) {
-                    $bagVal = (int) filter_var($bagVal, FILTER_SANITIZE_NUMBER_INT);
-                }
-                return $bagVal >= $requiredBags;
-            }));
+            
+            // Safety: If requiredBags is unreasonably high (e.g. > 100), it's likely malformed or an ID.
+            // We skip filtering in such cases to prevent empty results.
+            if ($requiredBags > 100) {
+                \Illuminate\Support\Facades\Log::warning("HybridFlightService: Ignoring unusually high baggage filter value: $requiredBags");
+            } else {
+                $allResults = array_values(array_filter($allResults, function($f) use ($requiredBags) {
+                    // If weight is numeric, compare. If it's a string like "15 KG", extract number.
+                    $bagVal = is_object($f) ? ($f->baggage ?? 0) : ($f['baggage'] ?? 0);
+                    if (is_string($bagVal)) {
+                        $bagVal = (int) filter_var($bagVal, FILTER_SANITIZE_NUMBER_INT);
+                    }
+                    return $bagVal >= $requiredBags;
+                }));
+                \Illuminate\Support\Facades\Log::info("HybridFlightService: Filtered results by baggage ($requiredBags KG). Remaining: " . count($allResults));
+            }
         }
 
         $finalResponse = [

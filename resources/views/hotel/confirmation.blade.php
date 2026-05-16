@@ -230,7 +230,7 @@
 
             {{-- Action Footer --}}
             <div class="action-footer">
-                <a href="{{ route('home') }}" class="btn-action btn-action-primary">
+                <a href="{{ localized_url('/') }}" class="btn-action btn-action-primary">
                     <i class="fas fa-house"></i> Home
                 </a>
                 <a href="{{ route('dashboard.bookings') }}" class="btn-action btn-action-light">

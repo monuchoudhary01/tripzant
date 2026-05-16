@@ -63,7 +63,12 @@ class AmadeusSoapService
         $nonce = $this->getNonce();
         $passwordDigest = $this->getPasswordDigest($nonce, $timestamp, $this->password);
 
-        if (strpos($date, '-') !== false) {
+        if (is_array($origin)) $origin = reset($origin);
+        if (is_array($destination)) $destination = reset($destination);
+        if (is_array($date)) $date = reset($date);
+        if (is_array($paxCount)) $paxCount = reset($paxCount);
+
+        if (is_string($date) && strpos($date, '-') !== false) {
             $date = date('dmy', strtotime($date));
         }
 

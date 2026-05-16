@@ -14,7 +14,7 @@
                     
                     <p class="text-muted mb-4">There was an issue connecting to the Mastercard MPGS gateway. Please check your credentials and API status.</p>
 
-                    <a href="{{ route('home') }}" class="btn btn-primary px-5">Back to Home</a>
+                    <a href="{{ localized_url('/') }}" class="btn btn-primary px-5">Back to Home</a>
                 </div>
             </div>
         </div>

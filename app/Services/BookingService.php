@@ -97,14 +97,14 @@ class BookingService
                         'flight_number' => $firstSeg['number'] ?? '000',
                         'cabin_class' => $item['travelerPricings'][0]['fareDetailsBySegment'][0]['cabin'] ?? 'ECONOMY',
                         'itinerary_details' => json_encode($itineraries),
-                        'fare_rules' => json_encode($item['travelerPricings'][0]['fareDetailsBySegment'] ?? [])
+                        'fare_details' => json_encode($item['travelerPricings'][0]['fareDetailsBySegment'] ?? [])
                     ]
                 );
             } elseif ($type === 'hotel') {
                 \App\Models\HotelBooking::updateOrCreate(
                     ['booking_id' => $booking->id],
                     [
-                        'hotel_id' => $item['hotelCode'] ?? ($item['code'] ?? ''),
+                        'hotel_code' => $item['hotelCode'] ?? ($item['code'] ?? ''),
                         'hotel_name' => $item['name'] ?? 'Hotel',
                         'check_in' => $sessionData['checkIn'] ?? ($item['checkIn'] ?? date('Y-m-d')),
                         'check_out' => $sessionData['checkOut'] ?? ($item['checkOut'] ?? date('Y-m-d', strtotime('+1 day'))),
